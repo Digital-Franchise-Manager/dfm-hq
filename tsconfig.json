@@ -17,13 +17,13 @@
       "path": "./packages/fantasy-engine"
     },
     {
-      "path": "./backend/dfm/drl/classic"
+      "path": "./backend/dfm/drl/classic/packages"
     },
     {
-      "path": "./backend/dfm/drl/draft"
+      "path": "./backend/dfm/drl/draft/packages"
     },
     {
-      "path": "./packages/sport-drl"
+      "path": "./backend/dfm/drl/packages/sport-drl"
     }
   ]
 }

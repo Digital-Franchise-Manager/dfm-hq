@@ -1,0 +1,24 @@
+{
+  "sport_code": "DRL",
+  "sport_name": "Digital Rugby League",
+  "supported_leagues": [
+    "NRL Fantasy",
+    "Super League Fantasy"
+  ],
+  "theme": {
+    "primary_color": "#0F172A",
+    "accent_color": "#38BDF8",
+    "dark_mode_default": true
+  },
+  "assets": {
+    "logos": {
+      "primary": "backend/dfm/assets/drl/identity/drl-logo-primary.png",
+      "icon": "backend/dfm/assets/drl/identity/drl-logo-icon.png",
+      "watermark": "backend/dfm/assets/drl/identity/drl-logo-watermark.png"
+    },
+    "backgrounds": {
+      "login": "backend/dfm/assets/drl/backgrounds/login-bg.jpg",
+      "stadium_matchday": "backend/dfm/assets/drl/backgrounds/matchday-stadium-bg.png"
+    }
+  }
+}

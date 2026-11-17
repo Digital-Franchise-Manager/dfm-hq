@@ -1,0 +1,9 @@
+{
+  "module": "drl.classic",
+  "sport_code": "DRL",
+  "game_mode": "classic",
+  "version": "0.1.0",
+  "core_path": "backend/dfm/drl/classic/core",
+  "packages_path": "backend/dfm/drl/classic/packages",
+  "typescript_package": "@dfm/game-classic"
+}

@@ -11,7 +11,7 @@
         "NRL Fantasy",
         "Super League Fantasy"
       ],
-      "config_path": "backend/dfm/drl/assets/identity/manifest.json"
+      "config_path": "backend/dfm/assets/drl/identity/manifest.json"
     }
   ],
   "global_theme": {

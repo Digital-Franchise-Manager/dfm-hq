@@ -11,8 +11,9 @@
     "apps/web",
     "apps/api",
     "packages/*",
-    "backend/dfm/drl/classic",
-    "backend/dfm/drl/draft"
+    "backend/dfm/drl/packages/*",
+    "backend/dfm/drl/classic/packages",
+    "backend/dfm/drl/draft/packages"
   ],
   "scripts": {
     "dev": "npm run dev --workspace @dfm/web",

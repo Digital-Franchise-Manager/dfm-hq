@@ -11,9 +11,15 @@ Establish a shared TypeScript workspace for the Digital Franchise Manager platfo
 - `packages/contracts`: shared domain contracts and DTO types.
 - `packages/platform-core`: shared identity, franchise, league and platform-level contracts.
 - `packages/fantasy-engine`: sport-neutral scoring, ranking and competition primitives.
-- `backend/dfm/drl/classic`: Classic game-mode rules and contracts.
-- `backend/dfm/drl/draft`: Draft game-mode rules and contracts.
-- `packages/sport-drl`: Digital Rugby League domain contracts and sport-specific adapters.
+- `backend/dfm/drl/classic/core`: Classic-specific backend logic.
+- `backend/dfm/drl/classic/packages`: Classic TypeScript package boundary.
+- `backend/dfm/drl/classic/manifest.json`: Classic module registration and configuration.
+- `backend/dfm/drl/draft/core`: Draft-specific backend logic and integrations.
+- `backend/dfm/drl/draft/packages`: Draft TypeScript package boundary.
+- `backend/dfm/drl/draft/manifest.json`: Draft module registration and configuration.
+- `backend/dfm/drl/core`: shared DRL backend functionality.
+- `backend/dfm/drl/packages`: shared DRL-specific packages, including `@dfm/sport-drl`.
+- `backend/dfm/assets/drl`: DRL identity and sport assets.
 - `supabase/migrations`: versioned database schema and security changes.
 - `supabase/tests/database`: database security regression checks.
 
