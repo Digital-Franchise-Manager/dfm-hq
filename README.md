@@ -39,7 +39,7 @@ npm run build
 npm run check
 ```
 
-The initial CI bootstrap resolves and uploads a generated lockfile artifact. Commit the validated `package-lock.json` from that artifact before treating dependency resolution as fully reproducible.
+CI resolves and validates a lockfile, uploads a short-lived backup artifact, and commits the exact generated `package-lock.json` to the security branch after typecheck, tests and build pass.
 
 ## Security rules
 
