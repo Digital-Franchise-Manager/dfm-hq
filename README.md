@@ -9,8 +9,8 @@ Digital Franchise Manager (DFM) is a multi-sport fantasy platform. Digital Rugby
 - `packages/contracts/` — shared domain contracts and DTO types.
 - `packages/platform-core/` — shared identity, franchise and league boundaries.
 - `packages/fantasy-engine/` — sport-neutral fantasy engine primitives.
-- `packages/game-classic/` — Classic game-mode rules.
-- `packages/game-draft/` — Draft game-mode rules.
+- `backend/dfm/drl/classic/` — Classic game-mode rules.
+- `backend/dfm/drl/draft/` — Draft game-mode rules.
 - `packages/sport-drl/` — Digital Rugby League domain.
 - `supabase/migrations/` — versioned JARVIS database migrations.
 - `supabase/tests/database/` — database security regression checks.
