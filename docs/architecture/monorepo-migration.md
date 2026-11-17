@@ -7,6 +7,7 @@ Establish a shared TypeScript workspace for the Digital Franchise Manager platfo
 ## Workspace boundaries
 
 - `apps/web`: React and Vite browser application.
+- `apps/api`: authenticated TypeScript request-handler boundary. The scaffold requires an injected JWT authenticator and intentionally returns no application routes; it is not deployed.
 - `packages/contracts`: shared domain contracts and DTO types.
 - `packages/platform-core`: shared identity, franchise, league and platform-level contracts.
 - `packages/fantasy-engine`: sport-neutral scoring, ranking and competition primitives.
@@ -17,6 +18,10 @@ Establish a shared TypeScript workspace for the Digital Franchise Manager platfo
 - `supabase/tests/database`: database security regression checks.
 
 Authentication, user identity, franchise ownership and league identity remain shared platform concerns. Classic and Draft are separate game-mode modules and must not create duplicate users, franchises or leagues.
+
+## API security boundary
+
+The API handler accepts an injected authentication function. A production adapter must validate the Supabase JWT and derive the principal from verified claims; never trust a client-supplied user ID or user-editable metadata. No application route is enabled and no API function is deployed by this foundation.
 
 ## Preservation rule
 
