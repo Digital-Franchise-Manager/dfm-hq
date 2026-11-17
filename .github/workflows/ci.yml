@@ -1,0 +1,47 @@
+name: DFM Quality Checks
+
+on:
+  push:
+    branches:
+      - main
+      - "security/**"
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Typecheck, test and build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 24 LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Pin npm
+        run: npm install --global npm@12.2.2
+
+      - name: Generate exact dependency lock
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+
+      - name: Publish generated lockfile
+        uses: actions/upload-artifact@v4
+        with:
+          name: dfm-package-lock
+          path: package-lock.json
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Verify TypeScript, tests and production build
+        run: npm run check
