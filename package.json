@@ -15,7 +15,7 @@
     "dev": "npm run dev --workspace @dfm/web",
     "build": "npm run typecheck && npm run build --workspace @dfm/web",
     "typecheck": "tsc -b --pretty false",
-    "test": "vitest run --passWithNoTests",
+    "test": "vitest run",
     "check": "npm run typecheck && npm test && npm run build --workspace @dfm/web"
   },
   "devDependencies": {
