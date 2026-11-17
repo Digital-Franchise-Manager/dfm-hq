@@ -35,8 +35,9 @@ The existing `frontend/` and `backend/` trees are intentionally retained. No exi
 1. `20261117194130_security_baseline_lockdown.sql` removes excess public grants, tightens default privileges and relocates the RLS event-trigger function.
 2. `20261117194151_public_franchise_profiles_projection.sql` replaces the writable view with an RLS-protected, read-only public branding projection and a private synchronisation trigger.
 3. Run `supabase/tests/database/security_baseline.sql` after migration changes.
-4. Run `supabase/tests/database/franchise_projection_trigger.sql` to verify projection insert/update synchronisation and cascade deletion. This script rolls back its synthetic test records.
-5. Run Supabase security advisors after every database security change.
+4. Run `supabase/tests/database/rls_auto_enable.sql` to verify the relocated event trigger and future default grants. Its temporary table is rolled back.
+5. Run `supabase/tests/database/franchise_projection_trigger.sql` to verify projection insert/update synchronisation and cascade deletion. Its synthetic account and franchise are rolled back.
+6. Run Supabase security advisors after every database security change.
 
 The private `dfm_private` schema is deliberately excluded from the Data API schemas in `supabase/config.toml`.
 
