@@ -1,60 +1,46 @@
-from pydantic import BaseModel, Field
-from typing import List, Optional, Dict
+class DraftNewsTranslator:
+    @staticmethod
+    async def translate_real_world_injury_to_draft(
+        supabase_client, 
+        league_id: str, 
+        player_name: str, 
+        player_id: str, 
+        injury_details: str, 
+        real_world_team: str
+    ) -> dict:
+        """
+        Translates a real-world injury update into draft-league context,
+        naming the rostered franchise or flagging them as a Free Agent.
+        """
+        roster_query = supabase_client.table("league_rosters") \
+            .select("franchises(primary_name, secondary_name, abbreviated_name)") \
+            .eq("league_id", league_id) \
+            .eq("player_id", player_id) \
+            .execute()
+        
+        if roster_query.data and len(roster_query.data) > 0:
+            franchise = roster_query.data[0].get("franchises", {})
+            p_name = franchise.get("primary_name", "")
+            s_name = franchise.get("secondary_name", "")
+            abbrev = franchise.get("abbreviated_name", "")
+            
+            owner_text = f"The {p_name} {s_name} ({abbrev})"
+            headline_prefix = f"⚠️ SQUAD BLOW FOR {abbrev}:"
+        else:
+            owner_text = "Unrestricted Free Agent market"
+            headline_prefix = "🔎 WAIVER WIRE ALERT:"
 
-class NewsArticleCreate(BaseModel):
-    sport_code: str = Field(..., description="Sport code e.g. DRL")
-    league_type: str = Field(..., description="nrl_fantasy, super_league_fantasy, or h2h_league")
-    league_id: Optional[str] = Field(None, description="UUID of the H2H league if applicable")
-    category: str = Field(..., description="team_list, injury, h2h_preview, h2h_review, trade_alert, finals_race")
-    title: str
-    summary: str
-    content: str
-    related_franchise_ids: Optional[List[str]] = []
+        title = f"{headline_prefix} {player_name} ({injury_details})"
+        summary = f"{owner_text} are hit with a major setback as {player_name} (formerly {real_world_team}) faces time on the sidelines."
+        content = (
+            f"In a major development for your head-to-head league, medical staff have confirmed "
+            f"that {player_name} has suffered an injury: {injury_details}. "
+            f"This development directly impacts {owner_text}. Managers should review their bench cover immediately."
+        )
 
-class H2HPreviewRequest(BaseModel):
-    home_franchise_name: str
-    away_franchise_name: str
-    home_projected_score: float
-    away_projected_score: float
-    round_number: int
-
-class FranchiseBrandingPayload(BaseModel):
-    franchise_id: str
-    primary_name: str
-    secondary_name: str
-    abbreviated_name: str
-    coach_name: str
-    primary_logo_url: Optional[str] = None
-    wordmark_logo_url: Optional[str] = None
-    simplified_logo_url: Optional[str] = None
-    primary_color: str = "#0F172A"
-    secondary_color: str = "#FFFFFF"
-    accent_color: Optional[str] = "#BFFF00"
-    recent_form: List[str] = []
-
-class MatchPlayerSlot(BaseModel):
-    slot_number: int
-    is_starting: bool
-    player_id: str
-    player_name: str
-    player_photo_url: Optional[str] = None
-    position: str
-    leadership: Optional[str] = None
-    availability: str = "available"
-    live_score: float = 0.0
-    projected_score: float = 0.0
-
-class MatchCentreResponse(BaseModel):
-    match_id: str
-    league_id: str
-    round_number: int
-    status: str
-    home_team: FranchiseBrandingPayload
-    away_team: FranchiseBrandingPayload
-    home_score: float
-    away_score: float
-    home_projected: float
-    away_projected: float
-    home_lineup: List[MatchPlayerSlot]
-    away_lineup: List[MatchPlayerSlot]
-    ai_article: Optional[Dict[str, str]] = None
+        return {
+            "title": title,
+            "summary": summary,
+            "content": content,
+            "ownership_status": "rostered" if "squad blow" in headline_prefix.lower() else "free_agent"
+        }
