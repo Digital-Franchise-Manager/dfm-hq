@@ -1,0 +1,14 @@
+{
+  "name": "@dfm/game-classic",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Classic game-mode rules and contracts.",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./src/index.ts"
+    }
+  }
+}
