@@ -1,0 +1,31 @@
+{
+  "platform_name": "Digital Franchise Manager",
+  "platform_code": "DFM",
+  "version": "1.0.0",
+  "description": "Multi-sport fantasy platform architecture supporting modular sports codes, H2H league news, AI coaching, and automated draft trade matching.",
+  "active_sports_codes": [
+    {
+      "code": "DRL",
+      "name": "Digital Rugby League",
+      "supported_competitions": [
+        "NRL Fantasy",
+        "Super League Fantasy"
+      ],
+      "config_path": "backend/drl/assets/identity/manifest.json"
+    }
+  ],
+  "global_theme": {
+    "primary_color": "#0F172A",
+    "accent_color": "#CCFF00",
+    "dark_mode_default": true
+  },
+  "platform_assets": {
+    "logos": {
+      "primary": "backend/assets/identity/dfm-logo-primary.png",
+      "app_icon": "backend/assets/identity/dfm-app-icon.png"
+    },
+    "backgrounds": {
+      "global_login": "backend/assets/backgrounds/login-hero.jpg"
+    }
+  }
+}
