@@ -36,3 +36,18 @@ jobs:
 
       - name: Verify TypeScript, tests and production build
         run: npm run check
+
+  drl-odds-engine:
+    name: DRL Odds Engine unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run standard-library unit tests
+        run: python -m unittest discover -s backend/dfm/drl/tests/odds_engine -t . -p "test_*.py"
