@@ -5,6 +5,7 @@ Digital Franchise Manager (DFM) is a multi-sport fantasy platform. Digital Rugby
 ## Repository structure
 
 - `apps/web/` — React and Vite TypeScript application foundation.
+- `apps/api/` — authenticated TypeScript request-handler foundation; no application routes are enabled or deployed.
 - `packages/contracts/` — shared domain contracts and DTO types.
 - `packages/platform-core/` — shared identity, franchise and league boundaries.
 - `packages/fantasy-engine/` — sport-neutral fantasy engine primitives.
