@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   verify:
@@ -20,6 +20,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Set up Node.js 24 LTS
         uses: actions/setup-node@v4
@@ -45,3 +47,18 @@ jobs:
 
       - name: Verify TypeScript, tests and production build
         run: npm run check
+
+      - name: Commit lockfile after successful verification
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/security/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "chore: commit reproducible npm lockfile"
+          gh auth setup-git
+          git push origin "HEAD:${GITHUB_REF_NAME}"
