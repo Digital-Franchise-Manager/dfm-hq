@@ -20,11 +20,10 @@ The existing `frontend/` and `backend/` directories are preserved during the tra
 
 The P0 and P1 migrations lock down franchise privileges, move privileged database functions into a non-exposed schema, and expose franchise branding through a read-only projection. The exact SQL is stored under `supabase/migrations/`.
 
-Run the security regression script after database changes:
+Run the database checks as the database owner in the Supabase SQL Editor after migration changes:
 
-```sql
-supabase/tests/database/security_baseline.sql
-```
+- `supabase/tests/database/security_baseline.sql` — privilege, RLS and private-schema assertions.
+- `supabase/tests/database/franchise_projection_trigger.sql` — rollback-safe insert, update and cascade-delete test for the branding projection.
 
 ## Development
 
@@ -39,7 +38,7 @@ npm run build
 npm run check
 ```
 
-CI resolves and validates a lockfile, uploads a short-lived backup artifact, and commits the exact generated `package-lock.json` to the security branch after typecheck, tests and build pass.
+The exact `package-lock.json` is committed. CI uses `npm ci` against that lockfile and runs typecheck, unit tests and the production build.
 
 ## Security rules
 
