@@ -27,7 +27,7 @@ The existing `frontend/` and `backend/` trees are intentionally retained. No exi
 - Node.js 26 LTS is the CI runtime; Node.js 22.12 or newer is required for local development.
 - npm is pinned to 12.2.2.
 - Direct dependencies are exact-version pinned in workspace manifests.
-- The CI workflow generates a lockfile from those exact pins, publishes it as a short-lived artifact, and installs from that lockfile. Commit the generated `package-lock.json` to the repository after the first validated dependency resolution.
+- The CI workflow generates a lockfile from those exact pins, publishes a short-lived backup artifact, installs from that lockfile, and commits it to the security branch only after typecheck, tests and build succeed.
 - No paid services, hosted build products or paid dependencies are introduced.
 
 ## Database security sequence
