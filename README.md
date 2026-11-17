@@ -23,6 +23,7 @@ The P0 and P1 migrations lock down franchise privileges, move privileged databas
 Run the database checks as the database owner in the Supabase SQL Editor after migration changes:
 
 - `supabase/tests/database/security_baseline.sql` — privilege, RLS and private-schema assertions.
+- `supabase/tests/database/rls_auto_enable.sql` — verifies automatic RLS enforcement and default grants for newly created public tables.
 - `supabase/tests/database/franchise_projection_trigger.sql` — rollback-safe insert, update and cascade-delete test for the branding projection.
 
 ## Development
