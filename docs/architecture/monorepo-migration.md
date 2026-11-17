@@ -10,12 +10,18 @@ Establish a shared TypeScript workspace for the Digital Franchise Manager platfo
 - `apps/api`: authenticated TypeScript request-handler boundary. The scaffold requires an injected JWT authenticator and intentionally returns no application routes; it is not deployed.
 - `packages/contracts`: shared domain contracts and DTO types.
 - `packages/platform-core`: shared identity, franchise, league and platform-level contracts.
-- `packages/fantasy-engine`: sport-neutral scoring, ranking and competition primitives.
-- `backend/dfm/drl/classic`: Classic game-mode rules and contracts.
-- `backend/dfm/drl/draft`: Draft game-mode rules and contracts.
-- `packages/sport-drl`: Digital Rugby League domain contracts and sport-specific adapters.
-- `supabase/migrations`: versioned database schema and security changes.
-- `supabase/tests/database`: database security regression checks.
+- `backend/dfm/drl/classic/core`: Classic-specific backend logic.
+- `backend/dfm/drl/classic/packages`: Classic TypeScript package boundary.
+- `backend/dfm/drl/classic/manifest.json`: Classic module registration and configuration.
+- `backend/dfm/drl/draft/core`: Draft-specific backend logic and integrations.
+- `backend/dfm/drl/draft/packages`: Draft TypeScript package boundary.
+- `backend/dfm/drl/draft/manifest.json`: Draft module registration and configuration.
+- `backend/dfm/drl/core`: shared DRL backend functionality.
+- `backend/dfm/drl/packages`: shared DRL-specific packages, including `@dfm/sport-drl` and the Rugby League fantasy engine.
+- `backend/dfm/drl/packages/fantasy-engine`: Rugby League scoring, ranking and competition primitives.
+- `backend/dfm/assets/drl`: DRL identity and sport assets.
+
+The DRL-specific npm workspaces are discovered from the `packages/` directories inside Classic, Draft and the shared DRL domain. The Fantasy Engine is Rugby League-specific and therefore resides within the DRL domain. Only genuinely sport-neutral contracts and platform services remain in the root `packages/` directory.
 
 Authentication, user identity, franchise ownership and league identity remain shared platform concerns. Classic and Draft are separate game-mode modules and must not create duplicate users, franchises or leagues.
 

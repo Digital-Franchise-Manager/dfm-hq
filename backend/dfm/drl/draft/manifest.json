@@ -1,0 +1,12 @@
+{
+  "module": "drl.draft",
+  "sport_code": "DRL",
+  "game_mode": "draft",
+  "version": "0.1.0",
+  "core_path": "backend/dfm/drl/draft/core",
+  "packages_path": "backend/dfm/drl/draft/packages",
+  "typescript_package": "@dfm/game-draft",
+  "integrations": [
+    "core/integrations/newsroom_translator.py"
+  ]
+}

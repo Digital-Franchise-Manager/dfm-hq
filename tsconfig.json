@@ -14,16 +14,16 @@
       "path": "./packages/platform-core"
     },
     {
-      "path": "./packages/fantasy-engine"
+      "path": "./backend/dfm/drl/classic/packages"
     },
     {
-      "path": "./backend/dfm/drl/classic"
+      "path": "./backend/dfm/drl/draft/packages"
     },
     {
-      "path": "./backend/dfm/drl/draft"
+      "path": "./backend/dfm/drl/packages/sport-drl"
     },
     {
-      "path": "./packages/sport-drl"
+      "path": "./backend/dfm/drl/packages/fantasy-engine"
     }
   ]
 }

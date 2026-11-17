@@ -8,10 +8,16 @@ Digital Franchise Manager (DFM) is a multi-sport fantasy platform. Digital Rugby
 - `apps/api/` — authenticated TypeScript request-handler foundation; no application routes are enabled or deployed.
 - `packages/contracts/` — shared domain contracts and DTO types.
 - `packages/platform-core/` — shared identity, franchise and league boundaries.
-- `packages/fantasy-engine/` — sport-neutral fantasy engine primitives.
-- `backend/dfm/drl/classic/` — Classic game-mode rules.
-- `backend/dfm/drl/draft/` — Draft game-mode rules.
-- `packages/sport-drl/` — Digital Rugby League domain.
+- `backend/dfm/drl/classic/core/` — Classic-specific backend logic.
+- `backend/dfm/drl/classic/packages/` — Classic TypeScript package boundary.
+- `backend/dfm/drl/classic/manifest.json` — Classic module manifest.
+- `backend/dfm/drl/draft/core/` — Draft-specific backend logic and integrations.
+- `backend/dfm/drl/draft/packages/` — Draft TypeScript package boundary.
+- `backend/dfm/drl/draft/manifest.json` — Draft module manifest.
+- `backend/dfm/drl/core/` — shared DRL backend functionality.
+- `backend/dfm/drl/packages/` — shared DRL-specific packages, including the Rugby League fantasy engine.
+- `backend/dfm/drl/packages/fantasy-engine/` — Rugby League scoring, ranking and competition engine.
+- `backend/dfm/assets/drl/` — DRL identity and sport assets.
 - `supabase/migrations/` — versioned JARVIS database migrations.
 - `supabase/tests/database/` — database security regression checks.
 
