@@ -1,0 +1,25 @@
+{
+  "name": "dfm-hq",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "npm@12.2.2",
+  "engines": {
+    "node": ">=22.12.0 <27"
+  },
+  "workspaces": [
+    "apps/web",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace @dfm/web",
+    "build": "npm run typecheck && npm run build --workspace @dfm/web",
+    "typecheck": "tsc -b --pretty false",
+    "test": "vitest run --passWithNoTests",
+    "check": "npm run typecheck && npm test && npm run build --workspace @dfm/web"
+  },
+  "devDependencies": {
+    "typescript": "7.0.2",
+    "vitest": "5.1.0"
+  }
+}
