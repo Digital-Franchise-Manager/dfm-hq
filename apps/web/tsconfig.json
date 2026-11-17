@@ -4,16 +4,32 @@
     "composite": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "types": ["vite/client"],
+    "types": [
+      "vite/client"
+    ],
     "tsBuildInfoFile": "../../node_modules/.cache/tsbuildinfo/web.tsbuildinfo"
   },
-  "include": ["src"],
+  "include": [
+    "src"
+  ],
   "references": [
-    { "path": "../../packages/contracts" },
-    { "path": "../../packages/platform-core" },
-    { "path": "../../packages/fantasy-engine" },
-    { "path": "../../backend/dfm/drl/classic/packages" },
-    { "path": "../../backend/dfm/drl/draft/packages" },
-    { "path": "../../backend/dfm/drl/packages/sport-drl" }
+    {
+      "path": "../../packages/contracts"
+    },
+    {
+      "path": "../../packages/platform-core"
+    },
+    {
+      "path": "../../backend/dfm/drl/classic/packages"
+    },
+    {
+      "path": "../../backend/dfm/drl/draft/packages"
+    },
+    {
+      "path": "../../backend/dfm/drl/packages/sport-drl"
+    },
+    {
+      "path": "../../backend/dfm/drl/packages/fantasy-engine"
+    }
   ]
 }

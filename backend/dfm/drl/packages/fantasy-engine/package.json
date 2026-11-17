@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Sport-neutral scoring, ranking and competition primitives.",
+  "description": "Rugby League fantasy scoring, ranking and competition primitives.",
   "types": "./dist/types/index.d.ts",
   "exports": {
     ".": {
