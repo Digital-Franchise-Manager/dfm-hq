@@ -10,7 +10,9 @@
   "workspaces": [
     "apps/web",
     "apps/api",
-    "packages/*"
+    "packages/*",
+    "backend/dfm/drl/classic",
+    "backend/dfm/drl/draft"
   ],
   "scripts": {
     "dev": "npm run dev --workspace @dfm/web",

@@ -12,8 +12,8 @@
     { "path": "../../packages/contracts" },
     { "path": "../../packages/platform-core" },
     { "path": "../../packages/fantasy-engine" },
-    { "path": "../../packages/game-classic" },
-    { "path": "../../packages/game-draft" },
+    { "path": "../../backend/dfm/drl/classic" },
+    { "path": "../../backend/dfm/drl/draft" },
     { "path": "../../packages/sport-drl" }
   ]
 }

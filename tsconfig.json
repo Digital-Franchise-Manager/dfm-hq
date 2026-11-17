@@ -17,10 +17,10 @@
       "path": "./packages/fantasy-engine"
     },
     {
-      "path": "./packages/game-classic"
+      "path": "./backend/dfm/drl/classic"
     },
     {
-      "path": "./packages/game-draft"
+      "path": "./backend/dfm/drl/draft"
     },
     {
       "path": "./packages/sport-drl"
