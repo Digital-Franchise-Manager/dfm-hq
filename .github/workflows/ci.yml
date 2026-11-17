@@ -55,10 +55,12 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          gh auth setup-git
+          git fetch origin "${GITHUB_REF_NAME}"
+          git reset --hard FETCH_HEAD
           git add package-lock.json
           if git diff --cached --quiet; then
             exit 0
           fi
           git commit -m "chore: commit reproducible npm lockfile"
-          gh auth setup-git
           git push origin "HEAD:${GITHUB_REF_NAME}"
