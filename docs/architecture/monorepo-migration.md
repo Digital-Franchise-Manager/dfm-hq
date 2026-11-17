@@ -27,7 +27,7 @@ The existing `frontend/` and `backend/` trees are intentionally retained. No exi
 - Node.js 26 LTS is the CI runtime; Node.js 22.12 or newer is required for local development.
 - npm is pinned to 12.2.2.
 - Direct dependencies are exact-version pinned in workspace manifests.
-- The CI workflow generates a lockfile from those exact pins, publishes a short-lived backup artifact, installs from that lockfile, and commits it to the security branch only after typecheck, tests and build succeed.
+- The exact `package-lock.json` is committed. CI installs with `npm ci` against the committed lockfile.
 - No paid services, hosted build products or paid dependencies are introduced.
 
 ## Database security sequence
@@ -35,7 +35,8 @@ The existing `frontend/` and `backend/` trees are intentionally retained. No exi
 1. `20261117194130_security_baseline_lockdown.sql` removes excess public grants, tightens default privileges and relocates the RLS event-trigger function.
 2. `20261117194151_public_franchise_profiles_projection.sql` replaces the writable view with an RLS-protected, read-only public branding projection and a private synchronisation trigger.
 3. Run `supabase/tests/database/security_baseline.sql` after migration changes.
-4. Run Supabase security advisors after every database security change.
+4. Run `supabase/tests/database/franchise_projection_trigger.sql` to verify projection insert/update synchronisation and cascade deletion. This script rolls back its synthetic test records.
+5. Run Supabase security advisors after every database security change.
 
 The private `dfm_private` schema is deliberately excluded from the Data API schemas in `supabase/config.toml`.
 
