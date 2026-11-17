@@ -1,0 +1,29 @@
+{
+  "files": [],
+  "references": [
+    {
+      "path": "./apps/api"
+    },
+    {
+      "path": "./apps/web"
+    },
+    {
+      "path": "./packages/contracts"
+    },
+    {
+      "path": "./packages/platform-core"
+    },
+    {
+      "path": "./packages/fantasy-engine"
+    },
+    {
+      "path": "./packages/game-classic"
+    },
+    {
+      "path": "./packages/game-draft"
+    },
+    {
+      "path": "./packages/sport-drl"
+    }
+  ]
+}

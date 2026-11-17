@@ -1,0 +1,14 @@
+{
+  "name": "@dfm/platform-core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared platform identity, franchise and league boundaries.",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./src/index.ts"
+    }
+  }
+}

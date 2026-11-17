@@ -1,0 +1,14 @@
+{
+  "name": "@dfm/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared domain contracts and API-safe DTO types.",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./src/index.ts"
+    }
+  }
+}

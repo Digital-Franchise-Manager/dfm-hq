@@ -1,0 +1,14 @@
+{
+  "name": "@dfm/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Authenticated backend request-handler foundation for DFM.",
+  "scripts": {
+    "typecheck": "tsc -b --pretty false"
+  },
+  "dependencies": {
+    "@dfm/contracts": "*",
+    "@dfm/platform-core": "*"
+  }
+}

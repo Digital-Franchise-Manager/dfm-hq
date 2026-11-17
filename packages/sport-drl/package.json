@@ -1,0 +1,14 @@
+{
+  "name": "@dfm/sport-drl",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Digital Rugby League domain contracts and adapters.",
+  "types": "./dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./src/index.ts"
+    }
+  }
+}
