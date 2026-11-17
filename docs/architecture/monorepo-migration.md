@@ -20,6 +20,8 @@ Establish a shared TypeScript workspace for the Digital Franchise Manager platfo
 - `backend/dfm/drl/core`: shared DRL backend functionality.
 - `backend/dfm/drl/packages`: shared DRL-specific packages, including `@dfm/sport-drl`.
 - `backend/dfm/assets/drl`: DRL identity and sport assets.
+
+The DRL-specific npm workspaces are discovered from the `packages/` directories inside Classic, Draft and the shared DRL domain. The root `packages/fantasy-engine` remains sport-neutral and is intentionally shared across sports.
 - `supabase/migrations`: versioned database schema and security changes.
 - `supabase/tests/database`: database security regression checks.
 
