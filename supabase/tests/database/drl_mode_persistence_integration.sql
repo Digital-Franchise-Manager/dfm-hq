@@ -191,6 +191,21 @@ BEGIN
   EXCEPTION WHEN SQLSTATE '55000' THEN NULL;
   END;
   BEGIN
+    UPDATE dfm_private.drl_classic_odds_market_snapshots
+      SET source_summary='Tampered'
+      WHERE league_id='test-classic-league' AND market_id='test-classic-market'
+        AND revision=1;
+    RAISE EXCEPTION 'Expected odds snapshot history mutation to fail';
+  EXCEPTION WHEN SQLSTATE '55000' THEN NULL;
+  END;
+  BEGIN
+    UPDATE dfm_private.drl_classic_coach_award_credits
+      SET points=99
+      WHERE league_id='test-classic-league' AND coach_id='coach-at-award-time';
+    RAISE EXCEPTION 'Expected coach credit history mutation to fail';
+  EXCEPTION WHEN SQLSTATE '55000' THEN NULL;
+  END;
+  BEGIN
     UPDATE dfm_private.drl_classic_news_articles
       SET title='Tampered'
       WHERE article_id='shared-test-article-id';
