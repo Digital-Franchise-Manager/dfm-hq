@@ -105,6 +105,74 @@ describe("mode-isolated DRL persistence adapters", () => {
     expect(rpc).not.toHaveBeenCalled();
   });
 
+
+  it("routes append-only market history to the mode-specific RPC", async () => {
+    const rpc = createRpc(true);
+    const adapter = new DraftDrlPersistenceAdapter(rpc);
+    await adapter.appendPriceMovement("league-1", {
+      marketId: "market-1",
+      selectionId: "home",
+      revision: 2,
+      previousProbability: 0.55,
+      revisedProbability: 0.60,
+      previousPrice: 1.8182,
+      revisedPrice: 1.6667,
+      sourceId: "source-2",
+      modelVersion: "0.2.0",
+      idempotencyKey: "movement-2"
+    });
+    expect(rpc).toHaveBeenCalledWith(
+      "dfm_draft_append_price_movement",
+      expect.objectContaining({ p_market_id: "market-1", p_revision: 2 })
+    );
+  });
+
+  it("maps persisted newsroom rows into engine article records", async () => {
+    const rpc = createRpc([{
+      article_id: "article-1",
+      league_id: "league-1",
+      round_number: 2,
+      category: "match_report",
+      title: "Round report",
+      summary: "Summary",
+      content: "Body",
+      published: true
+    }]);
+    const adapter = new ClassicDrlPersistenceAdapter(rpc);
+    const articles = await adapter.listNewsArticles("league-1", 10);
+    expect(articles).toHaveLength(1);
+    expect(articles[0]).toMatchObject({
+      articleId: "article-1",
+      leagueId: "league-1",
+      category: "match_report"
+    });
+    expect(rpc).toHaveBeenCalledWith(
+      "dfm_classic_list_news_articles",
+      { p_league_id: "league-1", p_limit: 10 }
+    );
+  });
+
+  it("maps persisted ladder results without recalculating engine points", async () => {
+    const rpc = createRpc([{
+      fixture_id: "fixture-1",
+      home_franchise_id: "home-franchise",
+      away_franchise_id: "away-franchise",
+      home_score: 44.5,
+      away_score: 39,
+      home_competition_points: 2,
+      away_competition_points: 0,
+      finalised: true
+    }]);
+    const adapter = new DraftDrlPersistenceAdapter(rpc);
+    const results = await adapter.listFinalisedMatches("league-1");
+    expect(results[0]).toMatchObject({
+      fixtureId: "fixture-1",
+      homeCompetitionPoints: 2,
+      awayCompetitionPoints: 0,
+      finalised: true
+    });
+  });
+
   it("propagates server-side RPC errors without swallowing them", async () => {
     const rpc = vi.fn<DfmRpcExecutor>().mockResolvedValue({
       data: null,
