@@ -41,6 +41,20 @@ SELECT public.dfm_draft_persist_market_snapshot(
   '[]'::jsonb
 );
 
+-- Replaying the same award/credit bundle is idempotent.
+SELECT public.dfm_classic_persist_award_bundle(
+  'test-classic-league',
+  '[{"award_id":"classic-award-1","category":"man_of_the_match","round_number":1,
+     "player_id":"player-1","player_name":"Test Player",
+     "franchise_id":"00000000-0000-0000-0000-000000000011",
+     "coach_id":"coach-at-award-time","base_score":88,"points":2,
+     "position":"HLF","achievement_only":false}]'::jsonb,
+  '[{"coach_id":"coach-at-award-time",
+     "franchise_id":"00000000-0000-0000-0000-000000000011",
+     "player_id":"player-1","category":"man_of_the_match",
+     "round_number":1,"points":2}]'::jsonb
+);
+
 SELECT public.dfm_classic_persist_award_bundle(
   'test-classic-league',
   '[{"award_id":"classic-award-1","category":"man_of_the_match","round_number":1,
@@ -71,11 +85,21 @@ SELECT public.dfm_classic_persist_news_article(
   'test-classic-league','shared-test-article-id',1,'preview',
   'Classic preview','Classic summary','Classic body',true
 );
+SELECT public.dfm_classic_persist_news_article(
+  'test-classic-league','shared-test-article-id',1,'preview',
+  'Classic preview','Classic summary','Classic body',true
+);
 SELECT public.dfm_draft_persist_news_article(
   'test-draft-league','shared-test-article-id',1,'preview',
   'Draft preview','Draft summary','Draft body',true
 );
 
+SELECT public.dfm_classic_persist_ladder_result(
+  'test-classic-league','test-fixture-1',
+  '00000000-0000-0000-0000-000000000011',
+  '00000000-0000-0000-0000-000000000012',
+  44.5,39.0,2,0
+);
 SELECT public.dfm_classic_persist_ladder_result(
   'test-classic-league','test-fixture-1',
   '00000000-0000-0000-0000-000000000011',
@@ -196,6 +220,14 @@ BEGIN
       WHERE league_id='test-classic-league' AND market_id='test-classic-market'
         AND revision=1;
     RAISE EXCEPTION 'Expected odds snapshot history mutation to fail';
+  EXCEPTION WHEN SQLSTATE '55000' THEN NULL;
+  END;
+  BEGIN
+    UPDATE dfm_private.drl_classic_odds_price_movements
+      SET revised_price=1.25
+      WHERE league_id='test-classic-league'
+        AND idempotency_key='classic-home-revision-2';
+    RAISE EXCEPTION 'Expected price movement history mutation to fail';
   EXCEPTION WHEN SQLSTATE '55000' THEN NULL;
   END;
   BEGIN
