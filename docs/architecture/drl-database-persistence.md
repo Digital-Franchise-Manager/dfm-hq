@@ -37,7 +37,7 @@ No API role receives direct schema USAGE or table privileges. RLS remains
 enabled as defence in depth.
 
 PostgREST cannot call functions in a schema that is not exposed. The server
-adapter therefore calls eight narrowly scoped \`public.dfm_*_persist_*\` RPC
+adapter therefore calls twenty narrowly scoped \`public.dfm_*_persist_*\` RPC
 wrappers. Each wrapper:
 - Is SECURITY DEFINER with an empty search_path and fully qualified private call.
 - Has EXECUTE revoked from PUBLIC, anon and authenticated.
