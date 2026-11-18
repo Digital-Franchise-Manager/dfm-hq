@@ -1,0 +1,6 @@
+"""Mode-scoped newsroom persistence port."""
+from typing import Protocol
+from .models import NewsArticle
+class NewsroomRepository(Protocol):
+    def append_once(self,article:NewsArticle)->bool: ...
+    def list_articles(self,league_id:str,limit:int=25)->tuple[NewsArticle,...]: ...

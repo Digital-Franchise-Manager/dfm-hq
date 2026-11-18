@@ -1,46 +1,27 @@
+"""Translate verified NRL injury facts into Draft league context.
+
+This adapter is deliberately pure: it does not query guessed Supabase tables.
+The caller must supply roster ownership resolved by an authorised Draft service.
+"""
+from collections.abc import Mapping
 class DraftNewsTranslator:
     @staticmethod
-    async def translate_real_world_injury_to_draft(
-        supabase_client, 
-        league_id: str, 
-        player_name: str, 
-        player_id: str, 
-        injury_details: str, 
-        real_world_team: str
-    ) -> dict:
-        """
-        Translates a real-world injury update into draft-league context,
-        naming the rostered franchise or flagging them as a Free Agent.
-        """
-        roster_query = supabase_client.table("league_rosters") \
-            .select("franchises(primary_name, secondary_name, abbreviated_name)") \
-            .eq("league_id", league_id) \
-            .eq("player_id", player_id) \
-            .execute()
-        
-        if roster_query.data and len(roster_query.data) > 0:
-            franchise = roster_query.data[0].get("franchises", {})
-            p_name = franchise.get("primary_name", "")
-            s_name = franchise.get("secondary_name", "")
-            abbrev = franchise.get("abbreviated_name", "")
-            
-            owner_text = f"The {p_name} {s_name} ({abbrev})"
-            headline_prefix = f"⚠️ SQUAD BLOW FOR {abbrev}:"
+    async def translate_real_world_injury_to_draft(*,league_id:str,player_name:str,player_id:str,injury_details:str,real_world_team:str,franchise:Mapping[str,str]|None=None)->dict[str,str]:
+        if not all(v.strip() for v in (league_id,player_name,player_id,injury_details,real_world_team)):
+            raise ValueError("league, player, injury and real-world team details are required")
+        if franchise:
+            abbrev=franchise.get("abbreviated_name","").strip()
+            primary=franchise.get("primary_name","").strip()
+            secondary=franchise.get("secondary_name","").strip()
+            owner_text=f"The {primary} {secondary} ({abbrev})".strip()
+            headline=f"SQUAD BLOW FOR {abbrev}:"
+            ownership_status="rostered"
         else:
-            owner_text = "Unrestricted Free Agent market"
-            headline_prefix = "🔎 WAIVER WIRE ALERT:"
-
-        title = f"{headline_prefix} {player_name} ({injury_details})"
-        summary = f"{owner_text} are hit with a major setback as {player_name} (formerly {real_world_team}) faces time on the sidelines."
-        content = (
-            f"In a major development for your head-to-head league, medical staff have confirmed "
-            f"that {player_name} has suffered an injury: {injury_details}. "
-            f"This development directly impacts {owner_text}. Managers should review their bench cover immediately."
-        )
-
-        return {
-            "title": title,
-            "summary": summary,
-            "content": content,
-            "ownership_status": "rostered" if "squad blow" in headline_prefix.lower() else "free_agent"
-        }
+            owner_text="Unrestricted Free Agent market"
+            headline="WAIVER WIRE ALERT:"
+            ownership_status="free_agent"
+        title=f"{headline} {player_name} ({injury_details})"
+        summary=f"{owner_text} face a setback as {player_name} of {real_world_team} is sidelined."
+        content=(f"Verified injury information confirms that {player_name} ({real_world_team}) has suffered {injury_details}. "
+                 f"This affects the {league_id} Draft competition and {owner_text}.")
+        return {"title":title,"summary":summary,"content":content,"ownership_status":ownership_status}

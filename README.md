@@ -8,34 +8,22 @@ Digital Franchise Manager (DFM) is a multi-sport fantasy platform. Digital Rugby
 - `apps/api/` — authenticated TypeScript request-handler foundation; no application routes are enabled or deployed.
 - `packages/contracts/` — shared domain contracts and DTO types.
 - `packages/platform-core/` — shared identity, franchise and league boundaries.
-- `backend/dfm/drl/classic/core/` — Classic-specific backend logic.
-- `backend/dfm/drl/classic/packages/` — Classic TypeScript package boundary.
-- `backend/dfm/drl/classic/manifest.json` — Classic module manifest.
-- `backend/dfm/drl/draft/core/` — Draft-specific backend logic and integrations.
-- `backend/dfm/drl/draft/packages/` — Draft TypeScript package boundary.
-- `backend/dfm/drl/draft/manifest.json` — Draft module manifest.
-- `backend/dfm/drl/core/` — shared DRL backend functionality.
-- `backend/dfm/drl/packages/` — shared DRL-specific packages, including the Rugby League fantasy engine.
-- `backend/dfm/drl/packages/fantasy-engine/` — Rugby League scoring, ranking and competition engine.
-- `backend/dfm/assets/drl/` — DRL identity and sport assets.
+- `backend/dfm/drl/classic/core/` — independent Classic Odds, Awards, Newsroom and Ladder engines.
+- `backend/dfm/drl/draft/core/` — independent Draft Odds, Awards, Newsroom and Ladder engines.
+- `backend/dfm/drl/classic/packages/` and `backend/dfm/drl/draft/packages/` — mode-specific TypeScript package boundaries.
+- `backend/dfm/drl/core/` — shared DRL foundations only; no Classic or Draft competition engines.
+- `backend/dfm/drl/packages/` — DRL sport-specific packages, including the Rugby League fantasy engine.
 - `supabase/migrations/` — versioned JARVIS database migrations.
-- `supabase/tests/database/` — database security regression checks.
 
-The existing `frontend/` and `backend/` directories are preserved during the transition. They are not removed or silently redirected by this foundation. Migration into the TypeScript workspace is incremental and requires regression checks before any cutover.
+Classic and Draft engine implementations, calculations, histories, publication feeds and standings are deliberately isolated. Neither mode imports or reads the other's engine package.
 
-## Database security baseline
+## Database security
 
-The P0 and P1 migrations lock down franchise privileges, move privileged database functions into a non-exposed schema, and expose franchise branding through a read-only projection. The exact SQL is stored under `supabase/migrations/`.
-
-Run the database checks as the database owner in the Supabase SQL Editor after migration changes:
-
-- `supabase/tests/database/security_baseline.sql` — privilege, RLS and private-schema assertions.
-- `supabase/tests/database/rls_auto_enable.sql` — verifies automatic RLS enforcement and default grants for newly created public tables.
-- `supabase/tests/database/franchise_projection_trigger.sql` — rollback-safe insert, update and cascade-delete test for the branding projection.
+Any future engine persistence adapter must use verified live schema, least-privilege grants and Row Level Security. This engine foundation does not invent database tables or apply migrations. Never commit credentials, service-role keys, tokens or private user data. Browser code may use only publishable keys; privileged operations belong server-side. Maintain the $0 AUD operating constraint.
 
 ## Development
 
-Requirements: Node.js 24 LTS (Node.js 22.17 or newer is accepted by the package engine) and npm 12.2.2.
+Requirements: Node.js 24 LTS (Node.js 22.17 or newer is accepted by the package engine), npm 12.2.2 and Python 3.12 for DRL tests.
 
 ```sh
 npm install
@@ -44,15 +32,5 @@ npm run typecheck
 npm test
 npm run build
 npm run check
+python -m unittest discover -s backend/dfm/drl/tests -t . -p "test_*.py"
 ```
-
-The exact `package-lock.json` is committed. CI uses `npm ci` against that lockfile and runs typecheck, unit tests and the production build.
-
-## Security rules
-
-- Never commit database passwords, service-role keys, secret API keys or access tokens.
-- Browser code may use only a publishable key; privileged operations belong on trusted server-side code.
-- Keep private database schemas outside the exposed Data API schemas.
-- Enforce ownership and authorization in PostgreSQL RLS, not in client-supplied identifiers.
-- Do not assume API URLs can be hidden from browser users; secure every operation through authentication, authorization and least-privilege grants.
-- Maintain the project's $0 AUD operating constraint.
