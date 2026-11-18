@@ -6,9 +6,11 @@ This document defines the database shape corresponding to the independent DRL
 Classic and Draft engine models. It is a persistence-schema preparation stage,
 not a claim that the engines are already connected to JARVIS.
 
-The SQL design is held in `supabase/drafts/drl_mode_persistence.sql`. It is not
-registered as a Supabase migration because the repository's migration history
-does not currently reconcile with the live project's applied migration list.
+The SQL design is held in `supabase/drafts/drl_mode_persistence.sql`. The
+previously missing initial franchise migration has been recovered from the live
+`supabase_migrations.schema_migrations` statements and restored in this branch.
+The DRL schema remains a draft until an official migration is generated and
+validated.
 
 ## Mode-specific persistence map
 
@@ -77,11 +79,11 @@ Accordingly:
 
 ## Outstanding integration work
 
-1. Reconcile the missing repository copy of live migration
-   `20261117024400_create_franchises_and_public_profiles`.
-2. Generate the official migration filename using the installed Supabase CLI.
+1. Review the restored historical migration file against the live migration
+   metadata before merging this branch.
+2. Generate the official DRL migration filename using the installed Supabase CLI.
 3. Validate the draft against a local Postgres/Supabase stack.
 4. Review constraints and security tests.
-5. Obtain separate approval before applying any migration to the hosted project.
+5. Obtain separate approval before applying any new migration to the hosted project.
 6. Implement server-side repositories and authenticated API routes after the
    persistence schema is approved.
