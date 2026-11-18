@@ -37,12 +37,14 @@ Classic table.
   franchise, coach-at-award-time, base score, points, position and
   achievement-only status.
 - Coach credits preserve the coach and franchise that held the player when the
-  award was earned. Transfers do not rewrite prior credits.
+  award was earned. Transfers do not rewrite prior credits. Database triggers
+  reject updates/deletes to award and coach-credit history.
 - Newsroom records preserve the engine's article ID, league, round, category,
   title, summary, content and publication state.
 - Ladder source records preserve finalised fixture scores and the competition
   points already supplied to the Ladder Engine. W/L/D, PF, PA and PD remain
-  derived values, not separately mutable facts.
+  derived values, not separately mutable facts. A trigger prevents changes to
+  a result after it has been finalised.
 
 ## Verified live-schema boundaries
 
