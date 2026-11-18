@@ -207,15 +207,15 @@ BEGIN
       v_movements_table
     ) INTO v_bad USING p_movements,p_league_id,p_revision,p_market_id;
     IF v_bad THEN RAISE EXCEPTION 'Market movement revision or idempotency conflict' USING ERRCODE = '23505'; END IF;
+  END IF;
 
-    EXECUTE format(
-      'SELECT count(*) FROM dfm_private.%I WHERE league_id=$1 AND market_id=$2 AND revision=$3',
-      v_movements_table
-    ) INTO v_count USING p_league_id,p_market_id,p_revision;
-    IF v_count <> jsonb_array_length(p_movements) THEN
-      RAISE EXCEPTION 'Price movement replay does not match the stored revision'
-        USING ERRCODE = '23505';
-    END IF;
+  EXECUTE format(
+    'SELECT count(*) FROM dfm_private.%I WHERE league_id=$1 AND market_id=$2 AND revision=$3',
+    v_movements_table
+  ) INTO v_count USING p_league_id,p_market_id,p_revision;
+  IF v_count <> jsonb_array_length(p_movements) THEN
+    RAISE EXCEPTION 'Price movement replay does not match the stored revision'
+      USING ERRCODE = '23505';
   END IF;
 
   RETURN v_snapshot_id;
@@ -281,7 +281,7 @@ BEGIN
     )
       ON a.coach_id=c.coach_id AND a.franchise_id=c.franchise_id
      AND a.player_id=c.player_id AND a.category=c.category
-     AND a.round_number=c.round_number AND a.points=c.points
+     AND a.round_number=c.round_number
     WHERE a.award_id IS NULL
   ) THEN
     RAISE EXCEPTION 'Coach credits must match an award in the same atomic batch'
