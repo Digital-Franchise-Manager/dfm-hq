@@ -154,7 +154,21 @@ BEGIN
   ) INTO v_bad USING p_outcomes,v_snapshot_id;
   IF v_bad THEN RAISE EXCEPTION 'Market outcome idempotency conflict' USING ERRCODE = '23505'; END IF;
 
+  EXECUTE format('SELECT count(*) FROM dfm_private.%I WHERE market_snapshot_id=$1',v_outcomes_table)
+    INTO v_count USING v_snapshot_id;
+  IF v_count <> jsonb_array_length(p_outcomes) THEN
+    RAISE EXCEPTION 'Market outcome replay does not match the stored snapshot'
+      USING ERRCODE = '23505';
+  END IF;
+
   IF jsonb_array_length(p_movements) > 0 THEN
+    IF jsonb_array_length(p_movements) <> (
+      SELECT count(DISTINCT item->>'idempotency_key')
+      FROM jsonb_array_elements(p_movements) AS movements(item)
+    ) THEN
+      RAISE EXCEPTION 'Price movement idempotency keys must be unique in a batch'
+        USING ERRCODE = '22023';
+    END IF;
     EXECUTE format(
       'INSERT INTO dfm_private.%I
         (league_id,market_id,selection_id,revision,previous_probability,
@@ -193,6 +207,15 @@ BEGIN
       v_movements_table
     ) INTO v_bad USING p_movements,p_league_id,p_revision,p_market_id;
     IF v_bad THEN RAISE EXCEPTION 'Market movement revision or idempotency conflict' USING ERRCODE = '23505'; END IF;
+
+    EXECUTE format(
+      'SELECT count(*) FROM dfm_private.%I WHERE league_id=$1 AND market_id=$2 AND revision=$3',
+      v_movements_table
+    ) INTO v_count USING p_league_id,p_market_id,p_revision;
+    IF v_count <> jsonb_array_length(p_movements) THEN
+      RAISE EXCEPTION 'Price movement replay does not match the stored revision'
+        USING ERRCODE = '23505';
+    END IF;
   END IF;
 
   RETURN v_snapshot_id;
@@ -221,6 +244,48 @@ BEGIN
      OR jsonb_typeof(p_awards) IS DISTINCT FROM 'array'
      OR jsonb_typeof(p_credits) IS DISTINCT FROM 'array' THEN
     RAISE EXCEPTION 'Invalid award bundle payload' USING ERRCODE = '22023';
+  END IF;
+
+  IF jsonb_array_length(p_awards) = 0 THEN
+    RAISE EXCEPTION 'Award bundle must contain at least one award'
+      USING ERRCODE = '22023';
+  END IF;
+  IF jsonb_array_length(p_awards) <> (
+    SELECT count(DISTINCT item->>'award_id')
+    FROM jsonb_array_elements(p_awards) AS awards(item)
+  ) THEN
+    RAISE EXCEPTION 'Award IDs must be unique within a batch'
+      USING ERRCODE = '22023';
+  END IF;
+  IF jsonb_array_length(p_credits) <> (
+    SELECT count(DISTINCT ROW(
+      item->>'coach_id',item->>'franchise_id',item->>'player_id',
+      item->>'category',item->>'round_number'
+    ))
+    FROM jsonb_array_elements(p_credits) AS credits(item)
+  ) THEN
+    RAISE EXCEPTION 'Coach credit events must be unique within a batch'
+      USING ERRCODE = '22023';
+  END IF;
+
+  IF EXISTS (
+    SELECT 1
+    FROM jsonb_to_recordset(p_credits) AS c(
+      coach_id text,franchise_id uuid,player_id text,category text,
+      round_number integer,points integer
+    )
+    LEFT JOIN jsonb_to_recordset(p_awards) AS a(
+      award_id text,category text,round_number integer,player_id text,
+      player_name text,franchise_id uuid,coach_id text,base_score numeric,
+      points integer,position text,achievement_only boolean
+    )
+      ON a.coach_id=c.coach_id AND a.franchise_id=c.franchise_id
+     AND a.player_id=c.player_id AND a.category=c.category
+     AND a.round_number=c.round_number AND a.points=c.points
+    WHERE a.award_id IS NULL
+  ) THEN
+    RAISE EXCEPTION 'Coach credits must match an award in the same atomic batch'
+      USING ERRCODE = '22023';
   END IF;
 
   v_awards_table := v_prefix || '_award_records';
