@@ -71,7 +71,7 @@ CREATE TABLE dfm_private.drl_classic_odds_market_outcomes (
   probability numeric(16,12) NOT NULL
     CHECK (probability > 0 AND probability < 1),
   decimal_price numeric(18,4) NOT NULL
-    CHECK (decimal_price >= 1),
+    CHECK (decimal_price >= 1 AND decimal_price < 'Infinity'::numeric),
   PRIMARY KEY (market_snapshot_id, selection_id)
 );
 
@@ -85,8 +85,8 @@ CREATE TABLE dfm_private.drl_classic_odds_price_movements (
     CHECK (previous_probability > 0 AND previous_probability < 1),
   revised_probability numeric(16,12) NOT NULL
     CHECK (revised_probability > 0 AND revised_probability < 1),
-  previous_price numeric(18,4) NOT NULL CHECK (previous_price >= 1),
-  revised_price numeric(18,4) NOT NULL CHECK (revised_price >= 1),
+  previous_price numeric(18,4) NOT NULL CHECK (previous_price >= 1 AND previous_price < 'Infinity'::numeric),
+  revised_price numeric(18,4) NOT NULL CHECK (revised_price >= 1 AND revised_price < 'Infinity'::numeric),
   source_id text NOT NULL,
   model_version text NOT NULL,
   idempotency_key text NOT NULL,
@@ -124,7 +124,7 @@ CREATE TABLE dfm_private.drl_classic_award_records (
   player_name text NOT NULL,
   franchise_id uuid NOT NULL,
   coach_id text NOT NULL,
-  base_score numeric(18,6) NOT NULL CHECK (base_score >= 0),
+  base_score numeric(18,6) NOT NULL CHECK (base_score >= 0 AND base_score < 'Infinity'::numeric),
   points integer NOT NULL CHECK (points >= 0),
   position text CHECK (position IS NULL OR position IN (
     'WFB', 'CTR', 'HLF', 'EDG', 'MID', 'HOK'
@@ -263,7 +263,7 @@ CREATE TABLE dfm_private.drl_draft_odds_market_outcomes (
   probability numeric(16,12) NOT NULL
     CHECK (probability > 0 AND probability < 1),
   decimal_price numeric(18,4) NOT NULL
-    CHECK (decimal_price >= 1),
+    CHECK (decimal_price >= 1 AND decimal_price < 'Infinity'::numeric),
   PRIMARY KEY (market_snapshot_id, selection_id)
 );
 
@@ -277,8 +277,8 @@ CREATE TABLE dfm_private.drl_draft_odds_price_movements (
     CHECK (previous_probability > 0 AND previous_probability < 1),
   revised_probability numeric(16,12) NOT NULL
     CHECK (revised_probability > 0 AND revised_probability < 1),
-  previous_price numeric(18,4) NOT NULL CHECK (previous_price >= 1),
-  revised_price numeric(18,4) NOT NULL CHECK (revised_price >= 1),
+  previous_price numeric(18,4) NOT NULL CHECK (previous_price >= 1 AND previous_price < 'Infinity'::numeric),
+  revised_price numeric(18,4) NOT NULL CHECK (revised_price >= 1 AND revised_price < 'Infinity'::numeric),
   source_id text NOT NULL,
   model_version text NOT NULL,
   idempotency_key text NOT NULL,
@@ -318,7 +318,7 @@ CREATE TABLE dfm_private.drl_draft_award_records (
   player_name text NOT NULL,
   franchise_id uuid NOT NULL,
   coach_id text NOT NULL,
-  base_score numeric(18,6) NOT NULL CHECK (base_score >= 0),
+  base_score numeric(18,6) NOT NULL CHECK (base_score >= 0 AND base_score < 'Infinity'::numeric),
   points integer NOT NULL CHECK (points >= 0),
   position text CHECK (position IS NULL OR position IN (
     'WFB', 'CTR', 'HLF', 'EDG', 'MID', 'HOK'
