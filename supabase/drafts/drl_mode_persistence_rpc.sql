@@ -71,6 +71,10 @@ BEGIN
   IF v_prefix IS NULL THEN RAISE EXCEPTION 'Unsupported DRL mode'; END IF;
   IF p_league_id IS NULL OR btrim(p_league_id) = ''
      OR p_market_id IS NULL OR btrim(p_market_id) = ''
+     OR p_source_id IS NULL OR btrim(p_source_id) = ''
+     OR p_source_category IS NULL OR btrim(p_source_category) = ''
+     OR p_source_summary IS NULL OR btrim(p_source_summary) = ''
+     OR p_model_version IS NULL OR btrim(p_model_version) = ''
      OR p_revision < 1
      OR p_official IS DISTINCT FROM p_source_verified THEN
     RAISE EXCEPTION 'Invalid market snapshot payload' USING ERRCODE = '22023';
@@ -82,6 +86,18 @@ BEGIN
   END IF;
   IF jsonb_array_length(p_outcomes) < 2 THEN
     RAISE EXCEPTION 'At least two market outcomes are required'
+      USING ERRCODE = '22023';
+  END IF;
+
+  IF EXISTS (
+    SELECT 1
+    FROM jsonb_to_recordset(p_outcomes) AS x(
+      selection_id text,label text,probability numeric,decimal_price numeric
+    )
+    WHERE x.selection_id IS NULL OR btrim(x.selection_id)=''
+       OR x.label IS NULL OR btrim(x.label)=''
+  ) THEN
+    RAISE EXCEPTION 'Market outcome identifiers and labels must not be blank'
       USING ERRCODE = '22023';
   END IF;
 
@@ -162,6 +178,22 @@ BEGIN
   END IF;
 
   IF jsonb_array_length(p_movements) > 0 THEN
+    IF EXISTS (
+      SELECT 1
+      FROM jsonb_to_recordset(p_movements) AS x(
+        selection_id text,revision integer,previous_probability numeric,
+        revised_probability numeric,previous_price numeric,revised_price numeric,
+        source_id text,model_version text,idempotency_key text
+      )
+      WHERE x.selection_id IS NULL OR btrim(x.selection_id)=''
+         OR x.source_id IS NULL OR btrim(x.source_id)=''
+         OR x.model_version IS NULL OR btrim(x.model_version)=''
+         OR x.idempotency_key IS NULL OR btrim(x.idempotency_key)=''
+         OR x.revision <> p_revision
+    ) THEN
+      RAISE EXCEPTION 'Price movement identity and revision must match the market snapshot'
+        USING ERRCODE = '22023';
+    END IF;
     IF jsonb_array_length(p_movements) <> (
       SELECT count(DISTINCT item->>'idempotency_key')
       FROM jsonb_array_elements(p_movements) AS movements(item)
@@ -248,6 +280,33 @@ BEGIN
 
   IF jsonb_array_length(p_awards) = 0 THEN
     RAISE EXCEPTION 'Award bundle must contain at least one award'
+      USING ERRCODE = '22023';
+  END IF;
+  IF EXISTS (
+    SELECT 1
+    FROM jsonb_to_recordset(p_awards) AS x(
+      award_id text,category text,round_number integer,player_id text,
+      player_name text,franchise_id uuid,coach_id text,base_score numeric,
+      points integer,position text,achievement_only boolean
+    )
+    WHERE x.award_id IS NULL OR btrim(x.award_id)=''
+       OR x.player_id IS NULL OR btrim(x.player_id)=''
+       OR x.player_name IS NULL OR btrim(x.player_name)=''
+       OR x.coach_id IS NULL OR btrim(x.coach_id)=''
+  ) THEN
+    RAISE EXCEPTION 'Award identity fields must not be blank'
+      USING ERRCODE = '22023';
+  END IF;
+  IF EXISTS (
+    SELECT 1
+    FROM jsonb_to_recordset(p_credits) AS x(
+      coach_id text,franchise_id uuid,player_id text,category text,
+      round_number integer,points integer
+    )
+    WHERE x.coach_id IS NULL OR btrim(x.coach_id)=''
+       OR x.player_id IS NULL OR btrim(x.player_id)=''
+  ) THEN
+    RAISE EXCEPTION 'Coach credit identity fields must not be blank'
       USING ERRCODE = '22023';
   END IF;
   IF jsonb_array_length(p_awards) <> (
