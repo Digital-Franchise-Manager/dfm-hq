@@ -41,39 +41,7 @@ SELECT public.dfm_draft_persist_market_snapshot(
   '[]'::jsonb
 );
 
--- Replaying the same award/credit bundle is idempotent.
-DO $append_once_assertions$
-DECLARE inserted_count integer; inserted boolean;
-BEGIN
-  inserted_count := public.dfm_classic_persist_award_bundle(
-    'test-classic-league',
-    '[{"award_id":"classic-award-1","category":"man_of_the_match","round_number":1,
-       "player_id":"player-1","player_name":"Test Player",
-       "franchise_id":"00000000-0000-0000-0000-000000000011",
-       "coach_id":"coach-at-award-time","base_score":88,"points":2,
-       "position":"HLF","achievement_only":false}]'::jsonb,
-    '[{"coach_id":"coach-at-award-time",
-       "franchise_id":"00000000-0000-0000-0000-000000000011",
-       "player_id":"player-1","category":"man_of_the_match",
-       "round_number":1,"points":2}]'::jsonb
-  );
-  IF inserted_count <> 0 THEN RAISE EXCEPTION 'Award replay must insert zero new awards'; END IF;
 
-  inserted := public.dfm_classic_persist_news_article(
-    'test-classic-league','shared-test-article-id',1,'preview',
-    'Classic preview','Classic summary','Classic body',true
-  );
-  IF inserted THEN RAISE EXCEPTION 'Newsroom replay must return false'; END IF;
-
-  inserted := public.dfm_classic_persist_ladder_result(
-    'test-classic-league','test-fixture-1',
-    '00000000-0000-0000-0000-000000000011',
-    '00000000-0000-0000-0000-000000000012',
-    44.5,39.0,2,0
-  );
-  IF inserted THEN RAISE EXCEPTION 'Ladder replay must return false'; END IF;
-END;
-$append_once_assertions$;
 
 SELECT public.dfm_classic_persist_award_bundle(
   'test-classic-league',
@@ -122,6 +90,40 @@ SELECT public.dfm_draft_persist_ladder_result(
   '00000000-0000-0000-0000-000000000022',
   61.0,61.0,1,1
 );
+
+-- Replaying the same award/credit bundle is idempotent.
+DO $append_once_assertions$
+DECLARE inserted_count integer; inserted boolean;
+BEGIN
+  inserted_count := public.dfm_classic_persist_award_bundle(
+    'test-classic-league',
+    '[{"award_id":"classic-award-1","category":"man_of_the_match","round_number":1,
+       "player_id":"player-1","player_name":"Test Player",
+       "franchise_id":"00000000-0000-0000-0000-000000000011",
+       "coach_id":"coach-at-award-time","base_score":88,"points":2,
+       "position":"HLF","achievement_only":false}]'::jsonb,
+    '[{"coach_id":"coach-at-award-time",
+       "franchise_id":"00000000-0000-0000-0000-000000000011",
+       "player_id":"player-1","category":"man_of_the_match",
+       "round_number":1,"points":2}]'::jsonb
+  );
+  IF inserted_count <> 0 THEN RAISE EXCEPTION 'Award replay must insert zero new awards'; END IF;
+
+  inserted := public.dfm_classic_persist_news_article(
+    'test-classic-league','shared-test-article-id',1,'preview',
+    'Classic preview','Classic summary','Classic body',true
+  );
+  IF inserted THEN RAISE EXCEPTION 'Newsroom replay must return false'; END IF;
+
+  inserted := public.dfm_classic_persist_ladder_result(
+    'test-classic-league','test-fixture-1',
+    '00000000-0000-0000-0000-000000000011',
+    '00000000-0000-0000-0000-000000000012',
+    44.5,39.0,2,0
+  );
+  IF inserted THEN RAISE EXCEPTION 'Ladder replay must return false'; END IF;
+END;
+$append_once_assertions$;
 
 -- Append a standalone movement once; an exact replay returns false.
 SELECT public.dfm_classic_append_price_movement(
