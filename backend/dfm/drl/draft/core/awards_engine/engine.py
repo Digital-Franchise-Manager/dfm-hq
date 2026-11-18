@@ -51,8 +51,14 @@ class AwardsEngine:
     def coach_credits(self,awards:Iterable[AwardRecord])->tuple[CoachCredit,...]:
         return tuple(CoachCredit(a.coach_id,a.franchise_id,a.player_id,a.category,a.round_number,a.points) for a in awards if a.points>0)
     def player_points(self,awards:Iterable[AwardRecord])->dict[str,int]:
+        # A Classic shared-owner tie creates multiple coach records but only one
+        # individual player award event. Deduplicate that event before summing.
+        events={}
+        for a in awards:
+            key=(a.round_number,a.category,a.player_id)
+            events[key]=max(events.get(key,0),a.points)
         totals=defaultdict(int)
-        for a in awards:totals[a.player_id]+=a.points
+        for (_,_,pid),points in events.items():totals[pid]+=points
         return dict(totals)
     def coach_points(self,credits:Iterable[CoachCredit])->dict[str,int]:
         totals=defaultdict(int)
@@ -67,22 +73,22 @@ class AwardsEngine:
         if not totals:return ()
         best=max(totals.values());return tuple(sorted(cid for cid,points in totals.items() if points==best))
     def record_play_of_the_week(self,round_number:int,candidate:PlayerCandidate)->AwardRecord:
-        # Achievement-only until the judging criteria and point value are specified.
         return self._record(AwardCategory.PLAY_OF_THE_WEEK,round_number,candidate,0)
     def _team_of_week(self,round_no,candidates,franchise_totals):
-        chosen=self.select_positional_team(candidates,franchise_totals)
-        return [self._record(AwardCategory.TOTW,round_no,c,POINTS[AwardCategory.TOTW],pos) for pos,group in chosen.items() for c in group]
-    def select_positional_team(self,candidates:Iterable[PlayerCandidate],franchise_totals:Mapping[str,float]):
-        pool=[c for c in candidates if c.score_contributed];used=set();result={p:[] for p,_ in POSITIONS}
-        # Allocate all primary positions first; secondary DPP fills vacancies only.
+        selected=self.select_positional_team(candidates,franchise_totals,require_contribution=True)
+        missing={pos:slots-len(selected[pos]) for pos,slots in POSITIONS if len(selected[pos])<slots}
+        if missing:raise RuntimeError(f"cannot finalise Team of the Week; missing eligible positions: {missing}")
+        return [self._record(AwardCategory.TOTW,round_no,c,POINTS[AwardCategory.TOTW],pos) for pos,group in selected.items() for c in group]
+    def select_positional_team(self,candidates:Iterable[PlayerCandidate],franchise_totals:Mapping[str,float],require_contribution:bool=True):
+        pool=[c for c in candidates if c.score_contributed or not require_contribution];used=set();result={p:[] for p,_ in POSITIONS}
         for pos,slots in POSITIONS:
             group=[c for c in pool if c.primary_position==pos and c.player_id not in used]
             picks=self._rank(group,slots,franchise_totals);result[pos].extend(picks);used.update(c.player_id for c in picks)
         for pos,slots in POSITIONS:
-            remaining=slots-len(result[pos])
-            if remaining>0:
+            left=slots-len(result[pos])
+            if left>0:
                 group=[c for c in pool if pos in c.secondary_positions and c.primary_position!=pos and c.player_id not in used]
-                picks=self._rank(group,remaining,franchise_totals);result[pos].extend(picks);used.update(c.player_id for c in picks)
+                picks=self._rank(group,left,franchise_totals);result[pos].extend(picks);used.update(c.player_id for c in picks)
         return {k:tuple(v) for k,v in result.items()}
     @staticmethod
     def _rank(candidates,slots,franchise_totals):
@@ -92,6 +98,6 @@ class AwardsEngine:
         cutoff=ordered[slots-1];key=(cutoff.base_score,franchise_totals.get(cutoff.franchise_id,0),cutoff.nrl_team_points)
         return [c for c in ordered if (c.base_score,franchise_totals.get(c.franchise_id,0),c.nrl_team_points)>=key]
     def select_team_of_year(self,candidates,franchise_season_totals):
-        # base_score is cumulative player-award ladder points; positional/DPP rules match TOTW.
-        return self.select_positional_team(candidates,franchise_season_totals)
+        # base_score is cumulative player-award points; TOTY is not gated by a weekly score contribution.
+        return self.select_positional_team(candidates,franchise_season_totals,require_contribution=False)
 

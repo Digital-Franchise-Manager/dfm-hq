@@ -51,8 +51,14 @@ class AwardsEngine:
     def coach_credits(self,awards:Iterable[AwardRecord])->tuple[CoachCredit,...]:
         return tuple(CoachCredit(a.coach_id,a.franchise_id,a.player_id,a.category,a.round_number,a.points) for a in awards if a.points>0)
     def player_points(self,awards:Iterable[AwardRecord])->dict[str,int]:
+        # A Classic shared-owner tie creates multiple coach records but only one
+        # individual player award event. Deduplicate that event before summing.
+        events={}
+        for a in awards:
+            key=(a.round_number,a.category,a.player_id)
+            events[key]=max(events.get(key,0),a.points)
         totals=defaultdict(int)
-        for a in awards:totals[a.player_id]+=a.points
+        for (_,_,pid),points in events.items():totals[pid]+=points
         return dict(totals)
     def coach_points(self,credits:Iterable[CoachCredit])->dict[str,int]:
         totals=defaultdict(int)
@@ -67,6 +73,5 @@ class AwardsEngine:
         if not totals:return ()
         best=max(totals.values());return tuple(sorted(cid for cid,points in totals.items() if points==best))
     def record_play_of_the_week(self,round_number:int,candidate:PlayerCandidate)->AwardRecord:
-        # Achievement-only until the judging criteria and point value are specified.
         return self._record(AwardCategory.PLAY_OF_THE_WEEK,round_number,candidate,0)
     

@@ -20,10 +20,10 @@ class DraftEngineTests(unittest.TestCase):
     def test_mode_market_boundary(self):
         result=OddsEngine().calculate_ranked_market(market_type=MarketType.TEAM_OF_THE_WEEK,market_id="totw",projections={"p1":90,"p2":80},labels={"p1":"One","p2":"Two"},source=self.source);self.assertEqual(result.market_type,MarketType.TEAM_OF_THE_WEEK)
     def test_round_gating_and_expected_motr_motm_count(self):
-        fixtures=[]
+        positions=["WFB","WFB","WFB","CTR","CTR","HLF","HLF","EDG","EDG","MID","MID","MID","HOK","HOK"];fixtures=[]
         for i in range(7):
-            a=PlayerCandidate(f"p{i}a",f"Player {i}A",100-i,f"f{i}a",f"c{i}a",primary_position="WFB")
-            b=PlayerCandidate(f"p{i}b",f"Player {i}B",80-i,f"f{i}b",f"c{i}b",primary_position="CTR")
+            a=PlayerCandidate(f"p{i}a",f"Player {i}A",100-i,f"f{i}a",f"c{i}a",primary_position=positions[i*2])
+            b=PlayerCandidate(f"p{i}b",f"Player {i}B",80-i,f"f{i}b",f"c{i}b",primary_position=positions[i*2+1])
             fixtures.append(FixtureInput(f"fixture-{i}",True,True,(a,b),{a.franchise_id:150,b.franchise_id:130}))
         fixtures[0]=FixtureInput("fixture-0",False,True,fixtures[0].candidates,fixtures[0].franchise_totals)
         with self.assertRaises(RuntimeError):AwardsEngine().finalise_round(1,tuple(fixtures))
@@ -31,6 +31,7 @@ class DraftEngineTests(unittest.TestCase):
         awards=AwardsEngine().finalise_round(1,tuple(fixtures))
         self.assertEqual(sum(a.category is AwardCategory.MOTR for a in awards),1)
         self.assertEqual(sum(a.category is AwardCategory.MOTM for a in awards),6)
+        self.assertEqual(sum(a.category is AwardCategory.TOTW for a in awards),13)
     def test_round_awards_cannot_publish_early(self):
         engine=NewsroomEngine(MemoryNews())
         with self.assertRaises(RuntimeError):engine.publish_round_awards(article_id="a1",league_id="l1",round_number=1,awards_finalised=False,title="Awards",summary="Pending",award_report="")

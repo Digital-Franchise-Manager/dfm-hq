@@ -17,8 +17,12 @@ class LadderEngine:
         return tuple(Standing(fid,s["played"],s["wins"],s["losses"],s["draws"],s["cp"],s["pf"],s["pa"],s["pf"]-s["pa"],i+1) for i,(fid,s) in enumerate(ordered))
     @staticmethod
     def player_awards_ladder(records,position_by_player:dict[str,str]|None=None,position_filter:str="ALL")->tuple[AwardStanding,...]:
+        events={}
+        for r in records:
+            key=(r.round_number,r.category,r.player_id)
+            events[key]=max(events.get(key,0),r.points)
         totals=defaultdict(lambda:defaultdict(int))
-        for r in records:totals[r.player_id][r.category.value]+=r.points
+        for (_,category,pid),points in events.items():totals[pid][category.value]+=points
         rows=[]
         for pid,columns in totals.items():
             pos=(position_by_player or {}).get(pid)
