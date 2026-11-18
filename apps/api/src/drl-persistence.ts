@@ -136,6 +136,12 @@ abstract class ModePersistenceAdapter {
     awards: string;
     newsroom: string;
     ladder: string;
+    appendMovement: string;
+    listMovements: string;
+    listAwards: string;
+    listCredits: string;
+    listNews: string;
+    listLadder: string;
   };
 
   constructor(private readonly rpc: DfmRpcExecutor) {}
@@ -349,6 +355,148 @@ abstract class ModePersistenceAdapter {
     return this.unwrap<boolean>(result, "finalised match result");
   }
 
+
+  async appendPriceMovement(
+    leagueId: string,
+    movement: PriceMovementInput
+  ): Promise<boolean> {
+    required(leagueId, "leagueId");
+    required(movement.marketId ?? "", "movement.marketId");
+    return this.unwrap<boolean>(await this.rpc(this.rpcNames.appendMovement, {
+      p_league_id: leagueId,
+      p_market_id: movement.marketId,
+      p_selection_id: movement.selectionId,
+      p_revision: movement.revision,
+      p_previous_probability: movement.previousProbability,
+      p_revised_probability: movement.revisedProbability,
+      p_previous_price: movement.previousPrice,
+      p_revised_price: movement.revisedPrice,
+      p_source_id: movement.sourceId,
+      p_model_version: movement.modelVersion,
+      p_idempotency_key: movement.idempotencyKey
+    }), "price movement");
+  }
+
+  async listMarketMovements(
+    leagueId: string,
+    marketId: string
+  ): Promise<PriceMovementInput[]> {
+    const rows = this.unwrap<unknown>(await this.rpc(this.rpcNames.listMovements, {
+      p_league_id: leagueId,
+      p_market_id: marketId
+    }), "market history");
+    if (!Array.isArray(rows)) throw new Error("Market history returned an invalid payload");
+    return rows.map((row) => {
+      const value = row as Record<string, unknown>;
+      return {
+        marketId: String(value.market_id),
+        selectionId: String(value.selection_id),
+        revision: Number(value.revision),
+        previousProbability: Number(value.previous_probability),
+        revisedProbability: Number(value.revised_probability),
+        previousPrice: Number(value.previous_price),
+        revisedPrice: Number(value.revised_price),
+        sourceId: String(value.source_id),
+        modelVersion: String(value.model_version),
+        idempotencyKey: String(value.idempotency_key)
+      };
+    });
+  }
+
+  async listAwards(
+    leagueId: string,
+    roundNumber?: number
+  ): Promise<AwardRecordInput[]> {
+    const rows = this.unwrap<unknown>(await this.rpc(this.rpcNames.listAwards, {
+      p_league_id: leagueId,
+      p_round_number: roundNumber ?? null
+    }), "award history");
+    if (!Array.isArray(rows)) throw new Error("Award history returned an invalid payload");
+    return rows.map((row) => {
+      const value = row as Record<string, unknown>;
+      return {
+        awardId: String(value.award_id),
+        category: String(value.category),
+        roundNumber: Number(value.round_number),
+        playerId: String(value.player_id),
+        playerName: String(value.player_name),
+        franchiseId: String(value.franchise_id),
+        coachId: String(value.coach_id),
+        baseScore: Number(value.base_score),
+        points: Number(value.points),
+        position: value.position === null ? null : String(value.position),
+        achievementOnly: Boolean(value.achievement_only)
+      };
+    });
+  }
+
+  async listCoachCredits(
+    leagueId: string,
+    coachId?: string
+  ): Promise<CoachCreditInput[]> {
+    const rows = this.unwrap<unknown>(await this.rpc(this.rpcNames.listCredits, {
+      p_league_id: leagueId,
+      p_coach_id: coachId ?? null
+    }), "coach credit history");
+    if (!Array.isArray(rows)) throw new Error("Coach credit history returned an invalid payload");
+    return rows.map((row) => {
+      const value = row as Record<string, unknown>;
+      return {
+        coachId: String(value.coach_id),
+        franchiseId: String(value.franchise_id),
+        playerId: String(value.player_id),
+        category: String(value.category),
+        roundNumber: Number(value.round_number),
+        points: Number(value.points)
+      };
+    });
+  }
+
+  async listNewsArticles(
+    leagueId: string,
+    limit = 25
+  ): Promise<NewsArticleInput[]> {
+    const rows = this.unwrap<unknown>(await this.rpc(this.rpcNames.listNews, {
+      p_league_id: leagueId,
+      p_limit: limit
+    }), "newsroom feed");
+    if (!Array.isArray(rows)) throw new Error("Newsroom feed returned an invalid payload");
+    return rows.map((row) => {
+      const value = row as Record<string, unknown>;
+      return {
+        articleId: String(value.article_id),
+        leagueId: String(value.league_id),
+        roundNumber: Number(value.round_number),
+        category: String(value.category),
+        title: String(value.title),
+        summary: String(value.summary),
+        content: String(value.content),
+        published: Boolean(value.published)
+      };
+    });
+  }
+
+  async listFinalisedMatches(leagueId: string): Promise<LadderResultInput[]> {
+    const rows = this.unwrap<unknown>(await this.rpc(this.rpcNames.listLadder, {
+      p_league_id: leagueId
+    }), "ladder results");
+    if (!Array.isArray(rows)) throw new Error("Ladder results returned an invalid payload");
+    return rows.map((row) => {
+      const value = row as Record<string, unknown>;
+      return {
+        leagueId,
+        fixtureId: String(value.fixture_id),
+        homeFranchiseId: String(value.home_franchise_id),
+        awayFranchiseId: String(value.away_franchise_id),
+        homeScore: Number(value.home_score),
+        awayScore: Number(value.away_score),
+        homeCompetitionPoints: Number(value.home_competition_points),
+        awayCompetitionPoints: Number(value.away_competition_points),
+        finalised: Boolean(value.finalised)
+      };
+    });
+  }
+
   private unwrap<T>(result: RpcResult, operation: string): T {
     if (result.error) {
       throw new Error("DRL " + this.mode + " " + operation +
@@ -368,7 +516,13 @@ export class ClassicDrlPersistenceAdapter extends ModePersistenceAdapter {
     market: "dfm_classic_persist_market_snapshot",
     awards: "dfm_classic_persist_award_bundle",
     newsroom: "dfm_classic_persist_news_article",
-    ladder: "dfm_classic_persist_ladder_result"
+    ladder: "dfm_classic_persist_ladder_result",
+    appendMovement: "dfm_classic_append_price_movement",
+    listMovements: "dfm_classic_list_market_movements",
+    listAwards: "dfm_classic_list_awards",
+    listCredits: "dfm_classic_list_coach_credits",
+    listNews: "dfm_classic_list_news_articles",
+    listLadder: "dfm_classic_list_ladder_results"
   };
 }
 
@@ -378,6 +532,12 @@ export class DraftDrlPersistenceAdapter extends ModePersistenceAdapter {
     market: "dfm_draft_persist_market_snapshot",
     awards: "dfm_draft_persist_award_bundle",
     newsroom: "dfm_draft_persist_news_article",
-    ladder: "dfm_draft_persist_ladder_result"
+    ladder: "dfm_draft_persist_ladder_result",
+    appendMovement: "dfm_draft_append_price_movement",
+    listMovements: "dfm_draft_list_market_movements",
+    listAwards: "dfm_draft_list_awards",
+    listCredits: "dfm_draft_list_coach_credits",
+    listNews: "dfm_draft_list_news_articles",
+    listLadder: "dfm_draft_list_ladder_results"
   };
 }
