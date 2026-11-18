@@ -547,4 +547,5 @@ REVOKE ALL ON FUNCTION dfm_private.persist_award_bundle(text,text,jsonb,jsonb) F
 REVOKE ALL ON FUNCTION dfm_private.persist_news_article(text,text,text,integer,text,text,text,text,boolean) FROM PUBLIC, anon, authenticated, service_role;
 REVOKE ALL ON FUNCTION dfm_private.persist_ladder_result(text,text,text,uuid,uuid,numeric,numeric,integer,integer) FROM PUBLIC, anon, authenticated, service_role;
 
+NOTIFY pgrst, 'reload schema';
 COMMIT;
