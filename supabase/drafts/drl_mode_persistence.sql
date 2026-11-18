@@ -71,7 +71,7 @@ CREATE TABLE dfm_private.drl_classic_odds_market_outcomes (
   probability numeric(16,12) NOT NULL
     CHECK (probability > 0 AND probability < 1),
   decimal_price numeric(18,4) NOT NULL
-    CHECK (decimal_price > 1),
+    CHECK (decimal_price >= 1),
   PRIMARY KEY (market_snapshot_id, selection_id)
 );
 
@@ -85,8 +85,8 @@ CREATE TABLE dfm_private.drl_classic_odds_price_movements (
     CHECK (previous_probability > 0 AND previous_probability < 1),
   revised_probability numeric(16,12) NOT NULL
     CHECK (revised_probability > 0 AND revised_probability < 1),
-  previous_price numeric(18,4) NOT NULL CHECK (previous_price > 1),
-  revised_price numeric(18,4) NOT NULL CHECK (revised_price > 1),
+  previous_price numeric(18,4) NOT NULL CHECK (previous_price >= 1),
+  revised_price numeric(18,4) NOT NULL CHECK (revised_price >= 1),
   source_id text NOT NULL,
   model_version text NOT NULL,
   idempotency_key text NOT NULL,
@@ -263,7 +263,7 @@ CREATE TABLE dfm_private.drl_draft_odds_market_outcomes (
   probability numeric(16,12) NOT NULL
     CHECK (probability > 0 AND probability < 1),
   decimal_price numeric(18,4) NOT NULL
-    CHECK (decimal_price > 1),
+    CHECK (decimal_price >= 1),
   PRIMARY KEY (market_snapshot_id, selection_id)
 );
 
@@ -277,8 +277,8 @@ CREATE TABLE dfm_private.drl_draft_odds_price_movements (
     CHECK (previous_probability > 0 AND previous_probability < 1),
   revised_probability numeric(16,12) NOT NULL
     CHECK (revised_probability > 0 AND revised_probability < 1),
-  previous_price numeric(18,4) NOT NULL CHECK (previous_price > 1),
-  revised_price numeric(18,4) NOT NULL CHECK (revised_price > 1),
+  previous_price numeric(18,4) NOT NULL CHECK (previous_price >= 1),
+  revised_price numeric(18,4) NOT NULL CHECK (revised_price >= 1),
   source_id text NOT NULL,
   model_version text NOT NULL,
   idempotency_key text NOT NULL,
