@@ -10,7 +10,9 @@ The files in this directory are design drafts and must not be applied directly.
    \`supabase/tests/database/\`.
 3. Generate the registered migration filename using
    \`supabase migration new drl_mode_persistence\`.
-4. Concatenate the reviewed schema and RPC drafts into that generated file.
+4. Remove the outer \`BEGIN;\` and \`COMMIT;\` from both draft files, then place
+   all schema and RPC statements inside one transaction in the generated
+   migration. This ensures the schema and RPC layer succeed or fail together.
 5. Review the exact diff and run repository CI.
 6. Obtain separate approval before applying any migration to hosted JARVIS.
 
@@ -21,10 +23,11 @@ migration history.
 ## Design boundary
 
 - All 14 mode-specific tables remain inside \`dfm_private\`.
-- Classic and Draft have separate tables and separate server-only RPC wrappers for both writes and reads.
+- Classic and Draft have separate tables and separate server-only RPC wrappers
+  for both writes and reads.
+- The 20 \`public.dfm_*\` wrappers grant EXECUTE only to \`service_role\`;
+  wrappers are not executable by PUBLIC, anon or authenticated.
 - No API role receives direct access to the private schema or its tables.
-- Only the eight \`public.dfm_*_persist_*\` wrappers grant EXECUTE to
-  \`service_role\`; wrappers are not executable by PUBLIC, anon or authenticated.
 - No service-role credential, database password or privileged URL belongs in
   source code or browser-visible configuration.
 - The server adapter receives a preconfigured RPC executor from trusted server
