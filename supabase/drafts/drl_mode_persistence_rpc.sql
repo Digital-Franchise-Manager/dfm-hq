@@ -72,17 +72,24 @@ BEGIN
   IF p_league_id IS NULL OR btrim(p_league_id) = ''
      OR p_market_id IS NULL OR btrim(p_market_id) = ''
      OR p_revision < 1
-     OR p_official IS DISTINCT FROM p_source_verified
-     OR jsonb_typeof(p_outcomes) IS DISTINCT FROM 'array'
-     OR jsonb_array_length(p_outcomes) < 2
-     OR jsonb_typeof(p_movements) IS DISTINCT FROM 'array' THEN
+     OR p_official IS DISTINCT FROM p_source_verified THEN
     RAISE EXCEPTION 'Invalid market snapshot payload' USING ERRCODE = '22023';
   END IF;
+  IF jsonb_typeof(p_outcomes) IS DISTINCT FROM 'array'
+     OR jsonb_typeof(p_movements) IS DISTINCT FROM 'array' THEN
+    RAISE EXCEPTION 'Market outcomes and movements must be JSON arrays'
+      USING ERRCODE = '22023';
+  END IF;
+  IF jsonb_array_length(p_outcomes) < 2 THEN
+    RAISE EXCEPTION 'At least two market outcomes are required'
+      USING ERRCODE = '22023';
+  END IF;
 
-  SELECT count(*), sum((x->>'probability')::numeric)
+  SELECT count(*), sum((item->>'probability')::numeric)
     INTO v_count, v_total
-  FROM jsonb_array_elements(p_outcomes) AS x;
-  IF v_count <> (SELECT count(DISTINCT x->>'selection_id') FROM jsonb_array_elements(p_outcomes) AS x)
+  FROM jsonb_array_elements(p_outcomes) AS items(item);
+  IF v_count <> (SELECT count(DISTINCT item->>'selection_id')
+                 FROM jsonb_array_elements(p_outcomes) AS items(item))
      OR abs(v_total - 1::numeric) > 0.00000001 THEN
     RAISE EXCEPTION 'Market outcomes must have unique selections and probabilities summing to one'
       USING ERRCODE = '22023';
