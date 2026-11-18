@@ -188,6 +188,22 @@ abstract class ModePersistenceAdapter {
       required(movement.idempotencyKey, "movement.idempotencyKey");
       required(movement.sourceId, "movement.sourceId");
       required(movement.modelVersion, "movement.modelVersion");
+      for (const [field, probability] of [
+        ["previousProbability", movement.previousProbability],
+        ["revisedProbability", movement.revisedProbability]
+      ] as const) {
+        if (!Number.isFinite(probability) || probability <= 0 || probability >= 1) {
+          throw new TypeError(field + " must be between zero and one");
+        }
+      }
+      for (const [field, price] of [
+        ["previousPrice", movement.previousPrice],
+        ["revisedPrice", movement.revisedPrice]
+      ] as const) {
+        if (!Number.isFinite(price) || price < 1) {
+          throw new TypeError(field + " must be finite and at least one");
+        }
+      }
     }
 
     const result = await this.rpc(this.rpcNames.market, {
@@ -228,6 +244,9 @@ abstract class ModePersistenceAdapter {
       required(award.coachId, "award.coachId");
       finiteNonNegative(award.baseScore, "award.baseScore");
       finiteNonNegative(award.points, "award.points");
+      if (!Number.isInteger(award.points)) {
+        throw new TypeError("award.points must be an integer");
+      }
       if (!Number.isInteger(award.roundNumber) || award.roundNumber < 1) {
         throw new TypeError("award.roundNumber must be a positive integer");
       }
@@ -237,7 +256,12 @@ abstract class ModePersistenceAdapter {
       required(credit.franchiseId, "credit.franchiseId");
       required(credit.playerId, "credit.playerId");
       finiteNonNegative(credit.points, "credit.points");
-      if (credit.points <= 0) throw new TypeError("credit.points must be positive");
+      if (!Number.isInteger(credit.points) || credit.points <= 0) {
+        throw new TypeError("credit.points must be a positive integer");
+      }
+      if (!Number.isInteger(credit.roundNumber) || credit.roundNumber < 1) {
+        throw new TypeError("credit.roundNumber must be a positive integer");
+      }
     }
 
     const result = await this.rpc(this.rpcNames.awards, {
@@ -307,6 +331,10 @@ abstract class ModePersistenceAdapter {
     finiteNonNegative(resultInput.awayScore, "result.awayScore");
     finiteNonNegative(resultInput.homeCompetitionPoints, "result.homeCompetitionPoints");
     finiteNonNegative(resultInput.awayCompetitionPoints, "result.awayCompetitionPoints");
+    if (!Number.isInteger(resultInput.homeCompetitionPoints) ||
+        !Number.isInteger(resultInput.awayCompetitionPoints)) {
+      throw new TypeError("competition points must be integers");
+    }
 
     const result = await this.rpc(this.rpcNames.ladder, {
       p_league_id: resultInput.leagueId,
