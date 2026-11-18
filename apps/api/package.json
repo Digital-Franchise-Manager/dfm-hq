@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@dfm/contracts": "*",
-    "@dfm/platform-core": "*"
+    "@dfm/platform-core": "*",
+    "@supabase/supabase-js": "2.119.0"
   }
 }
