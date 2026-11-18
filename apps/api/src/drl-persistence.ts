@@ -31,6 +31,7 @@ export interface MarketOutcomeInput {
 }
 
 export interface PriceMovementInput {
+  marketId: string;
   selectionId: string;
   revision: number;
   previousProbability: number;
@@ -361,7 +362,30 @@ abstract class ModePersistenceAdapter {
     movement: PriceMovementInput
   ): Promise<boolean> {
     required(leagueId, "leagueId");
-    required(movement.marketId ?? "", "movement.marketId");
+    required(movement.marketId, "movement.marketId");
+    required(movement.selectionId, "movement.selectionId");
+    required(movement.idempotencyKey, "movement.idempotencyKey");
+    required(movement.sourceId, "movement.sourceId");
+    required(movement.modelVersion, "movement.modelVersion");
+    if (!Number.isInteger(movement.revision) || movement.revision < 2) {
+      throw new TypeError("movement.revision must be an integer of at least two");
+    }
+    for (const [field, probability] of [
+      ["previousProbability", movement.previousProbability],
+      ["revisedProbability", movement.revisedProbability]
+    ] as const) {
+      if (!Number.isFinite(probability) || probability <= 0 || probability >= 1) {
+        throw new TypeError(field + " must be between zero and one");
+      }
+    }
+    for (const [field, price] of [
+      ["previousPrice", movement.previousPrice],
+      ["revisedPrice", movement.revisedPrice]
+    ] as const) {
+      if (!Number.isFinite(price) || price < 1) {
+        throw new TypeError(field + " must be finite and at least one");
+      }
+    }
     return this.unwrap<boolean>(await this.rpc(this.rpcNames.appendMovement, {
       p_league_id: leagueId,
       p_market_id: movement.marketId,
@@ -381,6 +405,8 @@ abstract class ModePersistenceAdapter {
     leagueId: string,
     marketId: string
   ): Promise<PriceMovementInput[]> {
+    required(leagueId, "leagueId");
+    required(marketId, "marketId");
     const rows = this.unwrap<unknown>(await this.rpc(this.rpcNames.listMovements, {
       p_league_id: leagueId,
       p_market_id: marketId
@@ -407,6 +433,10 @@ abstract class ModePersistenceAdapter {
     leagueId: string,
     roundNumber?: number
   ): Promise<AwardRecordInput[]> {
+    required(leagueId, "leagueId");
+    if (roundNumber !== undefined && (!Number.isInteger(roundNumber) || roundNumber < 1)) {
+      throw new TypeError("roundNumber must be a positive integer");
+    }
     const rows = this.unwrap<unknown>(await this.rpc(this.rpcNames.listAwards, {
       p_league_id: leagueId,
       p_round_number: roundNumber ?? null
@@ -434,6 +464,7 @@ abstract class ModePersistenceAdapter {
     leagueId: string,
     coachId?: string
   ): Promise<CoachCreditInput[]> {
+    required(leagueId, "leagueId");
     const rows = this.unwrap<unknown>(await this.rpc(this.rpcNames.listCredits, {
       p_league_id: leagueId,
       p_coach_id: coachId ?? null
@@ -456,6 +487,10 @@ abstract class ModePersistenceAdapter {
     leagueId: string,
     limit = 25
   ): Promise<NewsArticleInput[]> {
+    required(leagueId, "leagueId");
+    if (!Number.isInteger(limit) || limit < 1 || limit > 100) {
+      throw new TypeError("limit must be an integer from 1 to 100");
+    }
     const rows = this.unwrap<unknown>(await this.rpc(this.rpcNames.listNews, {
       p_league_id: leagueId,
       p_limit: limit
@@ -477,6 +512,7 @@ abstract class ModePersistenceAdapter {
   }
 
   async listFinalisedMatches(leagueId: string): Promise<LadderResultInput[]> {
+    required(leagueId, "leagueId");
     const rows = this.unwrap<unknown>(await this.rpc(this.rpcNames.listLadder, {
       p_league_id: leagueId
     }), "ladder results");
