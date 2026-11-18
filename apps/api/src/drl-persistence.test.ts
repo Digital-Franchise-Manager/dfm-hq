@@ -56,8 +56,8 @@ describe("mode-isolated DRL persistence adapters", () => {
     await expect(adapter.persistMarketSnapshot({
       ...market,
       outcomes: [
-        { ...market.outcomes[0], probability: 0.7 },
-        { ...market.outcomes[1], probability: 0.45 }
+        { selectionId: "home", label: "Home", probability: 0.7, decimalPrice: 1.4286 },
+        { selectionId: "away", label: "Away", probability: 0.45, decimalPrice: 2.2222 }
       ]
     })).rejects.toThrow("must sum to one");
     expect(rpc).not.toHaveBeenCalled();
@@ -85,7 +85,10 @@ describe("mode-isolated DRL persistence adapters", () => {
       points: 2
     }]);
     expect(rpc).toHaveBeenCalledTimes(1);
-    expect(rpc.mock.calls[0][0]).toBe("dfm_classic_persist_award_bundle");
+    expect(rpc).toHaveBeenCalledWith(
+      "dfm_classic_persist_award_bundle",
+      expect.any(Object)
+    );
   });
 
   it("rejects non-finalised ladder results", async () => {
