@@ -1,53 +1,33 @@
 name: DFM Quality Checks
-
 on:
   push:
-    branches:
-      - main
-      - "security/**"
+    branches: [main, "security/**", "feature/**"]
   pull_request:
-    branches:
-      - main
+    branches: [main]
   workflow_dispatch:
-
 permissions:
   contents: read
-
 jobs:
   verify:
     name: Typecheck, test and build
     runs-on: ubuntu-latest
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v7
-
-      - name: Set up Node.js 24 LTS
-        uses: actions/setup-node@v7
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
           cache-dependency-path: package-lock.json
-
-      - name: Pin npm
-        run: npm install --global npm@12.2.2
-
-      - name: Install exact locked dependencies
-        run: npm ci --no-audit --no-fund
-
-      - name: Verify TypeScript, tests and production build
-        run: npm run check
-
-  drl-odds-engine:
-    name: DRL Odds Engine unit tests
+      - run: npm install --global npm@12.2.2
+      - run: npm ci --no-audit --no-fund
+      - run: npm run check
+  drl-mode-engines:
+    name: DRL Classic and Draft engine unit tests
     runs-on: ubuntu-latest
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v7
-
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-
-      - name: Run standard-library unit tests
-        run: python -m unittest discover -s backend/dfm/drl/tests/odds_engine -t . -p "test_*.py"
+      - name: Run independent mode engine tests
+        run: python -m unittest discover -s backend/dfm/drl/tests -t . -p "test_*.py"
