@@ -1,73 +1,35 @@
-# DRL persistence migration draft
+# DRL persistence migration drafts
 
-**Status: DRAFT ONLY — not an executable or registered Supabase migration.**
+The files in this directory are design drafts and must not be applied directly.
 
-The schema design is prepared from the current Classic and Draft engine models on
-`feature/drl-independent-odds-engine`. The SQL is stored here so it cannot be
-picked up accidentally by Supabase migration commands.
+## Required generation sequence
 
-## Why this is not under `supabase/migrations/` yet
+1. Validate \`drl_mode_persistence.sql\` and \`drl_mode_persistence_rpc.sql\`
+   together against a disposable local PostgreSQL 17 / Supabase stack.
+2. Run the security and integration SQL tests under
+   \`supabase/tests/database/\`.
+3. Generate the registered migration filename using
+   \`supabase migration new drl_mode_persistence\`.
+4. Remove the outer \`BEGIN;\` and \`COMMIT;\` from both draft files, then place
+   all schema and RPC statements inside one transaction in the generated
+   migration. This ensures the schema and RPC layer succeed or fail together.
+5. Review the exact diff and run repository CI.
+6. Obtain separate approval before applying any migration to hosted JARVIS.
 
-The live Supabase project reports these applied migration versions:
+Do not manually re-apply \`20261117024400_create_franchises_and_public_profiles\`;
+it is already applied in the live project and is restored only to repair Git
+migration history.
 
-- `20261117024400` — `create_franchises_and_public_profiles`
-- `20261117194130` — `security_baseline_lockdown`
-- `20261117194151` — `public_franchise_profiles_projection`
+## Design boundary
 
-The initial migration file was absent from GitHub, although it was already
-applied in the live project. Its original SQL statements were recovered from
-`supabase_migrations.schema_migrations` and restored in this branch at
-`supabase/migrations/20261117024400_create_franchises_and_public_profiles.sql`.
-The restored file matches the applied migration metadata; it must not be
-manually re-applied to the live project.
-
-The Supabase CLI is not available in the current execution environment. The
-new DRL migration filename must be generated with the CLI, not guessed:
-
-```sh
-supabase migration new drl_mode_persistence
-```
-
-Then copy the reviewed SQL from `supabase/drafts/drl_mode_persistence.sql`
-into the generated file. Review the diff and validate locally before any hosted
-migration is considered. No new hosted migration has been applied.
-
-## Design decisions
-
-- Classic and Draft persistence are separate table families in the existing
-  private `dfm_private` schema.
-- The schema remains outside the Data API schemas in `supabase/config.toml`.
-- All 14 tables explicitly enable RLS.
-- No API-role grants or RLS policies are created. The tables remain inaccessible
-  to `anon`, `authenticated` and `service_role` until a separately reviewed
-  server-side access design is implemented.
-- `league_id` and `fixture_id` are text identifiers because the live database
-  currently has no verified league or fixture tables. No guessed foreign keys
-  are added.
-- Franchise identifiers are stored as UUID values, matching the verified
-  `public.franchises.id` type. Coach identifiers remain text until a canonical
-  coach identity schema is verified. Historical
-  references intentionally do not cascade-delete with an account or franchise.
-- Player identifiers remain text because the current engine contracts do not
-  define a verified player identity table.
-- Ladder standings are derived from persisted finalised match results and award
-  events; no redundant calculated leaderboard table is introduced.
-- Classic and Draft award categories are constrained independently. Draft alone
-  supports TOTW and TOTY.
-- Price movement records include the engine's idempotency key and revision.
-- Database triggers reject updates/deletes to odds snapshots, outcomes, price movements, award records and coach credits. Finalised ladder match results cannot be changed or deleted.
-
-## Validation
-
-After the official migration has been reviewed and applied in an explicitly
-authorised environment, run:
-
-```sh
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/tests/database/drl_mode_persistence.sql
-```
-
-The test checks table existence, RLS, API-role isolation and that DRL persistence
-has not been placed in the exposed `public` schema.
-
-This draft does not add adapters, API routes, public grants, credentials,
-Cloudflare configuration or production data changes.
+- All 14 mode-specific tables remain inside \`dfm_private\`.
+- Classic and Draft have separate tables and separate server-only RPC wrappers
+  for both writes and reads.
+- The 20 \`public.dfm_*\` wrappers grant EXECUTE only to \`service_role\`;
+  wrappers are not executable by PUBLIC, anon or authenticated.
+- No API role receives direct access to the private schema or its tables.
+- No service-role credential, database password or privileged URL belongs in
+  source code or browser-visible configuration.
+- The server adapter receives a preconfigured RPC executor from trusted server
+  composition; it does not construct or expose credentials.
+- No paid service or Cloudflare resource is required.
