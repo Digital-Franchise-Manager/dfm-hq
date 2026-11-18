@@ -52,6 +52,7 @@ migration is considered. No hosted migration has been applied.
 - Classic and Draft award categories are constrained independently. Draft alone
   supports TOTW and TOTY.
 - Price movement records include the engine's idempotency key and revision.
+- Database triggers reject updates/deletes to odds snapshots, outcomes, price movements, award records and coach credits. Finalised ladder match results cannot be changed or deleted.
 
 ## Validation
 
