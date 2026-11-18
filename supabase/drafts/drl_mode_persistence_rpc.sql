@@ -462,6 +462,237 @@ BEGIN
 END;
 $function$;
 
+
+-- Read repositories and single-event market history append operations. These
+-- private helpers are reached only through the fixed-mode public RPC facade.
+CREATE OR REPLACE FUNCTION dfm_private.append_price_movement(
+  p_mode text,p_league_id text,p_market_id text,p_selection_id text,
+  p_revision integer,p_previous_probability numeric,p_revised_probability numeric,
+  p_previous_price numeric,p_revised_price numeric,p_source_id text,
+  p_model_version text,p_idempotency_key text
+)
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = ''
+AS $function$
+DECLARE
+  v_prefix text;
+  v_table text;
+  v_id uuid;
+  v_same boolean;
+BEGIN
+  v_prefix := CASE p_mode WHEN 'classic' THEN 'drl_classic'
+                          WHEN 'draft' THEN 'drl_draft' ELSE NULL END;
+  IF v_prefix IS NULL THEN RAISE EXCEPTION 'Unsupported DRL mode'; END IF;
+  IF p_league_id IS NULL OR btrim(p_league_id)=''
+     OR p_market_id IS NULL OR btrim(p_market_id)=''
+     OR p_selection_id IS NULL OR btrim(p_selection_id)=''
+     OR p_revision < 2
+     OR p_previous_probability <= 0 OR p_previous_probability >= 1
+     OR p_revised_probability <= 0 OR p_revised_probability >= 1
+     OR p_previous_price < 1 OR p_previous_price >= 'Infinity'::numeric
+     OR p_revised_price < 1 OR p_revised_price >= 'Infinity'::numeric
+     OR p_source_id IS NULL OR btrim(p_source_id)=''
+     OR p_model_version IS NULL OR btrim(p_model_version)=''
+     OR p_idempotency_key IS NULL OR btrim(p_idempotency_key)='' THEN
+    RAISE EXCEPTION 'Invalid price movement payload' USING ERRCODE = '22023';
+  END IF;
+  v_table := v_prefix || '_odds_price_movements';
+  EXECUTE format(
+    'INSERT INTO dfm_private.%I
+      (league_id,market_id,selection_id,revision,previous_probability,
+       revised_probability,previous_price,revised_price,source_id,
+       model_version,idempotency_key)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+     ON CONFLICT DO NOTHING
+     RETURNING id',
+    v_table
+  ) INTO v_id
+  USING p_league_id,p_market_id,p_selection_id,p_revision,p_previous_probability,
+        p_revised_probability,p_previous_price,p_revised_price,p_source_id,
+        p_model_version,p_idempotency_key;
+  IF v_id IS NOT NULL THEN RETURN true; END IF;
+
+  EXECUTE format(
+    'SELECT EXISTS (
+       SELECT 1 FROM dfm_private.%I
+       WHERE league_id=$1 AND idempotency_key=$2
+         AND ROW(market_id,selection_id,revision,previous_probability,
+                 revised_probability,previous_price,revised_price,source_id,model_version)
+             IS NOT DISTINCT FROM
+             ROW($3,$4,$5,$6,$7,$8,$9,$10,$11)
+     )',
+    v_table
+  ) INTO v_same
+  USING p_league_id,p_idempotency_key,p_market_id,p_selection_id,p_revision,
+        p_previous_probability,p_revised_probability,p_previous_price,
+        p_revised_price,p_source_id,p_model_version;
+  IF v_same THEN RETURN false; END IF;
+  RAISE EXCEPTION 'Price movement idempotency or revision conflict'
+    USING ERRCODE = '23505';
+END;
+$function$;
+
+CREATE OR REPLACE FUNCTION dfm_private.list_market_movements(
+  p_mode text,p_league_id text,p_market_id text
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = ''
+AS $function$
+DECLARE v_prefix text; v_result jsonb;
+BEGIN
+  v_prefix := CASE p_mode WHEN 'classic' THEN 'drl_classic'
+                          WHEN 'draft' THEN 'drl_draft' ELSE NULL END;
+  IF v_prefix IS NULL THEN RAISE EXCEPTION 'Unsupported DRL mode'; END IF;
+  IF p_league_id IS NULL OR btrim(p_league_id)=''
+     OR p_market_id IS NULL OR btrim(p_market_id)='' THEN
+    RAISE EXCEPTION 'League and market identifiers are required' USING ERRCODE = '22023';
+  END IF;
+  EXECUTE format(
+    'SELECT coalesce(jsonb_agg(jsonb_build_object(
+       ''market_id'',market_id,''selection_id'',selection_id,''revision'',revision,
+       ''previous_probability'',previous_probability,''revised_probability'',revised_probability,
+       ''previous_price'',previous_price,''revised_price'',revised_price,
+       ''source_id'',source_id,''model_version'',model_version,
+       ''idempotency_key'',idempotency_key,''created_at'',created_at
+     ) ORDER BY revision,selection_id),''[]''::jsonb)
+     FROM dfm_private.%I WHERE league_id=$1 AND market_id=$2',
+    v_prefix || '_odds_price_movements'
+  ) INTO v_result USING p_league_id,p_market_id;
+  RETURN v_result;
+END;
+$function$;
+
+CREATE OR REPLACE FUNCTION dfm_private.list_awards(
+  p_mode text,p_league_id text,p_round_number integer
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = ''
+AS $function$
+DECLARE v_prefix text; v_result jsonb;
+BEGIN
+  v_prefix := CASE p_mode WHEN 'classic' THEN 'drl_classic'
+                          WHEN 'draft' THEN 'drl_draft' ELSE NULL END;
+  IF v_prefix IS NULL THEN RAISE EXCEPTION 'Unsupported DRL mode'; END IF;
+  IF p_league_id IS NULL OR btrim(p_league_id)='' THEN
+    RAISE EXCEPTION 'League identifier is required' USING ERRCODE = '22023';
+  END IF;
+  EXECUTE format(
+    'SELECT coalesce(jsonb_agg(jsonb_build_object(
+       ''award_id'',award_id,''category'',category,''round_number'',round_number,
+       ''player_id'',player_id,''player_name'',player_name,''franchise_id'',franchise_id,
+       ''coach_id'',coach_id,''base_score'',base_score,''points'',points,
+       ''position'',position,''achievement_only'',achievement_only,''created_at'',created_at
+     ) ORDER BY round_number,category,player_id,franchise_id),''[]''::jsonb)
+     FROM dfm_private.%I
+     WHERE league_id=$1 AND ($2 IS NULL OR round_number=$2)',
+    v_prefix || '_award_records'
+  ) INTO v_result USING p_league_id,p_round_number;
+  RETURN v_result;
+END;
+$function$;
+
+CREATE OR REPLACE FUNCTION dfm_private.list_coach_credits(
+  p_mode text,p_league_id text,p_coach_id text
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = ''
+AS $function$
+DECLARE v_prefix text; v_result jsonb;
+BEGIN
+  v_prefix := CASE p_mode WHEN 'classic' THEN 'drl_classic'
+                          WHEN 'draft' THEN 'drl_draft' ELSE NULL END;
+  IF v_prefix IS NULL THEN RAISE EXCEPTION 'Unsupported DRL mode'; END IF;
+  IF p_league_id IS NULL OR btrim(p_league_id)='' THEN
+    RAISE EXCEPTION 'League identifier is required' USING ERRCODE = '22023';
+  END IF;
+  EXECUTE format(
+    'SELECT coalesce(jsonb_agg(jsonb_build_object(
+       ''coach_id'',coach_id,''franchise_id'',franchise_id,''player_id'',player_id,
+       ''category'',category,''round_number'',round_number,''points'',points,
+       ''credited_at'',credited_at
+     ) ORDER BY round_number,coach_id,player_id),''[]''::jsonb)
+     FROM dfm_private.%I
+     WHERE league_id=$1 AND ($2 IS NULL OR coach_id=$2)',
+    v_prefix || '_coach_award_credits'
+  ) INTO v_result USING p_league_id,p_coach_id;
+  RETURN v_result;
+END;
+$function$;
+
+CREATE OR REPLACE FUNCTION dfm_private.list_news_articles(
+  p_mode text,p_league_id text,p_limit integer
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = ''
+AS $function$
+DECLARE v_prefix text; v_result jsonb;
+BEGIN
+  v_prefix := CASE p_mode WHEN 'classic' THEN 'drl_classic'
+                          WHEN 'draft' THEN 'drl_draft' ELSE NULL END;
+  IF v_prefix IS NULL THEN RAISE EXCEPTION 'Unsupported DRL mode'; END IF;
+  IF p_league_id IS NULL OR btrim(p_league_id)=''
+     OR p_limit IS NULL OR p_limit < 1 OR p_limit > 100 THEN
+    RAISE EXCEPTION 'Valid league and feed limit (1-100) are required'
+      USING ERRCODE = '22023';
+  END IF;
+  EXECUTE format(
+    'SELECT coalesce(jsonb_agg(to_jsonb(feed_row) ORDER BY created_at DESC),''[]''::jsonb)
+     FROM (
+       SELECT league_id,article_id,round_number,category,title,summary,content,
+              published,created_at
+       FROM dfm_private.%I
+       WHERE league_id=$1 AND published
+       ORDER BY created_at DESC
+       LIMIT $2
+     ) AS feed_row',
+    v_prefix || '_news_articles'
+  ) INTO v_result USING p_league_id,p_limit;
+  RETURN v_result;
+END;
+$function$;
+
+CREATE OR REPLACE FUNCTION dfm_private.list_ladder_results(
+  p_mode text,p_league_id text
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = ''
+AS $function$
+DECLARE v_prefix text; v_result jsonb;
+BEGIN
+  v_prefix := CASE p_mode WHEN 'classic' THEN 'drl_classic'
+                          WHEN 'draft' THEN 'drl_draft' ELSE NULL END;
+  IF v_prefix IS NULL THEN RAISE EXCEPTION 'Unsupported DRL mode'; END IF;
+  IF p_league_id IS NULL OR btrim(p_league_id)='' THEN
+    RAISE EXCEPTION 'League identifier is required' USING ERRCODE = '22023';
+  END IF;
+  EXECUTE format(
+    'SELECT coalesce(jsonb_agg(jsonb_build_object(
+       ''fixture_id'',fixture_id,''home_franchise_id'',home_franchise_id,
+       ''away_franchise_id'',away_franchise_id,''home_score'',home_score,
+       ''away_score'',away_score,''home_competition_points'',home_competition_points,
+       ''away_competition_points'',away_competition_points,''finalised'',finalised,
+       ''updated_at'',updated_at
+     ) ORDER BY fixture_id),''[]''::jsonb)
+     FROM dfm_private.%I WHERE league_id=$1 AND finalised',
+    v_prefix || '_ladder_match_results'
+  ) INTO v_result USING p_league_id;
+  RETURN v_result;
+END;
+$function$;
+
+
 -- Public RPC facade: the only callable route for the trusted server adapter.
 -- No direct table grants, private schema USAGE or user-facing execute grants.
 CREATE OR REPLACE FUNCTION public.dfm_classic_persist_market_snapshot(
@@ -524,6 +755,72 @@ AS $$ SELECT dfm_private.persist_ladder_result(
   'draft',$1,$2,$3,$4,$5,$6,$7,$8
 ) $$;
 
+
+CREATE OR REPLACE FUNCTION public.dfm_classic_append_price_movement(
+  p_league_id text,p_market_id text,p_selection_id text,p_revision integer,
+  p_previous_probability numeric,p_revised_probability numeric,
+  p_previous_price numeric,p_revised_price numeric,p_source_id text,
+  p_model_version text,p_idempotency_key text
+) RETURNS boolean LANGUAGE sql SECURITY DEFINER SET search_path = ''
+AS $ SELECT dfm_private.append_price_movement(
+  'classic',$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11
+) $;
+
+CREATE OR REPLACE FUNCTION public.dfm_draft_append_price_movement(
+  p_league_id text,p_market_id text,p_selection_id text,p_revision integer,
+  p_previous_probability numeric,p_revised_probability numeric,
+  p_previous_price numeric,p_revised_price numeric,p_source_id text,
+  p_model_version text,p_idempotency_key text
+) RETURNS boolean LANGUAGE sql SECURITY DEFINER SET search_path = ''
+AS $ SELECT dfm_private.append_price_movement(
+  'draft',$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11
+) $;
+
+CREATE OR REPLACE FUNCTION public.dfm_classic_list_market_movements(
+  p_league_id text,p_market_id text
+) RETURNS jsonb LANGUAGE sql SECURITY DEFINER SET search_path = ''
+AS $ SELECT dfm_private.list_market_movements('classic',$1,$2) $;
+CREATE OR REPLACE FUNCTION public.dfm_draft_list_market_movements(
+  p_league_id text,p_market_id text
+) RETURNS jsonb LANGUAGE sql SECURITY DEFINER SET search_path = ''
+AS $ SELECT dfm_private.list_market_movements('draft',$1,$2) $;
+
+CREATE OR REPLACE FUNCTION public.dfm_classic_list_awards(
+  p_league_id text,p_round_number integer DEFAULT NULL
+) RETURNS jsonb LANGUAGE sql SECURITY DEFINER SET search_path = ''
+AS $ SELECT dfm_private.list_awards('classic',$1,$2) $;
+CREATE OR REPLACE FUNCTION public.dfm_draft_list_awards(
+  p_league_id text,p_round_number integer DEFAULT NULL
+) RETURNS jsonb LANGUAGE sql SECURITY DEFINER SET search_path = ''
+AS $ SELECT dfm_private.list_awards('draft',$1,$2) $;
+
+CREATE OR REPLACE FUNCTION public.dfm_classic_list_coach_credits(
+  p_league_id text,p_coach_id text DEFAULT NULL
+) RETURNS jsonb LANGUAGE sql SECURITY DEFINER SET search_path = ''
+AS $ SELECT dfm_private.list_coach_credits('classic',$1,$2) $;
+CREATE OR REPLACE FUNCTION public.dfm_draft_list_coach_credits(
+  p_league_id text,p_coach_id text DEFAULT NULL
+) RETURNS jsonb LANGUAGE sql SECURITY DEFINER SET search_path = ''
+AS $ SELECT dfm_private.list_coach_credits('draft',$1,$2) $;
+
+CREATE OR REPLACE FUNCTION public.dfm_classic_list_news_articles(
+  p_league_id text,p_limit integer DEFAULT 25
+) RETURNS jsonb LANGUAGE sql SECURITY DEFINER SET search_path = ''
+AS $ SELECT dfm_private.list_news_articles('classic',$1,$2) $;
+CREATE OR REPLACE FUNCTION public.dfm_draft_list_news_articles(
+  p_league_id text,p_limit integer DEFAULT 25
+) RETURNS jsonb LANGUAGE sql SECURITY DEFINER SET search_path = ''
+AS $ SELECT dfm_private.list_news_articles('draft',$1,$2) $;
+
+CREATE OR REPLACE FUNCTION public.dfm_classic_list_ladder_results(
+  p_league_id text
+) RETURNS jsonb LANGUAGE sql SECURITY DEFINER SET search_path = ''
+AS $ SELECT dfm_private.list_ladder_results('classic',$1) $;
+CREATE OR REPLACE FUNCTION public.dfm_draft_list_ladder_results(
+  p_league_id text
+) RETURNS jsonb LANGUAGE sql SECURITY DEFINER SET search_path = ''
+AS $ SELECT dfm_private.list_ladder_results('draft',$1) $;
+
 REVOKE ALL ON FUNCTION public.dfm_classic_persist_market_snapshot(text,text,text,integer,text,text,boolean,text,text,boolean,jsonb,jsonb) FROM PUBLIC, anon, authenticated, service_role;
 REVOKE ALL ON FUNCTION public.dfm_draft_persist_market_snapshot(text,text,text,integer,text,text,boolean,text,text,boolean,jsonb,jsonb) FROM PUBLIC, anon, authenticated, service_role;
 REVOKE ALL ON FUNCTION public.dfm_classic_persist_award_bundle(text,jsonb,jsonb) FROM PUBLIC, anon, authenticated, service_role;
@@ -546,6 +843,40 @@ REVOKE ALL ON FUNCTION dfm_private.persist_market_snapshot(text,text,text,text,i
 REVOKE ALL ON FUNCTION dfm_private.persist_award_bundle(text,text,jsonb,jsonb) FROM PUBLIC, anon, authenticated, service_role;
 REVOKE ALL ON FUNCTION dfm_private.persist_news_article(text,text,text,integer,text,text,text,text,boolean) FROM PUBLIC, anon, authenticated, service_role;
 REVOKE ALL ON FUNCTION dfm_private.persist_ladder_result(text,text,text,uuid,uuid,numeric,numeric,integer,integer) FROM PUBLIC, anon, authenticated, service_role;
+
+
+REVOKE ALL ON FUNCTION public.dfm_classic_append_price_movement(text,text,text,integer,numeric,numeric,numeric,numeric,text,text,text) FROM PUBLIC, anon, authenticated, service_role;
+REVOKE ALL ON FUNCTION public.dfm_draft_append_price_movement(text,text,text,integer,numeric,numeric,numeric,numeric,text,text,text) FROM PUBLIC, anon, authenticated, service_role;
+REVOKE ALL ON FUNCTION public.dfm_classic_list_market_movements(text,text) FROM PUBLIC, anon, authenticated, service_role;
+REVOKE ALL ON FUNCTION public.dfm_draft_list_market_movements(text,text) FROM PUBLIC, anon, authenticated, service_role;
+REVOKE ALL ON FUNCTION public.dfm_classic_list_awards(text,integer) FROM PUBLIC, anon, authenticated, service_role;
+REVOKE ALL ON FUNCTION public.dfm_draft_list_awards(text,integer) FROM PUBLIC, anon, authenticated, service_role;
+REVOKE ALL ON FUNCTION public.dfm_classic_list_coach_credits(text,text) FROM PUBLIC, anon, authenticated, service_role;
+REVOKE ALL ON FUNCTION public.dfm_draft_list_coach_credits(text,text) FROM PUBLIC, anon, authenticated, service_role;
+REVOKE ALL ON FUNCTION public.dfm_classic_list_news_articles(text,integer) FROM PUBLIC, anon, authenticated, service_role;
+REVOKE ALL ON FUNCTION public.dfm_draft_list_news_articles(text,integer) FROM PUBLIC, anon, authenticated, service_role;
+REVOKE ALL ON FUNCTION public.dfm_classic_list_ladder_results(text) FROM PUBLIC, anon, authenticated, service_role;
+REVOKE ALL ON FUNCTION public.dfm_draft_list_ladder_results(text) FROM PUBLIC, anon, authenticated, service_role;
+
+GRANT EXECUTE ON FUNCTION public.dfm_classic_append_price_movement(text,text,text,integer,numeric,numeric,numeric,numeric,text,text,text) TO service_role;
+GRANT EXECUTE ON FUNCTION public.dfm_draft_append_price_movement(text,text,text,integer,numeric,numeric,numeric,numeric,text,text,text) TO service_role;
+GRANT EXECUTE ON FUNCTION public.dfm_classic_list_market_movements(text,text) TO service_role;
+GRANT EXECUTE ON FUNCTION public.dfm_draft_list_market_movements(text,text) TO service_role;
+GRANT EXECUTE ON FUNCTION public.dfm_classic_list_awards(text,integer) TO service_role;
+GRANT EXECUTE ON FUNCTION public.dfm_draft_list_awards(text,integer) TO service_role;
+GRANT EXECUTE ON FUNCTION public.dfm_classic_list_coach_credits(text,text) TO service_role;
+GRANT EXECUTE ON FUNCTION public.dfm_draft_list_coach_credits(text,text) TO service_role;
+GRANT EXECUTE ON FUNCTION public.dfm_classic_list_news_articles(text,integer) TO service_role;
+GRANT EXECUTE ON FUNCTION public.dfm_draft_list_news_articles(text,integer) TO service_role;
+GRANT EXECUTE ON FUNCTION public.dfm_classic_list_ladder_results(text) TO service_role;
+GRANT EXECUTE ON FUNCTION public.dfm_draft_list_ladder_results(text) TO service_role;
+
+REVOKE ALL ON FUNCTION dfm_private.append_price_movement(text,text,text,text,integer,numeric,numeric,numeric,numeric,text,text,text) FROM PUBLIC, anon, authenticated, service_role;
+REVOKE ALL ON FUNCTION dfm_private.list_market_movements(text,text,text) FROM PUBLIC, anon, authenticated, service_role;
+REVOKE ALL ON FUNCTION dfm_private.list_awards(text,text,integer) FROM PUBLIC, anon, authenticated, service_role;
+REVOKE ALL ON FUNCTION dfm_private.list_coach_credits(text,text,text) FROM PUBLIC, anon, authenticated, service_role;
+REVOKE ALL ON FUNCTION dfm_private.list_news_articles(text,text,integer) FROM PUBLIC, anon, authenticated, service_role;
+REVOKE ALL ON FUNCTION dfm_private.list_ladder_results(text,text) FROM PUBLIC, anon, authenticated, service_role;
 
 NOTIFY pgrst, 'reload schema';
 COMMIT;
