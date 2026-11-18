@@ -189,6 +189,9 @@ abstract class ModePersistenceAdapter {
 
     const movements = input.movements ?? [];
     for (const movement of movements) {
+      if (movement.marketId !== input.marketId) {
+        throw new TypeError("price movement marketId must match snapshot marketId");
+      }
       if (movement.revision !== input.revision) {
         throw new TypeError("price movement revision must match snapshot revision");
       }
