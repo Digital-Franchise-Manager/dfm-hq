@@ -306,6 +306,7 @@ BEGIN
      ON CONFLICT DO NOTHING',
     v_awards_table
   ) USING p_league_id,p_awards;
+  GET DIAGNOSTICS v_count = ROW_COUNT;
 
   EXECUTE format(
     'SELECT EXISTS (
@@ -357,7 +358,6 @@ BEGIN
   ) INTO v_bad USING p_credits,p_league_id;
   IF v_bad THEN RAISE EXCEPTION 'Coach credit idempotency conflict' USING ERRCODE = '23505'; END IF;
 
-  v_count := jsonb_array_length(p_awards);
   RETURN v_count;
 END;
 $function$;
@@ -375,14 +375,19 @@ DECLARE
   v_prefix text;
   v_table text;
   v_bad boolean;
+  v_inserted boolean;
 BEGIN
   v_prefix := CASE p_mode WHEN 'classic' THEN 'drl_classic'
                           WHEN 'draft' THEN 'drl_draft' ELSE NULL END;
   IF v_prefix IS NULL THEN RAISE EXCEPTION 'Unsupported DRL mode'; END IF;
   IF p_league_id IS NULL OR btrim(p_league_id)=''
      OR p_article_id IS NULL OR btrim(p_article_id)=''
-     OR p_round_number < 1 THEN
-    RAISE EXCEPTION 'Invalid newsroom article identity' USING ERRCODE = '22023';
+     OR p_round_number < 1
+     OR p_category IS NULL OR btrim(p_category)=''
+     OR p_title IS NULL OR btrim(p_title)=''
+     OR p_summary IS NULL OR btrim(p_summary)=''
+     OR p_content IS NULL OR btrim(p_content)='' THEN
+    RAISE EXCEPTION 'Invalid newsroom article identity or content' USING ERRCODE = '22023';
   END IF;
   v_table := v_prefix || '_news_articles';
 
@@ -390,9 +395,10 @@ BEGIN
     'INSERT INTO dfm_private.%I
       (league_id,article_id,round_number,category,title,summary,content,published)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
-     ON CONFLICT (league_id,article_id) DO NOTHING',
+     ON CONFLICT (league_id,article_id) DO NOTHING
+     RETURNING true',
     v_table
-  ) USING p_league_id,p_article_id,p_round_number,p_category,p_title,p_summary,p_content,p_published;
+  ) INTO v_inserted USING p_league_id,p_article_id,p_round_number,p_category,p_title,p_summary,p_content,p_published;
 
   EXECUTE format(
     'SELECT EXISTS (
@@ -404,7 +410,7 @@ BEGIN
     v_table
   ) INTO v_bad USING p_league_id,p_article_id,p_round_number,p_category,p_title,p_summary,p_content,p_published;
   IF v_bad THEN RAISE EXCEPTION 'News article idempotency conflict' USING ERRCODE = '23505'; END IF;
-  RETURN true;
+  RETURN coalesce(v_inserted,false);
 END;
 $function$;
 
@@ -422,6 +428,7 @@ DECLARE
   v_prefix text;
   v_table text;
   v_bad boolean;
+  v_inserted boolean;
 BEGIN
   v_prefix := CASE p_mode WHEN 'classic' THEN 'drl_classic'
                           WHEN 'draft' THEN 'drl_draft' ELSE NULL END;
@@ -441,9 +448,10 @@ BEGIN
       (league_id,fixture_id,home_franchise_id,away_franchise_id,
        home_score,away_score,home_competition_points,away_competition_points,finalised)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,true)
-     ON CONFLICT (league_id,fixture_id) DO NOTHING',
+     ON CONFLICT (league_id,fixture_id) DO NOTHING
+     RETURNING true',
     v_table
-  ) USING p_league_id,p_fixture_id,p_home_franchise_id,p_away_franchise_id,
+  ) INTO v_inserted USING p_league_id,p_fixture_id,p_home_franchise_id,p_away_franchise_id,
           p_home_score,p_away_score,p_home_competition_points,p_away_competition_points;
 
   EXECUTE format(
@@ -458,7 +466,7 @@ BEGIN
   ) INTO v_bad USING p_league_id,p_fixture_id,p_home_franchise_id,p_away_franchise_id,
                      p_home_score,p_away_score,p_home_competition_points,p_away_competition_points;
   IF v_bad THEN RAISE EXCEPTION 'Finalised match idempotency conflict' USING ERRCODE = '23505'; END IF;
-  RETURN true;
+  RETURN coalesce(v_inserted,false);
 END;
 $function$;
 
