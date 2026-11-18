@@ -65,6 +65,10 @@ BEGIN
        OR NOT has_function_privilege('service_role',oid_value,'EXECUTE') THEN
       RAISE EXCEPTION 'RPC execute grants are incorrect: %',rpc_name;
     END IF;
+    IF NOT (SELECT p.prosecdef AND p.proconfig @> ARRAY['search_path=""']
+            FROM pg_proc p WHERE p.oid=oid_value) THEN
+      RAISE EXCEPTION 'RPC must be SECURITY DEFINER with an empty search_path: %',rpc_name;
+    END IF;
   END LOOP;
 
   IF EXISTS (
