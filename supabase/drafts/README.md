@@ -14,13 +14,15 @@ The live Supabase project reports these applied migration versions:
 - `20261117194130` — `security_baseline_lockdown`
 - `20261117194151` — `public_franchise_profiles_projection`
 
-The GitHub repository contains the latter two SQL files, but the first migration
-file could not be found in the inspected repository branch. That is migration
-history drift. Do not create a new official migration until the missing baseline
-is recovered or the discrepancy is reconciled.
+The initial migration file was absent from GitHub, although it was already
+applied in the live project. Its original SQL statements were recovered from
+`supabase_migrations.schema_migrations` and restored in this branch at
+`supabase/migrations/20261117024400_create_franchises_and_public_profiles.sql`.
+The restored file matches the applied migration metadata; it must not be
+manually re-applied to the live project.
 
 The Supabase CLI is not available in the current execution environment. The
-official migration filename must be generated with the CLI, not guessed:
+new DRL migration filename must be generated with the CLI, not guessed:
 
 ```sh
 supabase migration new drl_mode_persistence
@@ -28,7 +30,7 @@ supabase migration new drl_mode_persistence
 
 Then copy the reviewed SQL from `supabase/drafts/drl_mode_persistence.sql`
 into the generated file. Review the diff and validate locally before any hosted
-migration is considered. No hosted migration has been applied.
+migration is considered. No new hosted migration has been applied.
 
 ## Design decisions
 
