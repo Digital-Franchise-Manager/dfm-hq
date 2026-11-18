@@ -1,0 +1,20 @@
+{
+  "name": "@dfm/drl-persistence",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Server-only Digital Rugby League persistence adapters for isolated Classic and Draft data.",
+  "types": "./dist/types/supabase/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/supabase/index.d.ts",
+      "import": "./supabase/index.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc -b --pretty false"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.119.0"
+  }
+}
