@@ -1,3 +1,5 @@
+import { createClient } from "@supabase/supabase-js";
+
 /**
  * Server-only DRL persistence adapter.
  *
@@ -578,5 +580,43 @@ export class DraftDrlPersistenceAdapter extends ModePersistenceAdapter {
     listCredits: "dfm_draft_list_coach_credits",
     listNews: "dfm_draft_list_news_articles",
     listLadder: "dfm_draft_list_ladder_results"
+  };
+}
+
+
+/**
+ * Construct the trusted server adapters from a runtime secret.
+ * Call only inside apps/api server code. Never import this module into
+ * apps/web or pass the service-role key to a browser/client.
+ */
+export function createServerDrlPersistenceAdapters(
+  supabaseUrl: string,
+  serviceRoleKey: string
+): {
+  classic: ClassicDrlPersistenceAdapter;
+  draft: DraftDrlPersistenceAdapter;
+} {
+  required(supabaseUrl, "supabaseUrl");
+  required(serviceRoleKey, "serviceRoleKey");
+
+  const client = createClient(supabaseUrl, serviceRoleKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false
+    }
+  });
+
+  const rpc: DfmRpcExecutor = async (functionName, args) => {
+    const { data, error } = await client.rpc(functionName, args);
+    return {
+      data,
+      error: error ? { message: error.message } : null
+    };
+  };
+
+  return {
+    classic: new ClassicDrlPersistenceAdapter(rpc),
+    draft: new DraftDrlPersistenceAdapter(rpc)
   };
 }
