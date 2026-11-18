@@ -13,7 +13,8 @@
     "packages/*",
     "backend/dfm/drl/packages/*",
     "backend/dfm/drl/classic/packages",
-    "backend/dfm/drl/draft/packages"
+    "backend/dfm/drl/draft/packages",
+    "backend/dfm/drl/persistence"
   ],
   "scripts": {
     "dev": "npm run dev --workspace @dfm/web",

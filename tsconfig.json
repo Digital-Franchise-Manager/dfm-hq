@@ -24,6 +24,9 @@
     },
     {
       "path": "./backend/dfm/drl/packages/fantasy-engine"
+    },
+    {
+      "path": "./backend/dfm/drl/persistence"
     }
   ]
 }
