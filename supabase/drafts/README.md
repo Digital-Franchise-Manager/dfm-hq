@@ -42,8 +42,9 @@ migration is considered. No hosted migration has been applied.
 - `league_id` and `fixture_id` are text identifiers because the live database
   currently has no verified league or fixture tables. No guessed foreign keys
   are added.
-- Franchise and coach identifiers are stored as UUID values, matching the
-  verified UUID identity types in the existing application schema. Historical
+- Franchise identifiers are stored as UUID values, matching the verified
+  `public.franchises.id` type. Coach identifiers remain text until a canonical
+  coach identity schema is verified. Historical
   references intentionally do not cascade-delete with an account or franchise.
 - Player identifiers remain text because the current engine contracts do not
   define a verified player identity table.
