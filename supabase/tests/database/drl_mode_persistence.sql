@@ -64,9 +64,9 @@ BEGIN
     END IF;
 
     IF EXISTS (
-      SELECT 1 FROM pg_policies
-      WHERE schemaname = 'dfm_private'
-        AND tablename = table_name
+      SELECT 1 FROM pg_policies AS policy
+      WHERE policy.schemaname = 'dfm_private'
+        AND policy.tablename = table_name
     ) THEN
       RAISE EXCEPTION 'Unexpected API policy exists on private table %', qualified_name;
     END IF;
