@@ -57,8 +57,8 @@ Accordingly:
 
 - `league_id` and `fixture_id` remain text context identifiers with no
   invented foreign keys.
-- Franchise and coach IDs are represented as UUIDs, consistent with the
-  existing franchise and Auth identity types.
+- Franchise IDs are UUIDs, matching the verified `public.franchises.id` type.
+  Coach IDs remain text until a canonical coach identity schema is verified.
 - Player IDs remain text until a canonical player identity schema is verified.
 - Historical award and ladder rows do not cascade-delete when a franchise or
   account is deleted.
