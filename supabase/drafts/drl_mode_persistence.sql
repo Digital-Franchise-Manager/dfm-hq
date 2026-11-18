@@ -569,4 +569,5 @@ COMMENT ON TABLE dfm_private.drl_draft_news_articles IS
 COMMENT ON TABLE dfm_private.drl_draft_ladder_match_results IS
   'Private Draft-only source match results used to derive competition standings.';
 
+-- Transactional RPC layer is maintained in drl_mode_persistence_rpc.sql.
 COMMIT;
