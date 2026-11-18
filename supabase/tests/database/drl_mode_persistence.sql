@@ -72,6 +72,43 @@ BEGIN
     END IF;
   END LOOP;
 
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger
+    WHERE tgname = 'drl_classic_award_immutable'
+      AND tgrelid = 'dfm_private.drl_classic_award_records'::regclass
+      AND NOT tgisinternal
+  ) OR NOT EXISTS (
+    SELECT 1 FROM pg_trigger
+    WHERE tgname = 'drl_draft_award_immutable'
+      AND tgrelid = 'dfm_private.drl_draft_award_records'::regclass
+      AND NOT tgisinternal
+  ) THEN
+    RAISE EXCEPTION 'Award history immutability triggers are missing';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger
+    WHERE tgname = 'drl_classic_finalised_match_immutable'
+      AND tgrelid = 'dfm_private.drl_classic_ladder_match_results'::regclass
+      AND NOT tgisinternal
+  ) OR NOT EXISTS (
+    SELECT 1 FROM pg_trigger
+    WHERE tgname = 'drl_draft_finalised_match_immutable'
+      AND tgrelid = 'dfm_private.drl_draft_ladder_match_results'::regclass
+      AND NOT tgisinternal
+  ) THEN
+    RAISE EXCEPTION 'Finalised match immutability triggers are missing';
+  END IF;
+
+  IF has_function_privilege('anon', 'dfm_private.reject_drl_history_mutation()', 'EXECUTE')
+     OR has_function_privilege('authenticated', 'dfm_private.reject_drl_history_mutation()', 'EXECUTE')
+     OR has_function_privilege('service_role', 'dfm_private.reject_drl_history_mutation()', 'EXECUTE')
+     OR has_function_privilege('anon', 'dfm_private.reject_finalised_drl_match_mutation()', 'EXECUTE')
+     OR has_function_privilege('authenticated', 'dfm_private.reject_finalised_drl_match_mutation()', 'EXECUTE')
+     OR has_function_privilege('service_role', 'dfm_private.reject_finalised_drl_match_mutation()', 'EXECUTE') THEN
+    RAISE EXCEPTION 'Private history trigger functions must not be directly executable by API roles';
+  END IF;
+
   IF EXISTS (
     SELECT 1 FROM pg_tables
     WHERE schemaname = 'public'
