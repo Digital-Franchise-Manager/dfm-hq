@@ -21,6 +21,18 @@ SELECT public.dfm_classic_persist_market_snapshot(
   '[]'::jsonb
 );
 
+-- Persist a revision and its price movement as one atomic market operation.
+SELECT public.dfm_classic_persist_market_snapshot(
+  'test-classic-league','test-classic-market','head_to_head',2,
+  'test-source-2','official',true,'revised synthetic source','0.2.0',true,
+  '[{"selection_id":"home","label":"Home","probability":0.60,"decimal_price":1.6667},
+    {"selection_id":"away","label":"Away","probability":0.40,"decimal_price":2.5000}]'::jsonb,
+  '[{"selection_id":"home","revision":2,"previous_probability":0.55,
+     "revised_probability":0.60,"previous_price":1.8182,"revised_price":1.6667,
+     "source_id":"test-source-2","model_version":"0.2.0",
+     "idempotency_key":"classic-home-revision-2"}]'::jsonb
+);
+
 SELECT public.dfm_draft_persist_market_snapshot(
   'test-draft-league','test-draft-market','team_of_the_week',1,
   'test-source','official',true,'synthetic verified source','0.2.0',true,
@@ -89,6 +101,13 @@ BEGIN
          WHERE s.league_id='test-classic-league' AND s.market_id='test-classic-market') <> 2 THEN
     RAISE EXCEPTION 'Market snapshot replay was not idempotent';
   END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM dfm_private.drl_classic_odds_price_movements
+    WHERE league_id='test-classic-league'
+      AND idempotency_key='classic-home-revision-2'
+      AND revised_probability=0.60
+  ) THEN RAISE EXCEPTION 'Classic price movement persistence failed'; END IF;
 
   IF NOT EXISTS (
     SELECT 1 FROM dfm_private.drl_classic_award_records
