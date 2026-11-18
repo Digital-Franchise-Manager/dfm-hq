@@ -30,7 +30,10 @@ BEGIN
   END IF;
   IF has_schema_privilege('anon','dfm_private','USAGE')
      OR has_schema_privilege('authenticated','dfm_private','USAGE')
-     OR has_schema_privilege('service_role','dfm_private','USAGE') THEN
+     OR has_schema_privilege('service_role','dfm_private','USAGE')
+     OR has_schema_privilege('anon','dfm_private','CREATE')
+     OR has_schema_privilege('authenticated','dfm_private','CREATE')
+     OR has_schema_privilege('service_role','dfm_private','CREATE') THEN
     RAISE EXCEPTION 'API roles must not have dfm_private schema USAGE';
   END IF;
 
@@ -41,9 +44,18 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_class WHERE oid=oid_value AND relrowsecurity) THEN
       RAISE EXCEPTION 'RLS disabled: %',q;
     END IF;
-    IF has_table_privilege('anon',q,'ALL')
-       OR has_table_privilege('authenticated',q,'ALL')
-       OR has_table_privilege('service_role',q,'ALL')
+    IF has_table_privilege('anon',q,'SELECT')
+       OR has_table_privilege('anon',q,'INSERT')
+       OR has_table_privilege('anon',q,'UPDATE')
+       OR has_table_privilege('anon',q,'DELETE')
+       OR has_table_privilege('authenticated',q,'SELECT')
+       OR has_table_privilege('authenticated',q,'INSERT')
+       OR has_table_privilege('authenticated',q,'UPDATE')
+       OR has_table_privilege('authenticated',q,'DELETE')
+       OR has_table_privilege('service_role',q,'SELECT')
+       OR has_table_privilege('service_role',q,'INSERT')
+       OR has_table_privilege('service_role',q,'UPDATE')
+       OR has_table_privilege('service_role',q,'DELETE')
        OR has_table_privilege('anon',q,'TRUNCATE')
        OR has_table_privilege('authenticated',q,'TRUNCATE')
        OR has_table_privilege('service_role',q,'TRUNCATE')
@@ -75,7 +87,7 @@ BEGIN
   IF EXISTS (
     SELECT 1 FROM pg_policies
     WHERE schemaname='dfm_private'
-      AND tablename = ANY(expected_tables)
+      AND tablename::text = ANY(expected_tables)
   ) THEN
     RAISE EXCEPTION 'Unexpected row policy exists on private persistence tables';
   END IF;
