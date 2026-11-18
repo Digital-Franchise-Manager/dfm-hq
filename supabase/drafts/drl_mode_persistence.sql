@@ -416,6 +416,100 @@ CREATE INDEX drl_draft_ladder_results_league_idx
   (league_id, finalised, fixture_id);
 
 -- ---------------------------------------------------------------------------
+-- Enforce immutable historical odds and award records at database level.
+-- The function is generic infrastructure only; mode data remains isolated.
+-- ---------------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION dfm_private.reject_drl_history_mutation()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = ''
+AS $function$
+BEGIN
+  RAISE EXCEPTION 'DRL historical records are immutable: %.%',
+    TG_TABLE_SCHEMA, TG_TABLE_NAME
+    USING ERRCODE = '55000';
+END;
+$function$;
+
+REVOKE ALL PRIVILEGES
+ON FUNCTION dfm_private.reject_drl_history_mutation()
+FROM PUBLIC, anon, authenticated, service_role;
+
+CREATE TRIGGER drl_classic_odds_snapshot_immutable
+BEFORE UPDATE OR DELETE ON dfm_private.drl_classic_odds_market_snapshots
+FOR EACH ROW EXECUTE FUNCTION dfm_private.reject_drl_history_mutation();
+
+CREATE TRIGGER drl_classic_odds_outcome_immutable
+BEFORE UPDATE OR DELETE ON dfm_private.drl_classic_odds_market_outcomes
+FOR EACH ROW EXECUTE FUNCTION dfm_private.reject_drl_history_mutation();
+
+CREATE TRIGGER drl_classic_odds_movement_immutable
+BEFORE UPDATE OR DELETE ON dfm_private.drl_classic_odds_price_movements
+FOR EACH ROW EXECUTE FUNCTION dfm_private.reject_drl_history_mutation();
+
+CREATE TRIGGER drl_classic_award_immutable
+BEFORE UPDATE OR DELETE ON dfm_private.drl_classic_award_records
+FOR EACH ROW EXECUTE FUNCTION dfm_private.reject_drl_history_mutation();
+
+CREATE TRIGGER drl_classic_coach_credit_immutable
+BEFORE UPDATE OR DELETE ON dfm_private.drl_classic_coach_award_credits
+FOR EACH ROW EXECUTE FUNCTION dfm_private.reject_drl_history_mutation();
+
+CREATE TRIGGER drl_draft_odds_snapshot_immutable
+BEFORE UPDATE OR DELETE ON dfm_private.drl_draft_odds_market_snapshots
+FOR EACH ROW EXECUTE FUNCTION dfm_private.reject_drl_history_mutation();
+
+CREATE TRIGGER drl_draft_odds_outcome_immutable
+BEFORE UPDATE OR DELETE ON dfm_private.drl_draft_odds_market_outcomes
+FOR EACH ROW EXECUTE FUNCTION dfm_private.reject_drl_history_mutation();
+
+CREATE TRIGGER drl_draft_odds_movement_immutable
+BEFORE UPDATE OR DELETE ON dfm_private.drl_draft_odds_price_movements
+FOR EACH ROW EXECUTE FUNCTION dfm_private.reject_drl_history_mutation();
+
+CREATE TRIGGER drl_draft_award_immutable
+BEFORE UPDATE OR DELETE ON dfm_private.drl_draft_award_records
+FOR EACH ROW EXECUTE FUNCTION dfm_private.reject_drl_history_mutation();
+
+CREATE TRIGGER drl_draft_coach_credit_immutable
+BEFORE UPDATE OR DELETE ON dfm_private.drl_draft_coach_award_credits
+FOR EACH ROW EXECUTE FUNCTION dfm_private.reject_drl_history_mutation();
+
+CREATE OR REPLACE FUNCTION dfm_private.reject_finalised_drl_match_mutation()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = ''
+AS $function$
+BEGIN
+  IF OLD.finalised THEN
+    RAISE EXCEPTION 'Finalised DRL match results are immutable: %.%',
+      TG_TABLE_SCHEMA, TG_TABLE_NAME
+      USING ERRCODE = '55000';
+  END IF;
+
+  IF TG_OP = 'DELETE' THEN
+    RETURN OLD;
+  END IF;
+  RETURN NEW;
+END;
+$function$;
+
+REVOKE ALL PRIVILEGES
+ON FUNCTION dfm_private.reject_finalised_drl_match_mutation()
+FROM PUBLIC, anon, authenticated, service_role;
+
+CREATE TRIGGER drl_classic_finalised_match_immutable
+BEFORE UPDATE OR DELETE ON dfm_private.drl_classic_ladder_match_results
+FOR EACH ROW EXECUTE FUNCTION dfm_private.reject_finalised_drl_match_mutation();
+
+CREATE TRIGGER drl_draft_finalised_match_immutable
+BEFORE UPDATE OR DELETE ON dfm_private.drl_draft_ladder_match_results
+FOR EACH ROW EXECUTE FUNCTION dfm_private.reject_finalised_drl_match_mutation();
+
+-- ---------------------------------------------------------------------------
 -- Explicitly keep all mode tables private and RLS-protected.
 -- No policies or API-role grants are created in this stage.
 -- ---------------------------------------------------------------------------
