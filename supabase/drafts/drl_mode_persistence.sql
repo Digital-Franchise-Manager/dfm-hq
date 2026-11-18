@@ -123,7 +123,7 @@ CREATE TABLE dfm_private.drl_classic_award_records (
   player_id text NOT NULL,
   player_name text NOT NULL,
   franchise_id uuid NOT NULL,
-  coach_id uuid NOT NULL,
+  coach_id text NOT NULL,
   base_score numeric(18,6) NOT NULL CHECK (base_score >= 0),
   points integer NOT NULL CHECK (points >= 0),
   position text CHECK (position IS NULL OR position IN (
@@ -139,7 +139,7 @@ CREATE TABLE dfm_private.drl_classic_award_records (
 CREATE TABLE dfm_private.drl_classic_coach_award_credits (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   league_id text NOT NULL,
-  coach_id uuid NOT NULL,
+  coach_id text NOT NULL,
   franchise_id uuid NOT NULL,
   player_id text NOT NULL,
   category text NOT NULL CHECK (category IN (
@@ -317,7 +317,7 @@ CREATE TABLE dfm_private.drl_draft_award_records (
   player_id text NOT NULL,
   player_name text NOT NULL,
   franchise_id uuid NOT NULL,
-  coach_id uuid NOT NULL,
+  coach_id text NOT NULL,
   base_score numeric(18,6) NOT NULL CHECK (base_score >= 0),
   points integer NOT NULL CHECK (points >= 0),
   position text CHECK (position IS NULL OR position IN (
@@ -333,7 +333,7 @@ CREATE TABLE dfm_private.drl_draft_award_records (
 CREATE TABLE dfm_private.drl_draft_coach_award_credits (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   league_id text NOT NULL,
-  coach_id uuid NOT NULL,
+  coach_id text NOT NULL,
   franchise_id uuid NOT NULL,
   player_id text NOT NULL,
   category text NOT NULL CHECK (category IN (
