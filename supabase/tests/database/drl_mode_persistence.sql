@@ -75,7 +75,7 @@ BEGIN
   IF EXISTS (
     SELECT 1 FROM pg_tables
     WHERE schemaname = 'public'
-      AND tablename LIKE 'drl\_%' ESCAPE '\'
+      AND left(tablename, 4) = 'drl_'
   ) THEN
     RAISE EXCEPTION 'DRL engine persistence must not be created in exposed public schema';
   END IF;
