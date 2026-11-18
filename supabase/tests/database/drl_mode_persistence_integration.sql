@@ -176,11 +176,13 @@ RESET ROLE;
 DO $assertions$
 BEGIN
   IF (SELECT count(*) FROM dfm_private.drl_classic_odds_market_snapshots
-      WHERE league_id='test-classic-league' AND market_id='test-classic-market') <> 1
+      WHERE league_id='test-classic-league' AND market_id='test-classic-market'
+        AND revision=1) <> 1
      OR (SELECT count(*) FROM dfm_private.drl_classic_odds_market_outcomes o
          JOIN dfm_private.drl_classic_odds_market_snapshots s
            ON s.id=o.market_snapshot_id
-         WHERE s.league_id='test-classic-league' AND s.market_id='test-classic-market') <> 2 THEN
+         WHERE s.league_id='test-classic-league' AND s.market_id='test-classic-market'
+           AND s.revision=1) <> 2 THEN
     RAISE EXCEPTION 'Market snapshot replay was not idempotent';
   END IF;
 
