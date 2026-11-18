@@ -20,7 +20,19 @@ DECLARE
     'public.dfm_classic_persist_news_article(text,text,integer,text,text,text,text,boolean)',
     'public.dfm_draft_persist_news_article(text,text,integer,text,text,text,text,boolean)',
     'public.dfm_classic_persist_ladder_result(text,text,uuid,uuid,numeric,numeric,integer,integer)',
-    'public.dfm_draft_persist_ladder_result(text,text,uuid,uuid,numeric,numeric,integer,integer)'
+    'public.dfm_draft_persist_ladder_result(text,text,uuid,uuid,numeric,numeric,integer,integer)',
+    'public.dfm_classic_append_price_movement(text,text,text,integer,numeric,numeric,numeric,numeric,text,text,text)',
+    'public.dfm_draft_append_price_movement(text,text,text,integer,numeric,numeric,numeric,numeric,text,text,text)',
+    'public.dfm_classic_list_market_movements(text,text)',
+    'public.dfm_draft_list_market_movements(text,text)',
+    'public.dfm_classic_list_awards(text,integer)',
+    'public.dfm_draft_list_awards(text,integer)',
+    'public.dfm_classic_list_coach_credits(text,text)',
+    'public.dfm_draft_list_coach_credits(text,text)',
+    'public.dfm_classic_list_news_articles(text,integer)',
+    'public.dfm_draft_list_news_articles(text,integer)',
+    'public.dfm_classic_list_ladder_results(text)',
+    'public.dfm_draft_list_ladder_results(text)'
   ];
   q text;
   oid_value oid;
@@ -107,7 +119,19 @@ BEGIN
      OR has_function_privilege('service_role',
        'dfm_private.persist_news_article(text,text,text,integer,text,text,text,text,boolean)','EXECUTE')
      OR has_function_privilege('service_role',
-       'dfm_private.persist_ladder_result(text,text,text,uuid,uuid,numeric,numeric,integer,integer)','EXECUTE') THEN
+       'dfm_private.persist_ladder_result(text,text,text,uuid,uuid,numeric,numeric,integer,integer)','EXECUTE')
+     OR has_function_privilege('service_role',
+       'dfm_private.append_price_movement(text,text,text,text,integer,numeric,numeric,numeric,numeric,text,text,text)','EXECUTE')
+     OR has_function_privilege('service_role',
+       'dfm_private.list_market_movements(text,text,text)','EXECUTE')
+     OR has_function_privilege('service_role',
+       'dfm_private.list_awards(text,text,integer)','EXECUTE')
+     OR has_function_privilege('service_role',
+       'dfm_private.list_coach_credits(text,text,text)','EXECUTE')
+     OR has_function_privilege('service_role',
+       'dfm_private.list_news_articles(text,text,integer)','EXECUTE')
+     OR has_function_privilege('service_role',
+       'dfm_private.list_ladder_results(text,text)','EXECUTE') THEN
     RAISE EXCEPTION 'Service role must not execute private implementation functions directly';
   END IF;
 
