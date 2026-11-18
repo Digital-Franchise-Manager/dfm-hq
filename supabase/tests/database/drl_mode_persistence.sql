@@ -131,12 +131,26 @@ BEGIN
      OR has_function_privilege('service_role',
        'dfm_private.list_news_articles(text,text,integer)','EXECUTE')
      OR has_function_privilege('service_role',
-       'dfm_private.list_ladder_results(text,text)','EXECUTE') THEN
+       'dfm_private.list_ladder_results(text,text)','EXECUTE')
+     OR has_function_privilege('service_role',
+       'dfm_private.reject_drl_history_mutation()','EXECUTE')
+     OR has_function_privilege('service_role',
+       'dfm_private.reject_finalised_drl_match_mutation()','EXECUTE')
+     OR has_function_privilege('service_role',
+       'dfm_private.reject_drl_news_mutation()','EXECUTE') THEN
     RAISE EXCEPTION 'Service role must not execute private implementation functions directly';
   END IF;
 
-  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname='drl_classic_award_immutable')
+  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname='drl_classic_odds_snapshot_immutable')
+     OR NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname='drl_classic_odds_outcome_immutable')
+     OR NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname='drl_classic_odds_movement_immutable')
+     OR NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname='drl_classic_award_immutable')
+     OR NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname='drl_classic_coach_credit_immutable')
+     OR NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname='drl_draft_odds_snapshot_immutable')
+     OR NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname='drl_draft_odds_outcome_immutable')
+     OR NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname='drl_draft_odds_movement_immutable')
      OR NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname='drl_draft_award_immutable')
+     OR NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname='drl_draft_coach_credit_immutable')
      OR NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname='drl_classic_news_immutable')
      OR NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname='drl_draft_news_immutable')
      OR NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname='drl_classic_finalised_match_immutable')
