@@ -48,6 +48,13 @@ The service-role client must be constructed only in a trusted server runtime
 using a runtime secret. The credential must never enter browser code, Git,
 logs, error responses or client-visible environment variables.
 
+Because `service_role` bypasses RLS, the adapter is an internal persistence
+service, not an authorization layer. No user-facing route is added in this
+change. Before a route can call it, the API must validate the Supabase JWT and
+verify the caller's league/franchise membership using a canonical membership
+model. The live schema currently has no league or membership tables, so that
+authorization layer remains intentionally unimplemented rather than guessed.
+
 Each RPC is one PostgreSQL transaction:
 - Market snapshot, outcomes and price movements commit together.
 - Award records and award-time coach-credit events commit together.
