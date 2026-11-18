@@ -340,7 +340,7 @@ BEGIN
     )
       ON a.coach_id=c.coach_id AND a.franchise_id=c.franchise_id
      AND a.player_id=c.player_id AND a.category=c.category
-     AND a.round_number=c.round_number
+     AND a.round_number=c.round_number AND a.points=c.points
     WHERE a.award_id IS NULL
   ) THEN
     RAISE EXCEPTION 'Coach credits must match an award in the same atomic batch'
