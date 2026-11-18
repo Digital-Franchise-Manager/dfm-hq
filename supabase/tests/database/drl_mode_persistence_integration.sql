@@ -12,6 +12,15 @@ SELECT public.dfm_classic_persist_market_snapshot(
   '[]'::jsonb
 );
 
+-- Exact retries are idempotent and do not duplicate snapshot/outcome rows.
+SELECT public.dfm_classic_persist_market_snapshot(
+  'test-classic-league','test-classic-market','head_to_head',1,
+  'test-source','official',true,'synthetic verified source','0.2.0',true,
+  '[{"selection_id":"home","label":"Home","probability":0.55,"decimal_price":1.8182},
+    {"selection_id":"away","label":"Away","probability":0.45,"decimal_price":2.2222}]'::jsonb,
+  '[]'::jsonb
+);
+
 SELECT public.dfm_draft_persist_market_snapshot(
   'test-draft-league','test-draft-market','team_of_the_week',1,
   'test-source','official',true,'synthetic verified source','0.2.0',true,
@@ -72,6 +81,15 @@ RESET ROLE;
 
 DO $assertions$
 BEGIN
+  IF (SELECT count(*) FROM dfm_private.drl_classic_odds_market_snapshots
+      WHERE league_id='test-classic-league' AND market_id='test-classic-market') <> 1
+     OR (SELECT count(*) FROM dfm_private.drl_classic_odds_market_outcomes o
+         JOIN dfm_private.drl_classic_odds_market_snapshots s
+           ON s.id=o.market_snapshot_id
+         WHERE s.league_id='test-classic-league' AND s.market_id='test-classic-market') <> 2 THEN
+    RAISE EXCEPTION 'Market snapshot replay was not idempotent';
+  END IF;
+
   IF NOT EXISTS (
     SELECT 1 FROM dfm_private.drl_classic_award_records
     WHERE league_id='test-classic-league' AND award_id='classic-award-1'
