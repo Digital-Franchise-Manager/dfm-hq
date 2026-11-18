@@ -74,6 +74,18 @@ BEGIN
     RAISE EXCEPTION 'DRL persistence tables must not be in public';
   END IF;
 
+  IF has_function_privilege('service_role',
+       'dfm_private.persist_market_snapshot(text,text,text,text,integer,text,text,boolean,text,text,boolean,jsonb,jsonb)',
+       'EXECUTE')
+     OR has_function_privilege('service_role',
+       'dfm_private.persist_award_bundle(text,text,jsonb,jsonb)','EXECUTE')
+     OR has_function_privilege('service_role',
+       'dfm_private.persist_news_article(text,text,text,integer,text,text,text,text,boolean)','EXECUTE')
+     OR has_function_privilege('service_role',
+       'dfm_private.persist_ladder_result(text,text,text,uuid,uuid,numeric,numeric,integer,integer)','EXECUTE') THEN
+    RAISE EXCEPTION 'Service role must not execute private implementation functions directly';
+  END IF;
+
   IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname='drl_classic_award_immutable')
      OR NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname='drl_draft_award_immutable')
      OR NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname='drl_classic_news_immutable')
