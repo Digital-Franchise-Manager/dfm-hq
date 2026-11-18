@@ -279,6 +279,18 @@ BEGIN
   EXCEPTION WHEN SQLSTATE '55000' THEN NULL;
   END;
   BEGIN
+    UPDATE dfm_private.drl_classic_odds_market_outcomes
+      SET label='Tampered'
+      WHERE selection_id='home'
+        AND market_snapshot_id=(
+          SELECT id FROM dfm_private.drl_classic_odds_market_snapshots
+          WHERE league_id='test-classic-league' AND market_id='test-classic-market'
+            AND revision=1
+        );
+    RAISE EXCEPTION 'Expected odds outcome history mutation to fail';
+  EXCEPTION WHEN SQLSTATE '55000' THEN NULL;
+  END;
+  BEGIN
     UPDATE dfm_private.drl_classic_odds_price_movements
       SET revised_price=1.25
       WHERE league_id='test-classic-league'
