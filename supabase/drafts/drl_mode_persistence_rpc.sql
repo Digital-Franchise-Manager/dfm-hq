@@ -829,9 +829,9 @@ CREATE OR REPLACE FUNCTION public.dfm_classic_append_price_movement(
   p_previous_price numeric,p_revised_price numeric,p_source_id text,
   p_model_version text,p_idempotency_key text
 ) RETURNS boolean LANGUAGE sql SECURITY DEFINER SET search_path = ''
-AS $ SELECT dfm_private.append_price_movement(
+AS $$ SELECT dfm_private.append_price_movement(
   'classic',$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11
-) $;
+) $$;
 
 CREATE OR REPLACE FUNCTION public.dfm_draft_append_price_movement(
   p_league_id text,p_market_id text,p_selection_id text,p_revision integer,
@@ -839,54 +839,54 @@ CREATE OR REPLACE FUNCTION public.dfm_draft_append_price_movement(
   p_previous_price numeric,p_revised_price numeric,p_source_id text,
   p_model_version text,p_idempotency_key text
 ) RETURNS boolean LANGUAGE sql SECURITY DEFINER SET search_path = ''
-AS $ SELECT dfm_private.append_price_movement(
+AS $$ SELECT dfm_private.append_price_movement(
   'draft',$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11
-) $;
+) $$;
 
 CREATE OR REPLACE FUNCTION public.dfm_classic_list_market_movements(
   p_league_id text,p_market_id text
 ) RETURNS jsonb LANGUAGE sql SECURITY DEFINER SET search_path = ''
-AS $ SELECT dfm_private.list_market_movements('classic',$1,$2) $;
+AS $$ SELECT dfm_private.list_market_movements('classic',$1,$2) $$;
 CREATE OR REPLACE FUNCTION public.dfm_draft_list_market_movements(
   p_league_id text,p_market_id text
 ) RETURNS jsonb LANGUAGE sql SECURITY DEFINER SET search_path = ''
-AS $ SELECT dfm_private.list_market_movements('draft',$1,$2) $;
+AS $$ SELECT dfm_private.list_market_movements('draft',$1,$2) $$;
 
 CREATE OR REPLACE FUNCTION public.dfm_classic_list_awards(
   p_league_id text,p_round_number integer DEFAULT NULL
 ) RETURNS jsonb LANGUAGE sql SECURITY DEFINER SET search_path = ''
-AS $ SELECT dfm_private.list_awards('classic',$1,$2) $;
+AS $$ SELECT dfm_private.list_awards('classic',$1,$2) $$;
 CREATE OR REPLACE FUNCTION public.dfm_draft_list_awards(
   p_league_id text,p_round_number integer DEFAULT NULL
 ) RETURNS jsonb LANGUAGE sql SECURITY DEFINER SET search_path = ''
-AS $ SELECT dfm_private.list_awards('draft',$1,$2) $;
+AS $$ SELECT dfm_private.list_awards('draft',$1,$2) $$;
 
 CREATE OR REPLACE FUNCTION public.dfm_classic_list_coach_credits(
   p_league_id text,p_coach_id text DEFAULT NULL
 ) RETURNS jsonb LANGUAGE sql SECURITY DEFINER SET search_path = ''
-AS $ SELECT dfm_private.list_coach_credits('classic',$1,$2) $;
+AS $$ SELECT dfm_private.list_coach_credits('classic',$1,$2) $$;
 CREATE OR REPLACE FUNCTION public.dfm_draft_list_coach_credits(
   p_league_id text,p_coach_id text DEFAULT NULL
 ) RETURNS jsonb LANGUAGE sql SECURITY DEFINER SET search_path = ''
-AS $ SELECT dfm_private.list_coach_credits('draft',$1,$2) $;
+AS $$ SELECT dfm_private.list_coach_credits('draft',$1,$2) $$;
 
 CREATE OR REPLACE FUNCTION public.dfm_classic_list_news_articles(
   p_league_id text,p_limit integer DEFAULT 25
 ) RETURNS jsonb LANGUAGE sql SECURITY DEFINER SET search_path = ''
-AS $ SELECT dfm_private.list_news_articles('classic',$1,$2) $;
+AS $$ SELECT dfm_private.list_news_articles('classic',$1,$2) $$;
 CREATE OR REPLACE FUNCTION public.dfm_draft_list_news_articles(
   p_league_id text,p_limit integer DEFAULT 25
 ) RETURNS jsonb LANGUAGE sql SECURITY DEFINER SET search_path = ''
-AS $ SELECT dfm_private.list_news_articles('draft',$1,$2) $;
+AS $$ SELECT dfm_private.list_news_articles('draft',$1,$2) $$;
 
 CREATE OR REPLACE FUNCTION public.dfm_classic_list_ladder_results(
   p_league_id text
 ) RETURNS jsonb LANGUAGE sql SECURITY DEFINER SET search_path = ''
-AS $ SELECT dfm_private.list_ladder_results('classic',$1) $;
+AS $$ SELECT dfm_private.list_ladder_results('classic',$1) $$;
 CREATE OR REPLACE FUNCTION public.dfm_draft_list_ladder_results(
   p_league_id text
 ) RETURNS jsonb LANGUAGE sql SECURITY DEFINER SET search_path = ''
-AS $ SELECT dfm_private.list_ladder_results('draft',$1) $;
+AS $$ SELECT dfm_private.list_ladder_results('draft',$1) $$;
 
 REVOKE ALL ON FUNCTION public.dfm_classic_persist_market_snapshot(text,text,text,integer,text,text,boolean,text,text,boolean,jsonb,jsonb) FROM PUBLIC, anon, authenticated, service_role;
 REVOKE ALL ON FUNCTION public.dfm_draft_persist_market_snapshot(text,text,text,integer,text,text,boolean,text,text,boolean,jsonb,jsonb) FROM PUBLIC, anon, authenticated, service_role;
