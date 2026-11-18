@@ -113,6 +113,52 @@ SELECT public.dfm_draft_persist_ladder_result(
   61.0,61.0,1,1
 );
 
+-- Append a standalone movement once; an exact replay returns false.
+SELECT public.dfm_classic_append_price_movement(
+  'test-classic-league','test-classic-market','home',3,
+  0.60,0.62,1.6667,1.6129,'test-source-3','0.2.0','classic-home-revision-3'
+);
+DO $movement_replay$
+DECLARE inserted boolean;
+BEGIN
+  inserted := public.dfm_classic_append_price_movement(
+    'test-classic-league','test-classic-market','home',3,
+    0.60,0.62,1.6667,1.6129,'test-source-3','0.2.0','classic-home-revision-3'
+  );
+  IF inserted THEN RAISE EXCEPTION 'Exact movement replay must be a no-op'; END IF;
+END;
+$movement_replay$;
+
+-- Read repository RPCs are mode-scoped and available only through service_role.
+DO $read_assertions$
+BEGIN
+  IF jsonb_array_length(public.dfm_classic_list_market_movements(
+       'test-classic-league','test-classic-market')) <> 2 THEN
+    RAISE EXCEPTION 'Classic market history read failed';
+  END IF;
+  IF jsonb_array_length(public.dfm_draft_list_market_movements(
+       'test-draft-league','test-draft-market')) <> 0 THEN
+    RAISE EXCEPTION 'Draft market history leaked from another mode';
+  END IF;
+  IF jsonb_array_length(public.dfm_classic_list_awards('test-classic-league',NULL)) <> 1
+     OR jsonb_array_length(public.dfm_draft_list_awards('test-draft-league',NULL)) <> 1 THEN
+    RAISE EXCEPTION 'Award history read failed';
+  END IF;
+  IF jsonb_array_length(public.dfm_classic_list_coach_credits('test-classic-league',NULL)) <> 1
+     OR jsonb_array_length(public.dfm_draft_list_coach_credits('test-draft-league',NULL)) <> 1 THEN
+    RAISE EXCEPTION 'Coach credit history read failed';
+  END IF;
+  IF jsonb_array_length(public.dfm_classic_list_news_articles('test-classic-league',25)) <> 1
+     OR jsonb_array_length(public.dfm_draft_list_news_articles('test-draft-league',25)) <> 1 THEN
+    RAISE EXCEPTION 'Newsroom feed read failed';
+  END IF;
+  IF jsonb_array_length(public.dfm_classic_list_ladder_results('test-classic-league')) <> 1
+     OR jsonb_array_length(public.dfm_draft_list_ladder_results('test-draft-league')) <> 1 THEN
+    RAISE EXCEPTION 'Finalised ladder result read failed';
+  END IF;
+END;
+$read_assertions$;
+
 RESET ROLE;
 
 DO $assertions$
