@@ -21,7 +21,7 @@ migration history.
 ## Design boundary
 
 - All 14 mode-specific tables remain inside \`dfm_private\`.
-- Classic and Draft have separate tables and separate server-only RPC wrappers.
+- Classic and Draft have separate tables and separate server-only RPC wrappers for both writes and reads.
 - No API role receives direct access to the private schema or its tables.
 - Only the eight \`public.dfm_*_persist_*\` wrappers grant EXECUTE to
   \`service_role\`; wrappers are not executable by PUBLIC, anon or authenticated.
