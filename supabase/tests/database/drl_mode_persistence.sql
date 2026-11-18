@@ -41,18 +41,18 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_class WHERE oid=oid_value AND relrowsecurity) THEN
       RAISE EXCEPTION 'RLS disabled: %',q;
     END IF;
-    IF has_table_privilege('anon',q,'SELECT')
-       OR has_table_privilege('anon',q,'INSERT')
-       OR has_table_privilege('anon',q,'UPDATE')
-       OR has_table_privilege('anon',q,'DELETE')
-       OR has_table_privilege('authenticated',q,'SELECT')
-       OR has_table_privilege('authenticated',q,'INSERT')
-       OR has_table_privilege('authenticated',q,'UPDATE')
-       OR has_table_privilege('authenticated',q,'DELETE')
-       OR has_table_privilege('service_role',q,'SELECT')
-       OR has_table_privilege('service_role',q,'INSERT')
-       OR has_table_privilege('service_role',q,'UPDATE')
-       OR has_table_privilege('service_role',q,'DELETE') THEN
+    IF has_table_privilege('anon',q,'ALL')
+       OR has_table_privilege('authenticated',q,'ALL')
+       OR has_table_privilege('service_role',q,'ALL')
+       OR has_table_privilege('anon',q,'TRUNCATE')
+       OR has_table_privilege('authenticated',q,'TRUNCATE')
+       OR has_table_privilege('service_role',q,'TRUNCATE')
+       OR has_table_privilege('anon',q,'REFERENCES')
+       OR has_table_privilege('authenticated',q,'REFERENCES')
+       OR has_table_privilege('service_role',q,'REFERENCES')
+       OR has_table_privilege('anon',q,'TRIGGER')
+       OR has_table_privilege('authenticated',q,'TRIGGER')
+       OR has_table_privilege('service_role',q,'TRIGGER') THEN
       RAISE EXCEPTION 'Unexpected direct API table privilege: %',q;
     END IF;
   END LOOP;
@@ -71,6 +71,14 @@ BEGIN
       RAISE EXCEPTION 'RPC must be SECURITY DEFINER with an empty search_path: %',rpc_name;
     END IF;
   END LOOP;
+
+  IF EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE schemaname='dfm_private'
+      AND tablename = ANY(expected_tables)
+  ) THEN
+    RAISE EXCEPTION 'Unexpected row policy exists on private persistence tables';
+  END IF;
 
   IF EXISTS (
     SELECT 1 FROM pg_tables
