@@ -15,6 +15,8 @@
     "core/newsroom",
     "core/ladder_engine",
     "core/squad_engine",
-    "core/points_engine"
+    "core/points_engine",
+    "core/draft_engine",
+    "core/draft_order_engine"
   ]
 }
