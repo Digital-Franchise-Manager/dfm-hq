@@ -39,7 +39,7 @@ class WaiverClaim:
     claim_id: str
     player_id: str
     franchise_id: str
-    drop_player_id: str
+    drop_player_id: str | None
     submitted_at: datetime
 
 
