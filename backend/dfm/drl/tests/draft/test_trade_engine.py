@@ -48,7 +48,8 @@ class DraftTradeEngineTests(unittest.TestCase):
         state = self.propose()
         state = self.engine.accept_trade(state, "trade-1", "B", self.settings, self.now)
         state = self.engine.finalize_trade(
-            state, "trade-1", self.settings, self.now + timedelta(hours=1)
+            state, "trade-1", self.settings, self.now + timedelta(hours=1),
+            self.contexts, self.kickoff,
         )
         self.assertEqual(state.proposals[0].status, TradeStatus.COMPLETED)
         self.assertEqual(set(state.roster_for("A").player_ids), {"a2", "b1", "b2"})
@@ -91,8 +92,7 @@ class DraftTradeEngineTests(unittest.TestCase):
                 proposing_franchise_id="A", receiving_franchise_id="B",
                 offered_player_ids=("a1",), requested_player_ids=("b3",),
                 player_lockouts=self.contexts, round_first_kickoff=self.kickoff,
-                now=self.now, roster_drops=(("A", ("a2",)),),
-                free_agent_additions=(("B", ("fa1",)),),
+                now=self.now,
             )
 
     def test_locked_player_cannot_be_traded(self):
@@ -108,7 +108,8 @@ class DraftTradeEngineTests(unittest.TestCase):
         self.assertEqual(state.proposals[0].status, TradeStatus.VETOED)
         with self.assertRaisesRegex(ValueError, "must be accepted"):
             self.engine.finalize_trade(
-                state, "trade-1", self.settings, self.now + timedelta(hours=2)
+                state, "trade-1", self.settings, self.now + timedelta(hours=2),
+                self.contexts, self.kickoff,
             )
 
     def test_league_vote_can_veto_trade(self):
@@ -141,7 +142,8 @@ class DraftTradeEngineTests(unittest.TestCase):
             state, "vote-trade", "C", True, settings, self.now + timedelta(minutes=10)
         )
         state = self.engine.finalize_trade(
-            state, "vote-trade", settings, self.now + timedelta(hours=1)
+            state, "vote-trade", settings, self.now + timedelta(hours=1),
+            contexts, self.kickoff,
         )
         self.assertEqual(state.proposals[0].status, TradeStatus.VETOED)
         self.assertEqual(state.roster_for("A").player_ids, ("a1", "a2"))
