@@ -4,8 +4,8 @@ from collections import defaultdict
 from dataclasses import replace
 from typing import Iterable,Mapping
 from .models import AwardCategory,PlayerCandidate,FixtureInput,AwardRecord,CoachCredit
+from backend.dfm.drl.core.player_positions import POSITIONAL_XIII as POSITIONS
 POINTS={AwardCategory.MOTM:2,AwardCategory.MOTR:3,AwardCategory.TOTW:1,}
-POSITIONS=(("WFB",3),("CTR",2),("HLF",2),("EDG",2),("MID",3),("HOK",1))
 class AwardsEngine:
     mode="draft"
     def _best(self,candidates:Iterable[PlayerCandidate],totals:Mapping[str,float],require_one_player:bool=False)->list[PlayerCandidate]:
