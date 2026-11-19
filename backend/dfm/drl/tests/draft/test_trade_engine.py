@@ -66,7 +66,7 @@ class DraftTradeEngineTests(unittest.TestCase):
         state = self.propose()
         state = self.engine.accept_trade(state, "trade-1", "B", self.settings, self.now)
         with self.assertRaisesRegex(ValueError, "review period has not ended"):
-            self.engine.finalize_trade(state, "trade-1", self.settings, self.now)
+            self.engine.finalize_trade(state, "trade-1", self.settings, self.now, self.contexts, self.kickoff)
 
     def test_trade_deadline_blocks_new_proposals(self):
         settings = DraftTradeSettings(trade_deadline=self.now - timedelta(seconds=1))
