@@ -5,7 +5,7 @@ from dataclasses import replace
 from collections.abc import Iterable
 
 from backend.dfm.drl.draft.core.draft_order_engine.engine import DraftOrderEngine
-from backend.dfm.drl.draft.core.draft_order_engine.models import DraftOrderType
+from backend.dfm.drl.draft.core.draft_order_engine.models import DraftOrderType, DraftPickSlot
 from .models import DraftPick, DraftSession, DraftStatus
 
 
@@ -28,7 +28,9 @@ class DraftEngine:
         if len(set(players)) != len(players):
             raise ValueError("player pool cannot contain duplicate player IDs")
         # Generate once here to validate franchise order, round count and type.
-        DraftOrderEngine.generate_order(franchises, rounds, draft_type)
+        order = DraftOrderEngine.generate_order(franchises, rounds, draft_type)
+        if len(players) < len(order):
+            raise ValueError("player pool must contain at least one player for every draft pick")
         selected_type = DraftOrderType(draft_type)
         return DraftSession(franchises, players, rounds, selected_type)
 
@@ -69,7 +71,7 @@ class DraftEngine:
         return replace(session, picks=picks, status=status)
 
     @staticmethod
-    def get_next_pick(session: DraftSession):
+    def get_next_pick(session: DraftSession) -> DraftPickSlot | None:
         if session.remaining_picks <= 0:
             return None
         return DraftOrderEngine.get_pick(
