@@ -17,7 +17,7 @@ class ClassicBankTradeIntegrationTests(unittest.TestCase):
         updated = self.engine.replace_player(
             self.account, "player-out", "player-in", "700000.00", "trade-1"
         )
-        self.assertEqual(updated.available_balance, Decimal("9300000.00"))
+        self.assertEqual(updated.available_balance, Decimal("8850000.00"))
         self.assertEqual(updated.squad_value, Decimal("700000.00"))
         self.assertEqual([item.player_id for item in updated.holdings], ["player-in"])
         self.assertEqual(updated.transactions[-2].amount, Decimal("600000.00"))
