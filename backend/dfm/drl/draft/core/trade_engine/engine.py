@@ -120,14 +120,25 @@ class DraftTradeEngine:
 
     def finalize_trade(
         self, state: DraftLeagueState, proposal_id: str, settings: DraftTradeSettings,
-        now: datetime,
+        now: datetime, player_lockouts: dict[str, PlayerLockoutContext],
+        round_first_kickoff: datetime,
     ) -> DraftLeagueState:
         self._aware(now, "now")
+        self._aware(round_first_kickoff, "round_first_kickoff")
         proposal = self._proposal(state, proposal_id)
         if proposal.status is not TradeStatus.ACCEPTED:
             raise ValueError("trade must be accepted before completion")
         if proposal.review_until is None or now < proposal.review_until:
             raise ValueError("trade review period has not ended")
+        involved = set(proposal.offered_player_ids + proposal.requested_player_ids)
+        for _, ids in proposal.roster_drops + proposal.free_agent_additions:
+            involved.update(ids)
+        if not involved.issubset(player_lockouts):
+            raise ValueError("lockout context is required for every player at trade completion")
+        for player_id in sorted(involved):
+            self.lockout_engine.assert_player_tradeable(
+                player=player_lockouts[player_id], round_first_kickoff=round_first_kickoff, now=now
+            )
         if is_vetoed(state, proposal, settings):
             return self._replace_proposal(state, replace(proposal, status=TradeStatus.VETOED))
 
