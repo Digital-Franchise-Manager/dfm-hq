@@ -124,3 +124,16 @@ def process_waiver_entry(
     counts[winner.franchise_id] = counts.get(winner.franchise_id, 0) + 1
     return replace(state, league_state=updated_league, waiver_priority=priority,
                    entries=entries, moves_used=tuple(sorted(counts.items())))
+
+def cancel_claim(state: DraftWaiverState, claim_id: str, franchise_id: str) -> DraftWaiverState:
+    """Allow a coach to withdraw their own claim before waiver processing."""
+    claim = next((item for item in state.claims if item.claim_id == claim_id), None)
+    if claim is None:
+        raise ValueError("waiver claim not found")
+    if claim.franchise_id != franchise_id:
+        raise ValueError("only the claiming franchise can cancel this claim")
+    entry = next((item for item in state.entries if item.player_id == claim.player_id
+                  and item.status is WaiverEntryStatus.OPEN), None)
+    if entry is None:
+        raise ValueError("waiver claim can no longer be cancelled")
+    return replace(state, claims=tuple(item for item in state.claims if item.claim_id != claim_id))
