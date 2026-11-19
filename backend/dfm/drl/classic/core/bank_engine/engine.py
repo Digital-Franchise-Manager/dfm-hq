@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from dataclasses import replace
 from decimal import Decimal, InvalidOperation
-from math import isfinite
 
 from .models import (
     BankAccount,
