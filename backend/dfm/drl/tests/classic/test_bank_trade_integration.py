@@ -19,6 +19,7 @@ class ClassicBankTradeIntegrationTests(unittest.TestCase):
         )
         self.assertEqual(updated.available_balance, Decimal("8850000.00"))
         self.assertEqual(updated.squad_value, Decimal("700000.00"))
+        self.assertEqual(updated.team_value, Decimal("9550000.00"))
         self.assertEqual([item.player_id for item in updated.holdings], ["player-in"])
         self.assertEqual(updated.transactions[-2].amount, Decimal("600000.00"))
         self.assertEqual(updated.transactions[-1].amount, Decimal("700000.00"))
