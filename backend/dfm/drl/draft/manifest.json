@@ -17,6 +17,7 @@
     "core/squad_engine",
     "core/points_engine",
     "core/draft_engine",
-    "core/draft_order_engine"
+    "core/draft_order_engine",
+    "core/lockout_engine"
   ]
 }
