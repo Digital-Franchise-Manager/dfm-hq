@@ -35,6 +35,9 @@ class DraftTradeSettings:
     veto_vote_threshold: float = 0.5
 
     def __post_init__(self) -> None:
+        object.__setattr__(self, "veto_mode", VetoMode(self.veto_mode))
+        if not isinstance(self.review_period, timedelta):
+            raise ValueError("review_period must be a timedelta")
         if self.review_period.total_seconds() < 0:
             raise ValueError("review_period cannot be negative")
         if not 0 < self.veto_vote_threshold <= 1:
