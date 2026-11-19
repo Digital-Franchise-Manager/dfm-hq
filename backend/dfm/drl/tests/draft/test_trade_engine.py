@@ -97,9 +97,11 @@ class DraftTradeEngineTests(unittest.TestCase):
 
     def test_locked_player_cannot_be_traded(self):
         locked = dict(self.contexts)
-        locked["a1"] = PlayerLockoutContext("a1", self.now - timedelta(minutes=1))
+        locked["a1"] = PlayerLockoutContext(
+            "a1", self.kickoff + timedelta(hours=2), is_captain=True
+        )
         with self.assertRaisesRegex(ValueError, "is locked"):
-            self.propose(player_lockouts=locked)
+            self.propose(player_lockouts=locked, now=self.kickoff)
 
     def test_commissioner_can_veto_accepted_trade(self):
         state = self.propose()
@@ -134,8 +136,6 @@ class DraftTradeEngineTests(unittest.TestCase):
             receiving_franchise_id="B", offered_player_ids=("a1",),
             requested_player_ids=("b1",), player_lockouts=contexts,
             round_first_kickoff=self.kickoff, now=self.now,
-            roster_drops=(("A", ("a2",)),),
-            free_agent_additions=(("B", ("fa1",)),),
         )
         state = self.engine.accept_trade(state, "vote-trade", "B", settings, self.now)
         state = self.engine.vote_to_veto(
