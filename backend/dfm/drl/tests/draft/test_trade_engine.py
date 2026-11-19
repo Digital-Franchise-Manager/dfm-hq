@@ -15,7 +15,7 @@ class DraftTradeEngineTests(unittest.TestCase):
         self.now = datetime(2027, 3, 1, 8, tzinfo=timezone.utc)
         self.kickoff = self.now + timedelta(days=2)
         self.state = DraftLeagueState(
-            league_id="league-1", roster_size=3,
+            league_id="league-1", roster_size=3, minimum_valid_players=1,
             rosters=(
                 DraftRoster("A", ("a1", "a2", "a3")),
                 DraftRoster("B", ("b1", "b2", "b3")),
@@ -151,7 +151,7 @@ class DraftTradeEngineTests(unittest.TestCase):
 
     def test_league_vote_can_veto_trade(self):
         state = DraftLeagueState(
-            league_id="league-2", roster_size=2,
+            league_id="league-2", roster_size=2, minimum_valid_players=1,
             rosters=(
                 DraftRoster("A", ("a1", "a2")), DraftRoster("B", ("b1", "b2")),
                 DraftRoster("C", ("c1", "c2")), DraftRoster("D", ("d1", "d2")),
