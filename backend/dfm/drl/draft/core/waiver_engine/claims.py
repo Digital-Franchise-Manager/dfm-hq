@@ -11,7 +11,7 @@ from .priority import priority_rank, rotate_priority
 
 def submit_claim(
     state: DraftWaiverState, settings: WaiverSettings, *,
-    claim_id: str, player_id: str, franchise_id: str, drop_player_id: str,
+    claim_id: str, player_id: str, franchise_id: str, drop_player_id: str | None,
     now: datetime,
 ) -> DraftWaiverState:
     if now.tzinfo is None or now.utcoffset() is None:
@@ -31,8 +31,10 @@ def submit_claim(
     if any(item.player_id == player_id and item.claim_id == claim_id for item in state.claims):
         raise ValueError("duplicate claim")
     roster = state.league_state.roster_for(franchise_id)
-    if drop_player_id not in roster.player_ids:
-        raise ValueError("a waiver claim must nominate a player from the current roster to drop")
+    if drop_player_id is not None and drop_player_id not in roster.player_ids:
+        raise ValueError("a nominated waiver drop must belong to the claiming franchise")
+    if len(roster.player_ids) >= state.league_state.roster_size and drop_player_id is None:
+        raise ValueError("a full squad must nominate a player to drop for a waiver claim")
     if settings.move_limit_per_franchise is not None and state.moves_for(franchise_id) >= settings.move_limit_per_franchise:
         raise ValueError("franchise waiver/free-agent move limit has been reached")
     claim = WaiverClaim(claim_id, player_id, franchise_id, drop_player_id, now.astimezone(timezone.utc))
@@ -63,17 +65,22 @@ def process_waiver_entry(
     winner = None
     for claim in claims:
         roster = league.roster_for(claim.franchise_id)
-        if claim.drop_player_id not in roster.player_ids:
+        if claim.drop_player_id is not None and claim.drop_player_id not in roster.player_ids:
+            continue
+        if len(roster.player_ids) >= league.roster_size and claim.drop_player_id is None:
             continue
         if settings.move_limit_per_franchise is not None and state.moves_for(claim.franchise_id) >= settings.move_limit_per_franchise:
             continue
-        if player_id not in lockout_contexts or claim.drop_player_id not in lockout_contexts:
-            raise ValueError("lockout contexts are required for the claimed and dropped players")
+        if player_id not in lockout_contexts:
+            raise ValueError("lockout context is required for the claimed player")
+        if claim.drop_player_id is not None and claim.drop_player_id not in lockout_contexts:
+            raise ValueError("lockout context is required for the nominated drop player")
         try:
             engine.assert_player_tradeable(player=lockout_contexts[player_id],
                                            round_first_kickoff=round_first_kickoff, now=now)
-            engine.assert_player_tradeable(player=lockout_contexts[claim.drop_player_id],
-                                           round_first_kickoff=round_first_kickoff, now=now)
+            if claim.drop_player_id is not None:
+                engine.assert_player_tradeable(player=lockout_contexts[claim.drop_player_id],
+                                               round_first_kickoff=round_first_kickoff, now=now)
         except ValueError:
             continue
         winner = claim
@@ -95,12 +102,13 @@ def process_waiver_entry(
     updated_rosters = []
     for item in league.rosters:
         if item.franchise_id == winner.franchise_id:
-            ids = (set(item.player_ids) - {winner.drop_player_id}) | {player_id}
+            ids = (set(item.player_ids) - ({winner.drop_player_id} if winner.drop_player_id else set())) | {player_id}
             updated_rosters.append(replace(item, player_ids=tuple(sorted(ids))))
         else:
             updated_rosters.append(item)
     free_agents = set(league.free_agent_player_ids)
-    free_agents.add(winner.drop_player_id)
+    if winner.drop_player_id is not None:
+        free_agents.add(winner.drop_player_id)
     updated_league = replace(
         league,
         rosters=tuple(updated_rosters),
