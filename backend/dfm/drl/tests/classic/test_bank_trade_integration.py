@@ -37,9 +37,12 @@ class ClassicBankTradeIntegrationTests(unittest.TestCase):
             self.engine.replace_player(
                 self.account, "missing", "player-in", "100.00", "trade-3"
             )
+        account = self.engine.purchase_player(
+            self.account, "already-held", "100.00", "buy-existing"
+        )
         with self.assertRaisesRegex(ValueError, "already registered"):
             self.engine.replace_player(
-                self.account, "player-out", "player-out", "100.00", "trade-4"
+                account, "player-out", "already-held", "100.00", "trade-4"
             )
 
 
