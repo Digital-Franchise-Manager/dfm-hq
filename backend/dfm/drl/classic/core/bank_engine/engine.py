@@ -213,6 +213,7 @@ class ClassicBankEngine:
         return {
             "available_balance": account.available_balance,
             "squad_value": account.squad_value,
+            "team_value": account.team_value,
             "total_expenditure": account.total_expenditure,
             "total_income": account.total_income,
             "players_registered": len(account.holdings),
