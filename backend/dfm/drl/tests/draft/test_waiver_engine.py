@@ -70,6 +70,15 @@ class DraftWaiverEngineTests(unittest.TestCase):
         self.assertEqual(state.waiver_priority, ("A", "C", "B"))
         self.assertEqual(state.moves_for("B"), 1)
 
+    def test_claimant_can_cancel_their_own_pending_claim(self):
+        state = self.drop()
+        state = self.engine.submit_claim(
+            state, self.settings, claim_id="claim-b", player_id="a1",
+            franchise_id="B", drop_player_id="b1", now=self.now + timedelta(hours=1),
+        )
+        state = self.engine.cancel_claim(state, "claim-b", "B")
+        self.assertEqual(state.claims, ())
+
     def test_unclaimed_player_becomes_free_agent(self):
         state = self.drop()
         state = self.engine.process_waiver(
