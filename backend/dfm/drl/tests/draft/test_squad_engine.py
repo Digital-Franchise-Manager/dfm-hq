@@ -202,8 +202,11 @@ class DraftSquadEngineTests(unittest.TestCase):
 
     def test_bench_player_replaces_at_most_one_unavailable_starter(self):
         selection, players = build_squad(emergency_assignments={"WFB": "BENCH-0"})
+        changed = list(players)
+        changed[14] = DraftPlayer("BENCH-1", "WFB", fantasy_points=11,
+                                  selected_position="WFB")
         unavailable = selection.starting_xiii["WFB"][:2]
-        score = self.engine.score_squad(selection, players, unavailable)
+        score = self.engine.score_squad(selection, tuple(changed), unavailable)
         ids = [replacement.replacement_player_id for replacement in score.replacements]
         self.assertEqual(len(ids), len(set(ids)))
         self.assertEqual(len(ids), 2)
