@@ -155,7 +155,7 @@ class DraftTradeEngine:
             target = proposer if franchise_id == proposal.proposing_franchise_id else receiver
             target.update(ids)
 
-        if len(proposer) != state.roster_size or len(receiver) != state.roster_size:
+        if len(proposer) > state.roster_size or len(receiver) > state.roster_size:
             raise ValueError("trade roster adjustments no longer satisfy configured squad size")
         free_agents = set(state.free_agent_player_ids)
         additions = {player for _, ids in proposal.free_agent_additions for player in ids}
