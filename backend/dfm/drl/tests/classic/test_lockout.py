@@ -1,5 +1,6 @@
 import unittest
 from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 from backend.dfm.drl.classic.core.lockout_engine import (
     ClassicLockoutEngine,
@@ -108,6 +109,21 @@ class ClassicLockoutEngineTests(unittest.TestCase):
                 round_first_kickoff=self.first_kickoff,
                 now=self.first_kickoff,
             )
+
+
+    def test_one_hour_deadline_uses_elapsed_time_across_sydney_dst_transition(self):
+        sydney = ZoneInfo("Australia/Sydney")
+        first = datetime(2026, 10, 1, 20, 0, tzinfo=sydney)
+        # Sydney jumps from 02:00 to 03:00 on this date.
+        match = datetime(2026, 10, 4, 3, 30, tzinfo=sydney)
+        player = PlayerLockoutContext("dst-player", match)
+        decision = self.engine.evaluate_player(
+            player=player,
+            round_first_kickoff=first,
+            now=datetime(2026, 10, 4, 1, 45, tzinfo=sydney),
+        )
+        local_cutoff = decision.lockout_at.astimezone(sydney)
+        self.assertEqual((local_cutoff.hour, local_cutoff.minute), (1, 30))
 
 
 if __name__ == "__main__":
