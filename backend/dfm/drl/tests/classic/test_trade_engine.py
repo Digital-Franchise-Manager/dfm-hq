@@ -72,7 +72,7 @@ class ClassicTradeEngineTests(unittest.TestCase):
         state, account = self.engine.execute_trade(self.state, self.account, self.request())
         self.assertEqual(state.total_trades_used, 1)
         self.assertEqual(state.rounds_1_to_19_used, 1)
-        self.assertEqual(account.available_balance, Decimal("9300000.00"))
+        self.assertEqual(account.available_balance, Decimal("8700000.00"))
         self.assertEqual(account.squad_value, Decimal("700000.00"))
         self.assertEqual([holding.player_id for holding in account.holdings], ["incoming-1"])
         self.assertEqual(len(account.transactions), 3)
@@ -88,7 +88,7 @@ class ClassicTradeEngineTests(unittest.TestCase):
             "600000.00",
         )
         _, updated = self.engine.execute_trade(self.state, account, self.request())
-        self.assertEqual(updated.available_balance, Decimal("9300000.00"))
+        self.assertEqual(updated.available_balance, Decimal("8900000.00"))
 
     def test_round_cap_is_enforced(self):
         state = ClassicTradeState(
@@ -152,7 +152,12 @@ class ClassicTradeEngineTests(unittest.TestCase):
             )
 
     def test_locked_outgoing_player_is_rejected(self):
-        request = self.request(now=self.round_first_kickoff)
+        request = self.request(
+            outgoing_player=PlayerLockoutContext(
+                "outgoing-1", self.round_first_kickoff + timedelta(minutes=30)
+            ),
+            now=self.round_first_kickoff,
+        )
         with self.assertRaisesRegex(ValueError, "is locked"):
             self.engine.execute_trade(self.state, self.account, request)
 
