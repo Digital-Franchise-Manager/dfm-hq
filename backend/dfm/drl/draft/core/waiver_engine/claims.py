@@ -62,6 +62,14 @@ def process_waiver_entry(
         (item for item in state.claims if item.player_id == player_id),
         key=lambda item: priority_rank(state.waiver_priority, item.franchise_id),
     )
+    if player_id not in lockout_contexts:
+        raise ValueError("lockout context is required for the claimed player")
+    # A player whose own match has locked cannot be awarded or moved to free agency.
+    engine.assert_player_tradeable(
+        player=lockout_contexts[player_id],
+        round_first_kickoff=round_first_kickoff,
+        now=now,
+    )
     winner = None
     for claim in claims:
         roster = league.roster_for(claim.franchise_id)
@@ -71,13 +79,9 @@ def process_waiver_entry(
             continue
         if settings.move_limit_per_franchise is not None and state.moves_for(claim.franchise_id) >= settings.move_limit_per_franchise:
             continue
-        if player_id not in lockout_contexts:
-            raise ValueError("lockout context is required for the claimed player")
         if claim.drop_player_id is not None and claim.drop_player_id not in lockout_contexts:
             raise ValueError("lockout context is required for the nominated drop player")
         try:
-            engine.assert_player_tradeable(player=lockout_contexts[player_id],
-                                           round_first_kickoff=round_first_kickoff, now=now)
             if claim.drop_player_id is not None:
                 engine.assert_player_tradeable(player=lockout_contexts[claim.drop_player_id],
                                                round_first_kickoff=round_first_kickoff, now=now)
