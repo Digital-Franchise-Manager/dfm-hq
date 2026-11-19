@@ -10,7 +10,7 @@ from .models import DraftWaiverState, WaiverSettings
 
 def add_free_agent(
     state: DraftWaiverState, settings: WaiverSettings, *,
-    franchise_id: str, player_id: str, drop_player_id: str,
+    franchise_id: str, player_id: str, drop_player_id: str | None,
     lockout_contexts: dict[str, PlayerLockoutContext],
     round_first_kickoff: datetime, now: datetime,
     lockout_engine: DraftLockoutEngine | None = None,
@@ -22,26 +22,29 @@ def add_free_agent(
     if settings.move_limit_per_franchise is not None and state.moves_for(franchise_id) >= settings.move_limit_per_franchise:
         raise ValueError("franchise waiver/free-agent move limit has been reached")
     roster = state.league_state.roster_for(franchise_id)
-    if drop_player_id not in roster.player_ids:
-        raise ValueError("a free-agent acquisition must nominate a current roster player to drop")
-    if player_id not in lockout_contexts or drop_player_id not in lockout_contexts:
-        raise ValueError("lockout contexts are required for the acquired and dropped players")
+    if drop_player_id is not None and drop_player_id not in roster.player_ids:
+        raise ValueError("a nominated drop must belong to the acquiring franchise")
+    if len(roster.player_ids) >= state.league_state.roster_size and drop_player_id is None:
+        raise ValueError("a full squad must nominate a player to drop for a free-agent acquisition")
+    if player_id not in lockout_contexts or (drop_player_id is not None and drop_player_id not in lockout_contexts):
+        raise ValueError("lockout contexts are required for the acquired and any dropped player")
     engine = lockout_engine or DraftLockoutEngine()
     engine.assert_player_tradeable(player=lockout_contexts[player_id],
                                    round_first_kickoff=round_first_kickoff, now=now)
-    engine.assert_player_tradeable(player=lockout_contexts[drop_player_id],
-                                   round_first_kickoff=round_first_kickoff, now=now)
+    if drop_player_id is not None:
+        engine.assert_player_tradeable(player=lockout_contexts[drop_player_id],
+                                       round_first_kickoff=round_first_kickoff, now=now)
     updated_rosters = []
     for item in state.league_state.rosters:
         if item.franchise_id == franchise_id:
-            ids = (set(item.player_ids) - {drop_player_id}) | {player_id}
+            ids = (set(item.player_ids) - ({drop_player_id} if drop_player_id else set())) | {player_id}
             updated_rosters.append(replace(item, player_ids=tuple(sorted(ids))))
         else:
             updated_rosters.append(item)
     league = replace(
         state.league_state, rosters=tuple(updated_rosters),
         free_agent_player_ids=tuple(sorted(
-            (set(state.league_state.free_agent_player_ids) - {player_id}) | {drop_player_id}
+            (set(state.league_state.free_agent_player_ids) - {player_id}) | ({drop_player_id} if drop_player_id else set())
         )),
     )
     counts = dict(state.moves_used)
