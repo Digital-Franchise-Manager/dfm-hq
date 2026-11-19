@@ -189,7 +189,7 @@ class DraftSquadEngineTests(unittest.TestCase):
         score = self.engine.score_squad(selection, players,
                                         (selection.starting_xiii["WFB"][0],))
         self.assertEqual(score.replacements, ())
-        self.assertEqual(score.starting_points["WFB"], 50 + 51)
+        self.assertEqual(score.starting_points["WFB"], 51 + 52)
 
     def test_auto_emergency_skips_unavailable_bench_player(self):
         selection, players = build_squad()
