@@ -2,6 +2,7 @@
 from dataclasses import dataclass
 from enum import Enum
 from typing import Mapping
+from backend.dfm.drl.core.player_positions import validate_player_positions
 class AwardCategory(str,Enum):
     MOTM="man_of_the_match"
     MOTR="man_of_the_round"
@@ -21,6 +22,7 @@ class PlayerCandidate:
     nrl_team_points:int=0
     def __post_init__(self):
         if not all(v.strip() for v in (self.player_id,self.player_name,self.franchise_id,self.coach_id)) or not self.base_score>=0:raise ValueError("candidate identifiers and score must be valid")
+        validate_player_positions(self.primary_position, self.secondary_positions)
 @dataclass(frozen=True,slots=True)
 class FixtureInput:
     fixture_id:str
