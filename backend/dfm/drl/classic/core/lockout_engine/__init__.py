@@ -1,5 +1,5 @@
 """Classic lockout engine public interface."""
-from .engine import ClassicLockoutEngine, PlayerLockedError
+from .engine import RoleAssignmentLockedError, ClassicLockoutEngine, PlayerLockedError
 from .models import LockoutDecision, LockoutReason, PlayerLockoutContext
 
 __all__ = [
@@ -7,5 +7,6 @@ __all__ = [
     "LockoutDecision",
     "LockoutReason",
     "PlayerLockedError",
+    "RoleAssignmentLockedError",
     "PlayerLockoutContext",
 ]
