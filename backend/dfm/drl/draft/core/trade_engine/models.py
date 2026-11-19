@@ -13,6 +13,7 @@ class TradeStatus(str, Enum):
     REJECTED = "rejected"
     VETOED = "vetoed"
     EXPIRED = "expired"
+    COUNTERED = "countered"
 
 
 class VetoMode(str, Enum):
@@ -69,6 +70,11 @@ class TradeProposal:
     accepted_at: datetime | None = None
     review_until: datetime | None = None
     votes: tuple[VetoVote, ...] = ()
+    parent_proposal_id: str | None = None
+    countered_by_proposal_id: str | None = None
+    invalid_roster_franchise_ids: tuple[str, ...] = ()
+    confirmed_invalid_roster_franchise_ids: tuple[str, ...] = ()
+    roster_validity_deadline: datetime | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -91,6 +97,11 @@ class DraftLeagueState:
     waiver_player_ids: tuple[str, ...] = ()
     proposals: tuple[TradeProposal, ...] = ()
     completed_trades: tuple[DraftTradeRecord, ...] = ()
+    minimum_valid_players: int = 17
+
+    def effective_score_for(self, franchise_id: str, raw_score: int | float) -> int | float:
+        """A franchise below the minimum squad size scores zero for the round."""
+        return raw_score if len(self.roster_for(franchise_id).player_ids) >= self.minimum_valid_players else 0
 
     def roster_for(self, franchise_id: str) -> DraftRoster:
         for roster in self.rosters:

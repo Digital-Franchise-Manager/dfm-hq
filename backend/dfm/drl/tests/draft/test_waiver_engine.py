@@ -13,7 +13,7 @@ class DraftWaiverEngineTests(unittest.TestCase):
         self.now = datetime(2027, 3, 1, 8, tzinfo=timezone.utc)
         self.kickoff = self.now + timedelta(days=3)
         self.league = DraftLeagueState(
-            league_id="league-1", roster_size=3,
+            league_id="league-1", roster_size=3, minimum_valid_players=1,
             rosters=(
                 DraftRoster("A", ("a1", "a2", "a3")),
                 DraftRoster("B", ("b1", "b2", "b3")),

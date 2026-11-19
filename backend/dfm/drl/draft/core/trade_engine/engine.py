@@ -38,6 +38,7 @@ class DraftTradeEngine:
         now: datetime,
         roster_drops: tuple[tuple[str, tuple[str, ...]], ...] = (),
         free_agent_additions: tuple[tuple[str, tuple[str, ...]], ...] = (),
+        confirm_invalid_roster: bool = False,
     ) -> DraftLeagueState:
         self._aware(now, "now")
         self._aware(round_first_kickoff, "round_first_kickoff")
@@ -60,6 +61,16 @@ class DraftTradeEngine:
                 round_first_kickoff=round_first_kickoff,
                 now=now,
             )
+        projected = self._projected_roster_sizes(
+            state, proposing_franchise_id, receiving_franchise_id,
+            offered_player_ids, requested_player_ids, roster_drops, free_agent_additions,
+        )
+        invalid = tuple(sorted(fid for fid, size in projected.items() if size < state.minimum_valid_players))
+        if proposing_franchise_id in invalid and not confirm_invalid_roster:
+            raise ValueError(
+                f"confirmation required: this trade leaves your squad with {projected[proposing_franchise_id]} players; "
+                f"minimum is {state.minimum_valid_players}"
+            )
         proposal = TradeProposal(
             proposal_id=proposal_id,
             proposing_franchise_id=proposing_franchise_id,
@@ -69,12 +80,16 @@ class DraftTradeEngine:
             roster_drops=tuple(roster_drops),
             free_agent_additions=tuple(free_agent_additions),
             proposed_at=now.astimezone(timezone.utc),
+            invalid_roster_franchise_ids=invalid,
+            confirmed_invalid_roster_franchise_ids=((proposing_franchise_id,) if proposing_franchise_id in invalid else ()),
+            roster_validity_deadline=round_first_kickoff.astimezone(timezone.utc) if invalid else None,
         )
         return replace(state, proposals=(*state.proposals, proposal))
 
     def accept_trade(
         self, state: DraftLeagueState, proposal_id: str, franchise_id: str,
         settings: DraftTradeSettings, now: datetime,
+        confirm_invalid_roster: bool = False,
     ) -> DraftLeagueState:
         self._aware(now, "now")
         proposal = self._proposal(state, proposal_id)
@@ -84,9 +99,27 @@ class DraftTradeEngine:
             raise ValueError("only the receiving franchise can accept this proposal")
         if settings.trade_deadline and now >= settings.trade_deadline:
             raise ValueError("Draft trade deadline has passed")
+        receiver_size = self._projected_roster_sizes(
+            state, proposal.proposing_franchise_id, proposal.receiving_franchise_id,
+            proposal.offered_player_ids, proposal.requested_player_ids,
+            proposal.roster_drops, proposal.free_agent_additions,
+        )[proposal.receiving_franchise_id]
+        receiver_invalid = receiver_size < state.minimum_valid_players
+        if receiver_invalid and not confirm_invalid_roster:
+            raise ValueError(
+                f"confirmation required: accepting this trade leaves your squad with {receiver_size} players; "
+                f"minimum is {state.minimum_valid_players}"
+            )
+        invalid = set(proposal.invalid_roster_franchise_ids)
+        confirmed = set(proposal.confirmed_invalid_roster_franchise_ids)
+        if receiver_invalid:
+            invalid.add(franchise_id)
+            confirmed.add(franchise_id)
         accepted = replace(
             proposal, status=TradeStatus.ACCEPTED, accepted_at=now.astimezone(timezone.utc),
             review_until=(now + settings.review_period).astimezone(timezone.utc),
+            invalid_roster_franchise_ids=tuple(sorted(invalid)),
+            confirmed_invalid_roster_franchise_ids=tuple(sorted(confirmed)),
         )
         return self._replace_proposal(state, accepted)
 
@@ -139,6 +172,8 @@ class DraftTradeEngine:
             self.lockout_engine.assert_player_tradeable(
                 player=player_lockouts[player_id], round_first_kickoff=round_first_kickoff, now=now
             )
+        if set(proposal.invalid_roster_franchise_ids) - set(proposal.confirmed_invalid_roster_franchise_ids):
+            raise ValueError("every franchise warned about an invalid squad must confirm before trade completion")
         if is_vetoed(state, proposal, settings):
             return self._replace_proposal(state, replace(proposal, status=TradeStatus.VETOED))
 
@@ -187,6 +222,51 @@ class DraftTradeEngine:
         ), completed)
         validate_league_state(updated)
         return updated
+
+    def counter_offer(
+        self, state: DraftLeagueState, settings: DraftTradeSettings, *,
+        proposal_id: str, countering_franchise_id: str,
+        offered_player_ids: tuple[str, ...], requested_player_ids: tuple[str, ...],
+        player_lockouts: dict[str, PlayerLockoutContext],
+        round_first_kickoff: datetime, now: datetime,
+        roster_drops: tuple[tuple[str, tuple[str, ...]], ...] = (),
+        free_agent_additions: tuple[tuple[str, tuple[str, ...]], ...] = (),
+        confirm_invalid_roster: bool = False,
+    ) -> DraftLeagueState:
+        """Replace a pending offer with a linked counter-offer while retaining history."""
+        original = self._proposal(state, proposal_id)
+        if original.status is not TradeStatus.PROPOSED:
+            raise ValueError("only a pending proposal can be countered")
+        if countering_franchise_id != original.receiving_franchise_id:
+            raise ValueError("only the receiving franchise can counter this proposal")
+        countered = replace(original, status=TradeStatus.COUNTERED, countered_by_proposal_id=proposal_id + ":counter")
+        state = self._replace_proposal(state, countered)
+        next_state = self.propose_trade(
+            state, settings, proposal_id=proposal_id + ":counter",
+            proposing_franchise_id=original.receiving_franchise_id,
+            receiving_franchise_id=original.proposing_franchise_id,
+            offered_player_ids=offered_player_ids, requested_player_ids=requested_player_ids,
+            player_lockouts=player_lockouts, round_first_kickoff=round_first_kickoff,
+            now=now, roster_drops=roster_drops, free_agent_additions=free_agent_additions,
+            confirm_invalid_roster=confirm_invalid_roster,
+        )
+        counter = self._proposal(next_state, proposal_id + ":counter")
+        return self._replace_proposal(next_state, replace(counter, parent_proposal_id=proposal_id))
+
+    @staticmethod
+    def _projected_roster_sizes(
+        state: DraftLeagueState, proposer_id: str, receiver_id: str,
+        offered: tuple[str, ...], requested: tuple[str, ...],
+        drops: tuple[tuple[str, tuple[str, ...]], ...],
+        additions: tuple[tuple[str, tuple[str, ...]], ...],
+    ) -> dict[str, int]:
+        sizes = {proposer_id: len(state.roster_for(proposer_id).player_ids) - len(offered) + len(requested),
+                 receiver_id: len(state.roster_for(receiver_id).player_ids) - len(requested) + len(offered)}
+        for franchise_id, ids in drops:
+            sizes[franchise_id] -= len(ids)
+        for franchise_id, ids in additions:
+            sizes[franchise_id] += len(ids)
+        return sizes
 
     @staticmethod
     def _proposal(state: DraftLeagueState, proposal_id: str) -> TradeProposal:
