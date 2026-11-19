@@ -45,6 +45,10 @@ class DraftEngineTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "duplicate player"):
             self.engine.create_draft(("A",), ("p1", "p1"), 1, "linear")
 
+    def test_rejects_player_pool_smaller_than_total_picks(self):
+        with self.assertRaisesRegex(ValueError, "one player for every draft pick"):
+            self.engine.create_draft(("A", "B"), ("p1",), 1, "linear")
+
     def test_completed_draft_cannot_accept_more_picks(self):
         session = self.session
         for index, franchise in enumerate(("A", "B", "C", "C", "B", "A")):
