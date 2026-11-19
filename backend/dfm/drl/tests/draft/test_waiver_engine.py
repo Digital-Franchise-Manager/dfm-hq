@@ -127,12 +127,14 @@ class DraftWaiverEngineTests(unittest.TestCase):
 
     def test_locked_player_cannot_be_added_from_free_agency(self):
         contexts = dict(self.contexts)
-        contexts["fa1"] = PlayerLockoutContext("fa1", self.now - timedelta(minutes=1))
+        contexts["fa1"] = PlayerLockoutContext(
+            "fa1", self.kickoff + timedelta(hours=1), is_captain=True
+        )
         with self.assertRaisesRegex(ValueError, "is locked"):
             self.engine.add_free_agent(
                 self.state, self.settings, franchise_id="A", player_id="fa1",
                 drop_player_id="a1", lockout_contexts=contexts,
-                round_first_kickoff=self.kickoff, now=self.now,
+                round_first_kickoff=self.kickoff, now=self.kickoff,
             )
 
 
