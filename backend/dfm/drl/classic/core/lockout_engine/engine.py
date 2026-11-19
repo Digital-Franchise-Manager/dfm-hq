@@ -23,6 +23,18 @@ class PlayerLockedError(ValueError):
         )
 
 
+
+class RoleAssignmentLockedError(ValueError):
+    """Raised when a Captain, Vice-Captain or Emergency assignment is frozen."""
+
+    def __init__(self, role: str, lockout_at: datetime) -> None:
+        self.role = role
+        self.lockout_at = lockout_at
+        super().__init__(
+            f"{role} assignment is locked from {lockout_at.isoformat()}."
+        )
+
+
 class ClassicLockoutEngine:
     """Enforces Classic lockout rules without importing Draft code."""
 
@@ -73,6 +85,40 @@ class ClassicLockoutEngine:
             reason=reason,
             evaluated_at=evaluated_at,
         )
+
+
+    def assert_captaincy_change_allowed(
+        self,
+        *,
+        affected_players: tuple[PlayerLockoutContext, ...],
+        round_first_kickoff: datetime,
+        now: datetime | None = None,
+    ) -> tuple[LockoutDecision, ...]:
+        """Guard all current and proposed Captain/VC players before changing roles.
+
+        Callers must include every player whose Captain or Vice-Captain
+        assignment would change. A role change freezes at the first round
+        kickoff; an affected player can freeze earlier at their own deadline.
+        """
+        if not affected_players:
+            raise ValueError("affected_players must include every player in the role change")
+        evaluated_at = now if now is not None else datetime.now(timezone.utc)
+        self._require_aware(evaluated_at, "now")
+        self._require_aware(round_first_kickoff, "round_first_kickoff")
+        if evaluated_at.astimezone(timezone.utc) >= round_first_kickoff.astimezone(timezone.utc):
+            raise RoleAssignmentLockedError("Captain/Vice-Captain", round_first_kickoff.astimezone(timezone.utc))
+        decisions = tuple(
+            self.evaluate_player(
+                player=player,
+                round_first_kickoff=round_first_kickoff,
+                now=evaluated_at,
+            )
+            for player in affected_players
+        )
+        for decision in decisions:
+            if decision.is_locked:
+                raise PlayerLockedError(decision)
+        return decisions
 
     def assert_player_tradeable(
         self,
