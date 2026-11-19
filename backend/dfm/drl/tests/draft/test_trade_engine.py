@@ -64,23 +64,26 @@ class DraftTradeEngineTests(unittest.TestCase):
                      DraftRoster("B", tuple(f"b{i}" for i in range(17)))),
         )
         contexts = {p: PlayerLockoutContext(p, self.kickoff + timedelta(hours=i))
-                    for i, p in enumerate(("a0", "b0", "b1"))}
+                    for i, p in enumerate(("a0", "a1", "b0"))}
         args = dict(proposal_id="unequal", proposing_franchise_id="A", receiving_franchise_id="B",
-                    offered_player_ids=("a0",), requested_player_ids=("b0", "b1"),
+                    offered_player_ids=("a0", "a1"), requested_player_ids=("b0",),
                     player_lockouts=contexts, round_first_kickoff=self.kickoff, now=self.now)
         with self.assertRaisesRegex(ValueError, "confirmation required"):
             self.engine.propose_trade(league, self.settings, **args)
         state = self.engine.propose_trade(league, self.settings, **args, confirm_invalid_roster=True)
         self.assertEqual(state.proposals[0].invalid_roster_franchise_ids, ("A",))
-        self.assertEqual(state.effective_score_for("A", 125), 125)
+        self.assertEqual(state.proposals[0].confirmed_invalid_roster_franchise_ids, ("A",))
+        state = self.engine.accept_trade(state, "unequal", "B", self.settings, self.now)
+        state = self.engine.finalize_trade(state, "unequal", self.settings, self.now + timedelta(hours=1), contexts, self.kickoff)
+        self.assertEqual(len(state.roster_for("A").player_ids), 16)
+        self.assertEqual(state.effective_score_for("A", 125), 0)
         self.assertEqual(state.effective_score_for("B", 125), 125)
-        self.assertEqual(league.effective_score_for("A", 125), 125)
 
     def test_counter_offer_links_history_and_reverses_trading_roles(self):
         state = self.propose()
         state = self.engine.counter_offer(
             state, self.settings, proposal_id="trade-1", countering_franchise_id="B",
-            offered_player_ids=("b3",), requested_player_ids=("a2",),
+            offered_player_ids=("b2",), requested_player_ids=("a3",),
             player_lockouts=self.contexts, round_first_kickoff=self.kickoff, now=self.now,
         )
         original, counter = state.proposals
