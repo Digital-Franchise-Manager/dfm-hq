@@ -42,6 +42,11 @@ def add_veto_vote(
         accepted_at=proposal.accepted_at,
         review_until=proposal.review_until,
         votes=(*proposal.votes, VetoVote(franchise_id, veto, voted_at)),
+        parent_proposal_id=proposal.parent_proposal_id,
+        countered_by_proposal_id=proposal.countered_by_proposal_id,
+        invalid_roster_franchise_ids=proposal.invalid_roster_franchise_ids,
+        confirmed_invalid_roster_franchise_ids=proposal.confirmed_invalid_roster_franchise_ids,
+        roster_validity_deadline=proposal.roster_validity_deadline,
     )
 
 
