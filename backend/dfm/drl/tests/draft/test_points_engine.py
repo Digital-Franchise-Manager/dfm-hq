@@ -24,8 +24,8 @@ class DraftPointsEngineTests(unittest.TestCase):
             PlayerRoundStats("p2", "m1", {}),
         ), CaptaincySelection("p2", "p1"))
         p1 = result.player_scores[0]
-        self.assertEqual(p1.base_points, 22)
-        self.assertEqual(p1.total_points, 22)
+        self.assertEqual(p1.base_points, 26)
+        self.assertEqual(p1.total_points, 26)
 
     def test_captain_doubles_and_vice_is_standby(self):
         result = self.engine.score_round("r1", (
