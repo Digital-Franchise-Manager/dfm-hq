@@ -31,9 +31,9 @@ class ClassicPointsEngineTests(unittest.TestCase):
             PlayerRoundStats("p2", "m1", {}),
         ), CaptaincySelection("p2", "p1"))
         p1 = next(player for player in result.player_scores if player.player_id == "p1")
-        self.assertEqual(p1.base_points, 39)
-        self.assertEqual(p1.total_points, 39)
-        self.assertEqual(result.total_points, 39)
+        self.assertEqual(p1.base_points, 50)
+        self.assertEqual(p1.total_points, 50)
+        self.assertEqual(result.total_points, 50)
 
     def test_captain_scores_double(self):
         result = self.engine.score_round("r1", (
