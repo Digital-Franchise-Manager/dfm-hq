@@ -8,7 +8,7 @@ from backend.dfm.drl.draft.core.lockout_engine import DraftLockoutEngine, Player
 from backend.dfm.drl.draft.core.trade_engine.models import DraftLeagueState
 from .models import DraftWaiverState, WaiverEntry, WaiverEntryStatus, WaiverSettings
 from .priority import validate_priority
-from .claims import process_waiver_entry, submit_claim
+from .claims import cancel_claim, process_waiver_entry, submit_claim
 from .free_agents import add_free_agent
 
 
@@ -55,6 +55,9 @@ class DraftWaiverEngine:
 
     def submit_claim(self, state: DraftWaiverState, settings: WaiverSettings, **kwargs) -> DraftWaiverState:
         return submit_claim(state, settings, **kwargs)
+
+    def cancel_claim(self, state: DraftWaiverState, claim_id: str, franchise_id: str) -> DraftWaiverState:
+        return cancel_claim(state, claim_id, franchise_id)
 
     def process_waiver(
         self, state: DraftWaiverState, player_id: str, now: datetime,
