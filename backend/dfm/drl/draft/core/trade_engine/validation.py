@@ -13,8 +13,8 @@ def validate_league_state(state: DraftLeagueState) -> None:
     if not franchise_ids or len(franchise_ids) != len(set(franchise_ids)):
         raise ValueError("league must contain unique franchise rosters")
     for roster in state.rosters:
-        if len(roster.player_ids) != state.roster_size:
-            raise ValueError("every franchise roster must match the configured squad size")
+        if len(roster.player_ids) > state.roster_size:
+            raise ValueError("a franchise roster cannot exceed the configured squad size")
         if len(roster.player_ids) != len(set(roster.player_ids)):
             raise ValueError("a franchise roster cannot contain duplicate players")
     owned = [player for roster in state.rosters for player in roster.player_ids]
@@ -91,8 +91,8 @@ def validate_package(
         if not adds.issubset(state.free_agent_player_ids):
             raise ValueError("roster adjustments may only add currently unowned free agents")
         final_size = len(roster.player_ids) - len(outgoing) + len(incoming) - len(drops) + len(adds)
-        if final_size != state.roster_size:
-            raise ValueError("both franchises must submit roster adjustments to preserve squad size")
+        if final_size < 0 or final_size > state.roster_size:
+            raise ValueError("trade and roster adjustments must keep both squads within the configured size")
 
     reserved = pending_player_ids(state)
     all_involved = set(offered_player_ids + requested_player_ids)
