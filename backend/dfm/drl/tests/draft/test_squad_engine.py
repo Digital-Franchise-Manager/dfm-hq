@@ -116,7 +116,7 @@ class DraftSquadEngineTests(unittest.TestCase):
         starters["WFB"] = ("WFB-S1", "WFB-S2", "WFB-S0")
         invalid = SquadSelection(selection.roster_player_ids, starters,
                                  selection.bench_player_ids, {}, True)
-        with self.assertRaisesRegex(ValueError, "CTR"):
+        with self.assertRaisesRegex(ValueError, "WFB"):
             self.engine.validate_squad(invalid, tuple(changed))
 
     def test_rejects_invalid_dpp_selected_position(self):
