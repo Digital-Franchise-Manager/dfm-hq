@@ -78,6 +78,13 @@ def validate_package(
     if len({f for f, _ in free_agent_additions}) != len(free_agent_additions):
         raise ValueError("free-agent additions must be grouped once per franchise")
 
+    all_additions = [player for _, ids in free_agent_additions for player in ids]
+    all_drops = [player for _, ids in roster_drops for player in ids]
+    if len(all_additions) != len(set(all_additions)):
+        raise ValueError("a free agent cannot be added to multiple franchises in one trade")
+    if len(all_drops) != len(set(all_drops)):
+        raise ValueError("a player cannot be dropped by multiple franchises in one trade")
+
     for franchise_id, incoming, outgoing in (
         (proposing_franchise_id, requested_player_ids, offered_player_ids),
         (receiving_franchise_id, offered_player_ids, requested_player_ids),
