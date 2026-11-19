@@ -110,12 +110,15 @@ class DraftTradeEngine:
                 f"confirmation required: accepting this trade leaves your squad with {receiver_size} players; "
                 f"minimum is {state.minimum_valid_players}"
             )
+        invalid = set(proposal.invalid_roster_franchise_ids)
         confirmed = set(proposal.confirmed_invalid_roster_franchise_ids)
         if receiver_invalid:
+            invalid.add(franchise_id)
             confirmed.add(franchise_id)
         accepted = replace(
             proposal, status=TradeStatus.ACCEPTED, accepted_at=now.astimezone(timezone.utc),
             review_until=(now + settings.review_period).astimezone(timezone.utc),
+            invalid_roster_franchise_ids=tuple(sorted(invalid)),
             confirmed_invalid_roster_franchise_ids=tuple(sorted(confirmed)),
         )
         return self._replace_proposal(state, accepted)
