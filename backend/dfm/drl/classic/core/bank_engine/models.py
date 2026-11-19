@@ -47,6 +47,11 @@ class BankAccount:
         return sum((holding.player_value for holding in self.holdings), Decimal("0.00"))
 
     @property
+    def team_value(self) -> Decimal:
+        """Current franchise value: available bank cash plus squad market value."""
+        return self.available_balance + self.squad_value
+
+    @property
     def total_expenditure(self) -> Decimal:
         return sum(
             (tx.amount for tx in self.transactions

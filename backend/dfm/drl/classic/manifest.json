@@ -14,6 +14,7 @@
     "core/squad_engine",
     "core/points_engine",
     "core/bank_engine",
-    "core/lockout_engine"
+    "core/lockout_engine",
+    "core/trade_engine"
   ]
 }
