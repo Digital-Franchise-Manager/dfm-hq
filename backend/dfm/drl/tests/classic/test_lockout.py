@@ -126,5 +126,24 @@ class ClassicLockoutEngineTests(unittest.TestCase):
         self.assertEqual((local_cutoff.hour, local_cutoff.minute), (1, 30))
 
 
+    def test_captaincy_assignment_cannot_change_after_round_starts(self):
+        sunday_player = PlayerLockoutContext("sunday", self.sunday_kickoff)
+        with self.assertRaisesRegex(ValueError, "Captain/Vice-Captain assignment is locked"):
+            self.engine.assert_captaincy_change_allowed(
+                affected_players=(sunday_player,),
+                round_first_kickoff=self.first_kickoff,
+                now=self.first_kickoff,
+            )
+
+    def test_captaincy_change_is_blocked_at_affected_players_own_lockout(self):
+        opening_player = PlayerLockoutContext("opening", self.first_kickoff)
+        with self.assertRaises(PlayerLockedError):
+            self.engine.assert_captaincy_change_allowed(
+                affected_players=(opening_player,),
+                round_first_kickoff=self.first_kickoff,
+                now=self.first_kickoff - timedelta(minutes=30),
+            )
+
+
 if __name__ == "__main__":
     unittest.main()
