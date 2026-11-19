@@ -57,6 +57,38 @@ class DraftTradeEngineTests(unittest.TestCase):
         self.assertEqual(state.free_agent_player_ids, ("a3",))
         self.assertEqual(len(state.completed_trades), 1)
 
+    def test_unequal_trade_requires_explicit_confirmation_and_invalid_squad_scores_zero(self):
+        league = DraftLeagueState(
+            league_id="league-minimum", roster_size=20, minimum_valid_players=17,
+            rosters=(DraftRoster("A", tuple(f"a{i}" for i in range(17))),
+                     DraftRoster("B", tuple(f"b{i}" for i in range(17)))),
+        )
+        contexts = {p: PlayerLockoutContext(p, self.kickoff + timedelta(hours=i))
+                    for i, p in enumerate(("a0", "b0", "b1"))}
+        args = dict(proposal_id="unequal", proposing_franchise_id="A", receiving_franchise_id="B",
+                    offered_player_ids=("a0",), requested_player_ids=("b0", "b1"),
+                    player_lockouts=contexts, round_first_kickoff=self.kickoff, now=self.now)
+        with self.assertRaisesRegex(ValueError, "confirmation required"):
+            self.engine.propose_trade(league, self.settings, **args)
+        state = self.engine.propose_trade(league, self.settings, **args, confirm_invalid_roster=True)
+        self.assertEqual(state.proposals[0].invalid_roster_franchise_ids, ("A",))
+        self.assertEqual(state.effective_score_for("A", 125), 125)
+        self.assertEqual(state.effective_score_for("B", 125), 125)
+        self.assertEqual(league.effective_score_for("A", 125), 125)
+
+    def test_counter_offer_links_history_and_reverses_trading_roles(self):
+        state = self.propose()
+        state = self.engine.counter_offer(
+            state, self.settings, proposal_id="trade-1", countering_franchise_id="B",
+            offered_player_ids=("b3",), requested_player_ids=("a2",),
+            player_lockouts=self.contexts, round_first_kickoff=self.kickoff, now=self.now,
+        )
+        original, counter = state.proposals
+        self.assertEqual(original.status, TradeStatus.COUNTERED)
+        self.assertEqual(counter.parent_proposal_id, "trade-1")
+        self.assertEqual(counter.proposing_franchise_id, "B")
+        self.assertEqual(counter.receiving_franchise_id, "A")
+
     def test_only_receiving_franchise_can_accept(self):
         state = self.propose()
         with self.assertRaisesRegex(ValueError, "only the receiving franchise"):
