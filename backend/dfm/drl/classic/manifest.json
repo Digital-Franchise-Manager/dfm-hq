@@ -11,6 +11,7 @@
     "core/awards_engine",
     "core/newsroom",
     "core/ladder_engine",
-    "core/squad_engine"
+    "core/squad_engine",
+    "core/points_engine"
   ]
 }
