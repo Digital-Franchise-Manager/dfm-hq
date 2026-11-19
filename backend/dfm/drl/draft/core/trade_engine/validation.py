@@ -9,6 +9,10 @@ def validate_league_state(state: DraftLeagueState) -> None:
         raise ValueError("league_id is required")
     if isinstance(state.roster_size, bool) or not isinstance(state.roster_size, int) or state.roster_size < 1:
         raise ValueError("roster_size must be a positive integer")
+    if isinstance(state.minimum_valid_players, bool) or not isinstance(state.minimum_valid_players, int) or state.minimum_valid_players < 1:
+        raise ValueError("minimum_valid_players must be a positive integer")
+    if state.minimum_valid_players > state.roster_size:
+        raise ValueError("minimum_valid_players cannot exceed roster_size")
     franchise_ids = [roster.franchise_id for roster in state.rosters]
     if not franchise_ids or len(franchise_ids) != len(set(franchise_ids)):
         raise ValueError("league must contain unique franchise rosters")
