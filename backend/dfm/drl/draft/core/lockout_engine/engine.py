@@ -52,26 +52,26 @@ class DraftLockoutEngine:
         evaluated_at = now if now is not None else datetime.now(timezone.utc)
         self._require_aware(evaluated_at, "now")
 
-        if player.match_kickoff < round_first_kickoff:
+        if player.match_kickoff.astimezone(timezone.utc) < round_first_kickoff.astimezone(timezone.utc):
             raise ValueError("player match kickoff cannot precede the round's first kickoff")
 
         deadlines: list[tuple[datetime, LockoutReason]] = [
             (
-                player.match_kickoff - self.INDIVIDUAL_LOCKOUT_LEAD,
+                player.match_kickoff.astimezone(timezone.utc) - self.INDIVIDUAL_LOCKOUT_LEAD,
                 LockoutReason.INDIVIDUAL_MATCH,
             )
         ]
         if player.is_captain:
-            deadlines.append((round_first_kickoff, LockoutReason.CAPTAIN_ROUND))
+            deadlines.append((round_first_kickoff.astimezone(timezone.utc), LockoutReason.CAPTAIN_ROUND))
         elif player.is_vice_captain:
-            deadlines.append((round_first_kickoff, LockoutReason.VICE_CAPTAIN_ROUND))
+            deadlines.append((round_first_kickoff.astimezone(timezone.utc), LockoutReason.VICE_CAPTAIN_ROUND))
         if player.is_emergency:
-            deadlines.append((round_first_kickoff, LockoutReason.EMERGENCY_ROUND))
+            deadlines.append((round_first_kickoff.astimezone(timezone.utc), LockoutReason.EMERGENCY_ROUND))
 
         lockout_at, reason = min(deadlines, key=lambda item: item[0])
         return LockoutDecision(
             player_id=player.player_id,
-            is_locked=evaluated_at >= lockout_at,
+            is_locked=evaluated_at.astimezone(timezone.utc) >= lockout_at,
             lockout_at=lockout_at,
             reason=reason,
             evaluated_at=evaluated_at,
