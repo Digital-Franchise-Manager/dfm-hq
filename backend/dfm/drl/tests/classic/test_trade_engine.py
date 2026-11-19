@@ -103,7 +103,7 @@ class ClassicTradeEngineTests(unittest.TestCase):
         )
         self.assertEqual(state.rounds_1_to_19_used, 36)
         with self.assertRaisesRegex(ValueError, "pool of 36"):
-            self.engine.execute_trade(state, self.account, self.request())
+            self.engine.execute_trade(state, self.account, self.request(round_number=19))
 
     def test_round_20_plus_pool_is_eight(self):
         state = ClassicTradeState(
