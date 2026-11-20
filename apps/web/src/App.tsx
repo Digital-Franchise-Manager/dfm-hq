@@ -39,8 +39,10 @@ const modules: { title: string; detail: string; section: Section; tag: string }[
 ];
 
 function BrandMark({ sport }: { sport: Sport }) {
+  const [logoFailed, setLogoFailed] = useState(false);
   if (sport === "DRL") {
-    return <img className="brand-shield" src="/assets/drl_official_logo.png" alt="Digital Rugby League shield" />;
+    if (logoFailed) return <div className="drl-monogram" aria-label="Digital Rugby League">DRL</div>;
+    return <img className="brand-shield" src="/assets/drl_official_logo.png" alt="Digital Rugby League shield" onError={() => setLogoFailed(true)} />;
   }
   return <div className="dfm-monogram" aria-label="Digital Franchise Manager">DFM<span>HQ</span></div>;
 }
