@@ -118,3 +118,7 @@ h1 em{color:var(--lime);font-style:normal}
 .selector-footnote{margin:17px 0 0;color:#73796d;font-size:8px;font-weight:800;letter-spacing:.13em}
 .selector-footer{display:flex;justify-content:space-between;gap:20px;padding:18px 0 22px;border-top:1px solid var(--line);color:#74796f;font-size:8px;font-weight:800;letter-spacing:.13em}
 @media(max-width:600px){.platform-selector{padding:0 18px}.selector-header{min-height:72px}.selector-content{padding:clamp(54px,11vh,90px) 0}.selector-content h1{font-size:clamp(55px,14vw,78px)}.selector-intro{font-size:11px;margin-bottom:27px}.platform-option{min-height:120px;padding:15px;gap:13px}.platform-option-logo{flex-basis:62px;width:62px;height:78px}.platform-option-copy h2{font-size:21px}.platform-option-copy p{font-size:9px}.platform-option-arrow{font-size:24px}.selector-footer{flex-direction:column;gap:7px;font-size:7px}.selector-status{font-size:7px;letter-spacing:.1em}}
+
+.drl-monogram{display:grid;place-items:center;width:42px;height:56px;border:2px solid var(--lime);clip-path:polygon(0 0,100% 0,100% 77%,50% 100%,0 77%);color:var(--lime);font-family:'Barlow Condensed',sans-serif;font-size:19px;font-weight:900}
+.hero-brand .drl-monogram{width:86px;height:108px;font-size:32px}
+@media(max-width:700px){.hero-brand .drl-monogram{width:59px;height:75px;font-size:25px}}
