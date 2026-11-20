@@ -40,7 +40,7 @@ const modules: { title: string; detail: string; section: Section; tag: string }[
 
 function BrandMark({ sport }: { sport: Sport }) {
   if (sport === "DRL") {
-    return <img className="brand-shield" src="https://raw.githubusercontent.com/Digital-Franchise-Manager/dfm-hq/main/backend/dfm/assets/drl/identity/drl-logo-primary.png" alt="Digital Rugby League shield" />;
+    return <img className="brand-shield" src="/assets/drl_official_logo.png" alt="Digital Rugby League shield" />;
   }
   return <div className="dfm-monogram" aria-label="Digital Franchise Manager">DFM<span>HQ</span></div>;
 }
