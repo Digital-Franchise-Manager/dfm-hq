@@ -45,7 +45,44 @@ function BrandMark({ sport }: { sport: Sport }) {
   return <div className="dfm-monogram" aria-label="Digital Franchise Manager">DFM<span>HQ</span></div>;
 }
 
-function App() {
+
+function PlatformSelector() {
+  const [logoFailed, setLogoFailed] = useState(false);
+  return (
+    <main className="platform-selector">
+      <div className="selector-edge-art" aria-hidden="true">
+        <span className="selector-splash selector-splash-left" />
+        <span className="selector-splash selector-splash-right" />
+        <span className="selector-dots" />
+      </div>
+      <header className="selector-header">
+        <div className="selector-wordmark"><span>DFM</span><small>DIGITAL FRANCHISE MANAGER</small></div>
+        <span className="selector-status"><i /> PLATFORM GATEWAY</span>
+      </header>
+      <section className="selector-content">
+        <p className="eyebrow"><span /> ONE PLATFORM. MULTIPLE SPORTS.</p>
+        <h1>CHOOSE YOUR<br /><em>COMPETITION.</em></h1>
+        <p className="selector-intro">Select a platform to enter its dedicated headquarters.</p>
+        <a className="platform-option" href="https://drl.digitalfranchisemanager.com/" aria-label="Enter Digital Rugby League">
+          <div className="platform-option-logo">
+            {!logoFailed && <img src="/assets/drl_official_logo.png" alt="Digital Rugby League official shield" onError={() => setLogoFailed(true)} />}
+            {logoFailed && <span className="platform-logo-fallback">DRL</span>}
+          </div>
+          <div className="platform-option-copy">
+            <span className="section-kicker">AVAILABLE PLATFORM · 01</span>
+            <h2>DIGITAL RUGBY LEAGUE</h2>
+            <p>Enter DRL Competition HQ</p>
+          </div>
+          <span className="platform-option-arrow" aria-hidden="true">↗</span>
+        </a>
+        <p className="selector-footnote">MORE SPORTS AND COMPETITIONS WILL BE ADDED AS THEY BECOME AVAILABLE.</p>
+      </section>
+      <footer className="selector-footer"><span>DIGITAL FRANCHISE MANAGER</span><span>BUILT FOR THE NEXT GENERATION OF FANTASY SPORT</span></footer>
+    </main>
+  );
+}
+
+function DrlDashboard() {
   const [sport, setSport] = useState<Sport>("DRL");
   const [section, setSection] = useState<Section>("Overview");
   const [query, setQuery] = useState("");
@@ -170,6 +207,11 @@ function App() {
       {mobileMenu && <button className="mobile-scrim" aria-label="Close navigation" onClick={() => setMobileMenu(false)} />}
     </div>
   );
+}
+
+function App() {
+  const hostname = window.location.hostname.toLowerCase();
+  return hostname === "drl.digitalfranchisemanager.com" ? <DrlDashboard /> : <PlatformSelector />;
 }
 
 export default App;
