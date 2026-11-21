@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";\nimport type { TouchEvent } from "react";
 import SiteFooter from "./components/SiteFooter";
 
 type Section = "Overview" | "Competitions" | "Leagues" | "Fixtures" | "Live Match" | "Ladder" | "Newsroom" | "Awards" | "Roster" | "Market" | "Settings" | "Coaches Box" | "Current Fixtures" | "Past Fixtures" | "Future Fixtures" | "Round-by-round Ladder" | "Player Awards" | "Coach Awards" | "Players on Offer" | "RFA" | "FA" | "Classic Marketplace";
@@ -89,7 +89,7 @@ function DrlDashboard() {
   const [sport, setSport] = useState<Sport>("DRL");
   const [section, setSection] = useState<Section>("Overview");
   const [query, setQuery] = useState("");
-  const [mobileMenu, setMobileMenu] = useState(false);\n  const touchStart = useRef<{ x: number; y: number } | null>(null);\n\n  const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {\n    const touch = event.touches[0];\n    if (!touch) return;\n    const withinClosedEdge = !mobileMenu && touch.clientX <= 26;\n    const withinOpenDrawer = mobileMenu && touch.clientX <= 290;\n    touchStart.current = withinClosedEdge || withinOpenDrawer ? { x: touch.clientX, y: touch.clientY } : null;\n  };\n\n  const handleTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {\n    const start = touchStart.current;\n    touchStart.current = null;\n    if (!start) return;\n    const touch = event.changedTouches[0];\n    if (!touch) return;\n    const dx = touch.clientX - start.x;\n    const dy = touch.clientY - start.y;\n    if (Math.abs(dx) < 55 || Math.abs(dx) < Math.abs(dy) * 1.35) return;\n    if (!mobileMenu && dx > 0) setMobileMenu(true);\n    if (mobileMenu && dx < 0) setMobileMenu(false);\n  };
+  const [mobileMenu, setMobileMenu] = useState(false);\n  const touchStart = useRef<{ x: number; y: number } | null>(null);\n\n  const handleTouchStart = (event: TouchEvent<HTMLDivElement>) => {\n    const touch = event.touches[0];\n    if (!touch) return;\n    const withinClosedEdge = !mobileMenu && touch.clientX <= 26;\n    const withinOpenDrawer = mobileMenu && touch.clientX <= 290;\n    touchStart.current = withinClosedEdge || withinOpenDrawer ? { x: touch.clientX, y: touch.clientY } : null;\n  };\n\n  const handleTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {\n    const start = touchStart.current;\n    touchStart.current = null;\n    if (!start) return;\n    const touch = event.changedTouches[0];\n    if (!touch) return;\n    const dx = touch.clientX - start.x;\n    const dy = touch.clientY - start.y;\n    if (Math.abs(dx) < 55 || Math.abs(dx) < Math.abs(dy) * 1.35) return;\n    if (!mobileMenu && dx > 0) setMobileMenu(true);\n    if (mobileMenu && dx < 0) setMobileMenu(false);\n  };
 
   const visibleSections = useMemo(
     () => sections.filter((item) => item.label.toLowerCase().includes(query.toLowerCase())),
