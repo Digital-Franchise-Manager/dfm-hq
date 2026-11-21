@@ -191,7 +191,7 @@ function DrlDashboard() {
               {items.map((item) => (
                 <button key={item.label} className={section === item.label ? "nav-item active" : "nav-item"} onClick={() => navigate(item.label)}>
                   <span className="nav-icon">{item.icon}</span><span>{item.label}</span>
-                  {item.label === "Live Match" && <i className="live-dot" />}
+                  {item.label === "Match Centre Live" && <i className="live-dot" />}
                 </button>
               ))}
             </div>;
