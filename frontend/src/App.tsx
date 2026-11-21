@@ -62,10 +62,10 @@ const modules: { title: string; detail: string; section: Section; tag: string }[
 function BrandMark({ sport }: { sport: Sport }) {
   const [logoFailed, setLogoFailed] = useState(false);
   if (sport === "DRL") {
-    if (logoFailed) return <div className="drl-monogram" aria-label="Digital Rugby League">DRL</div>;
+    if (logoFailed) return null;
     return <img className="brand-shield" src="/assets/drl_official_logo.png" alt="Digital Rugby League shield" onError={() => setLogoFailed(true)} />;
   }
-  return <div className="dfm-monogram" aria-label="Digital Franchise Manager">DFM<span>HQ</span></div>;
+  return null;
 }
 
 
@@ -112,7 +112,6 @@ function PlatformSelector() {
         <a className="platform-option" href="https://drl.digitalfranchisemanager.com/" aria-label="Enter Digital Rugby League">
           <div className="platform-option-logo">
             {!logoFailed && <img src="/assets/drl_official_logo.png" alt="Digital Rugby League official shield" onError={() => setLogoFailed(true)} />}
-            {logoFailed && <span className="platform-logo-fallback">DRL</span>}
           </div>
           <div className="platform-option-copy">
             <span className="section-kicker">AVAILABLE PLATFORM · 01</span>
