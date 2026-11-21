@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import SiteFooter from "./components/SiteFooter";
 
-type Section = "Overview" | "Competitions" | "Leagues" | "Fixtures" | "Live Match" | "Ladder" | "Newsroom" | "Awards" | "Roster" | "Market" | "Settings";
+type Section = "Overview" | "Competitions" | "Leagues" | "Fixtures" | "Live Match" | "Ladder" | "Newsroom" | "Awards" | "Roster" | "Market" | "Settings" | "Coaches Box" | "Current Fixtures" | "Past Fixtures" | "Future Fixtures" | "Round-by-round Ladder" | "Player Awards" | "Coach Awards" | "Players on Offer" | "RFA" | "FA" | "Classic Marketplace";
 type Sport = "DFM" | "DRL";
 
 const sections: { label: Section; icon: string; group: string }[] = [
@@ -15,7 +15,7 @@ const sections: { label: Section; icon: string; group: string }[] = [
   { label: "Awards", icon: "✦", group: "FRANCHISE" },
   { label: "Roster", icon: "♙", group: "FRANCHISE" },
   { label: "Market", icon: "⇄", group: "FRANCHISE" },
-  { label: "Settings", icon: "⚙", group: "SYSTEM" }
+  { label: "Coaches Box", icon: "▣", group: "FRANCHISE" },\n  { label: "Current Fixtures", icon: "◷", group: "FIXTURE" },\n  { label: "Past Fixtures", icon: "↶", group: "FIXTURE" },\n  { label: "Future Fixtures", icon: "↷", group: "FIXTURE" },\n  { label: "Round-by-round Ladder", icon: "↗", group: "LADDER & AWARDS" },\n  { label: "Player Awards", icon: "✦", group: "LADDER & AWARDS" },\n  { label: "Coach Awards", icon: "★", group: "LADDER & AWARDS" },\n  { label: "Players on Offer", icon: "⇄", group: "MARKETPLACE" },\n  { label: "RFA", icon: "R", group: "MARKETPLACE" },\n  { label: "FA", icon: "F", group: "MARKETPLACE" },\n  { label: "Classic Marketplace", icon: "♙", group: "MARKETPLACE" },\n  { label: "Settings", icon: "⚙", group: "SYSTEM" }
 ];
 
 const descriptions: Record<Section, string> = {
@@ -29,7 +29,7 @@ const descriptions: Record<Section, string> = {
   Awards: "Season honours, round awards and player recognition.",
   Roster: "Manage your squad, starting side and player availability.",
   Market: "Player movement and roster transactions for supported game modes.",
-  Settings: "Manage your platform and competition preferences."
+  Settings: "Manage your platform and competition preferences.",\n  "Coaches Box": "Coach chatroom and franchise communication.",\n  "Current Fixtures": "View the active round fixtures and match schedule.",\n  "Past Fixtures": "Review completed fixtures and previous results.",\n  "Future Fixtures": "Preview upcoming rounds and scheduled matches.",\n  "Round-by-round Ladder": "Review ladder positions for past, current and future rounds where available.",\n  "Player Awards": "Player ladder awards and round-by-round recognition.",\n  "Coach Awards": "Coach ladder awards and round-by-round recognition.",\n  "Players on Offer": "Review players currently available for roster movement.",\n  RFA: "Review Restricted Free Agents.",\n  FA: "Review Free Agents.",\n  "Classic Marketplace": "Every player not selected in a Classic Cup team is available in this marketplace."
 };
 
 const modules: { title: string; detail: string; section: Section; tag: string }[] = [
@@ -89,7 +89,7 @@ function DrlDashboard() {
   const [sport, setSport] = useState<Sport>("DRL");
   const [section, setSection] = useState<Section>("Overview");
   const [query, setQuery] = useState("");
-  const [mobileMenu, setMobileMenu] = useState(false);
+  const [mobileMenu, setMobileMenu] = useState(false);\n  const touchStart = useRef<{ x: number; y: number } | null>(null);\n\n  const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {\n    const touch = event.touches[0];\n    if (!touch) return;\n    const withinClosedEdge = !mobileMenu && touch.clientX <= 26;\n    const withinOpenDrawer = mobileMenu && touch.clientX <= 290;\n    touchStart.current = withinClosedEdge || withinOpenDrawer ? { x: touch.clientX, y: touch.clientY } : null;\n  };\n\n  const handleTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {\n    const start = touchStart.current;\n    touchStart.current = null;\n    if (!start) return;\n    const touch = event.changedTouches[0];\n    if (!touch) return;\n    const dx = touch.clientX - start.x;\n    const dy = touch.clientY - start.y;\n    if (Math.abs(dx) < 55 || Math.abs(dx) < Math.abs(dy) * 1.35) return;\n    if (!mobileMenu && dx > 0) setMobileMenu(true);\n    if (mobileMenu && dx < 0) setMobileMenu(false);\n  };
 
   const visibleSections = useMemo(
     () => sections.filter((item) => item.label.toLowerCase().includes(query.toLowerCase())),
@@ -102,7 +102,7 @@ function DrlDashboard() {
   };
 
   return (
-    <div className={`site-shell ${sport === "DRL" ? "sport-drl" : "sport-dfm"}`}>
+    <div className={`site-shell ${sport === "DRL" ? "sport-drl" : "sport-dfm"}`} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       <div className="edge-art" aria-hidden="true">
         <span className="paint-splash splash-one" />
         <span className="paint-splash splash-two" />
@@ -124,7 +124,7 @@ function DrlDashboard() {
           </div>
         </div>
 
-        <div className="sport-switch" role="group" aria-label="Select platform">
+        <div className="drawer-shortcuts" aria-label="Headquarters navigation">\n          <button className="drawer-home" onClick={() => { setSport("DFM"); navigate("Overview"); }}>DFM HQ <span>↗</span></button>\n          <button className="drawer-coming-soon" disabled>FRANCHISE HQ <small>COMING SOON</small></button>\n        </div>\n\n        <div className="sport-switch" role="group" aria-label="Select platform">
           <button className={sport === "DFM" ? "selected" : ""} onClick={() => { setSport("DFM"); navigate("Overview"); }}>DFM HQ</button>
           <button className={sport === "DRL" ? "selected" : ""} onClick={() => { setSport("DRL"); navigate("Overview"); }}>DRL</button>
         </div>
@@ -136,11 +136,11 @@ function DrlDashboard() {
         </label>
 
         <nav className="main-nav" aria-label="Main navigation">
-          {(["HQ", "MANAGE", "MATCH CENTRE", "FRANCHISE", "SYSTEM"] as const).map((group) => {
+          {(["HQ", "MANAGE", "MATCH CENTRE", "FIXTURE", "LADDER & AWARDS", "FRANCHISE", "MARKETPLACE", "SYSTEM"] as const).map((group) => {
             const items = visibleSections.filter((item) => item.group === group);
             if (!items.length) return null;
             return <div className="nav-group" key={group}>
-              <p className="nav-heading">{group}</p>
+              <p className="nav-heading">{group === "FIXTURE" ? "FIXTURE" : group === "LADDER & AWARDS" ? "LADDER & AWARDS" : group === "MARKETPLACE" ? "MARKETPLACE" : group}</p>
               {items.map((item) => (
                 <button key={item.label} className={section === item.label ? "nav-item active" : "nav-item"} onClick={() => navigate(item.label)}>
                   <span className="nav-icon">{item.icon}</span><span>{item.label}</span>
