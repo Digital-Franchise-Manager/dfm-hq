@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from "react";
 import type { TouchEvent } from "react";
 import SiteFooter from "./components/SiteFooter";
 
-type Section = "Overview" | "Competitions" | "Leagues" | "Fixtures" | "Live Match" | "Ladder" | "Newsroom" | "Awards" | "Roster" | "Market" | "Settings" | "Coaches Box" | "Current Fixtures" | "Past Fixtures" | "Future Fixtures" | "Round-by-round Ladder" | "Player Awards" | "Coach Awards" | "Players on Offer" | "RFA" | "FA" | "Classic Marketplace";
+type Section = "Overview" | "Competitions" | "Leagues" | "Fixtures" | "Match Centre Live" | "Ladder" | "Newsroom" | "Awards" | "Roster" | "Market" | "Settings" | "Coaches Box" | "Current Fixtures" | "Past Fixtures" | "Future Fixtures" | "Round-by-round Ladder" | "Player Awards" | "Coach Awards" | "Players on Offer" | "RFA" | "FA" | "Classic Marketplace";
 type Sport = "DFM" | "DRL";
 
 const sections: { label: Section; icon: string; group: string }[] = [
@@ -10,13 +10,10 @@ const sections: { label: Section; icon: string; group: string }[] = [
   { label: "Competitions", icon: "◈", group: "HQ" },
   { label: "Leagues", icon: "♧", group: "MANAGE" },
   { label: "Fixtures", icon: "▤", group: "MATCH CENTRE" },
-  { label: "Live Match", icon: "◉", group: "MATCH CENTRE" },
-  { label: "Ladder", icon: "↗", group: "MATCH CENTRE" },
-  { label: "Newsroom", icon: "▧", group: "FRANCHISE" },
-  { label: "Awards", icon: "✦", group: "FRANCHISE" },
-  { label: "Roster", icon: "♙", group: "FRANCHISE" },
-  { label: "Market", icon: "⇄", group: "FRANCHISE" },
-  { label: "Coaches Box", icon: "▣", group: "FRANCHISE" },
+      { label: "Newsroom", icon: "▧", group: "NEWSROOM" },
+  { label: "Match Centre Live", icon: "◉", group: "NEWSROOM" },
+    { label: "Roster", icon: "♙", group: "FRANCHISE" },
+    { label: "Coaches Box", icon: "▣", group: "FRANCHISE" },
   { label: "Current Fixtures", icon: "◷", group: "FIXTURE" },
   { label: "Past Fixtures", icon: "↶", group: "FIXTURE" },
   { label: "Future Fixtures", icon: "↷", group: "FIXTURE" },
@@ -35,7 +32,7 @@ const descriptions: Record<Section, string> = {
   Competitions: "Choose a game mode and enter the competition hub.",
   Leagues: "Create a private league, join an existing league or manage your leagues.",
   Fixtures: "Round-by-round fixtures, match previews and results.",
-  "Live Match": "Follow match-day action and live scoring when feeds are connected.",
+  "Match Centre Live": "Follow match-day action and live scoring when feeds are connected.",
   Ladder: "Track standings, form and movement across the competition.",
   Newsroom: "Competition updates, franchise announcements and match reports.",
   Awards: "Season honours, round awards and player recognition.",
@@ -186,7 +183,7 @@ function DrlDashboard() {
         </label>
 
         <nav className="main-nav" aria-label="Main navigation">
-          {(["HQ", "MANAGE", "MATCH CENTRE", "FIXTURE", "LADDER & AWARDS", "FRANCHISE", "MARKETPLACE", "SYSTEM"] as const).map((group) => {
+          {(["HQ", "MANAGE", "NEWSROOM", "FIXTURE", "LADDER & AWARDS", "FRANCHISE", "MARKETPLACE", "SYSTEM"] as const).map((group) => {
             const items = visibleSections.filter((item) => item.group === group);
             if (!items.length) return null;
             return <div className="nav-group" key={group}>
