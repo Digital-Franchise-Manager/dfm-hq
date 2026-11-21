@@ -71,8 +71,31 @@ function BrandMark({ sport }: { sport: Sport }) {
 
 function PlatformSelector() {
   const [logoFailed, setLogoFailed] = useState(false);
+  const [mobileMenu, setMobileMenu] = useState(false);
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
+
+  const handleTouchStart = (event: TouchEvent<HTMLElement>) => {
+    const touch = event.touches[0];
+    if (!touch) return;
+    const startsAtEdge = !mobileMenu && touch.clientX <= 26;
+    const startsInDrawer = mobileMenu && touch.clientX <= 290;
+    touchStart.current = startsAtEdge || startsInDrawer ? { x: touch.clientX, y: touch.clientY } : null;
+  };
+
+  const handleTouchEnd = (event: TouchEvent<HTMLElement>) => {
+    const start = touchStart.current;
+    touchStart.current = null;
+    if (!start) return;
+    const touch = event.changedTouches[0];
+    if (!touch) return;
+    const dx = touch.clientX - start.x;
+    const dy = touch.clientY - start.y;
+    if (Math.abs(dx) < 55 || Math.abs(dx) < Math.abs(dy) * 1.35) return;
+    if (!mobileMenu && dx > 0) setMobileMenu(true);
+    if (mobileMenu && dx < 0) setMobileMenu(false);
+  };
   return (
-    <main className="platform-selector">
+    <main className={`platform-selector ${mobileMenu ? "gateway-menu-open" : ""}`} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       <div className="selector-edge-art" aria-hidden="true">
         <span className="selector-splash selector-splash-left" />
         <span className="selector-splash selector-splash-right" />
@@ -100,6 +123,11 @@ function PlatformSelector() {
         </a>
         <p className="selector-footnote">MORE SPORTS AND COMPETITIONS WILL BE ADDED AS THEY BECOME AVAILABLE.</p>
       </section>
+      {mobileMenu && <button className="gateway-menu-scrim" aria-label="Close platform navigation" onClick={() => setMobileMenu(false)} />}
+      <aside className={`gateway-drawer ${mobileMenu ? "gateway-drawer-open" : ""}`} aria-label="Platform navigation">
+        <div className="gateway-drawer-heading"><strong>DFM HQ</strong><button onClick={() => setMobileMenu(false)} aria-label="Close navigation">×</button></div>
+        <a href="https://drl.digitalfranchisemanager.com/" onClick={() => setMobileMenu(false)}>DIGITAL RUGBY LEAGUE <span>↗</span></a>
+      </aside>
       <SiteFooter />
     </main>
   );
