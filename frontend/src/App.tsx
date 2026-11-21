@@ -1,4 +1,5 @@
-import { useMemo, useRef, useState } from "react";\nimport type { TouchEvent } from "react";
+import { useMemo, useRef, useState } from "react";
+import type { TouchEvent } from "react";
 import SiteFooter from "./components/SiteFooter";
 
 type Section = "Overview" | "Competitions" | "Leagues" | "Fixtures" | "Live Match" | "Ladder" | "Newsroom" | "Awards" | "Roster" | "Market" | "Settings" | "Coaches Box" | "Current Fixtures" | "Past Fixtures" | "Future Fixtures" | "Round-by-round Ladder" | "Player Awards" | "Coach Awards" | "Players on Offer" | "RFA" | "FA" | "Classic Marketplace";
@@ -15,7 +16,18 @@ const sections: { label: Section; icon: string; group: string }[] = [
   { label: "Awards", icon: "✦", group: "FRANCHISE" },
   { label: "Roster", icon: "♙", group: "FRANCHISE" },
   { label: "Market", icon: "⇄", group: "FRANCHISE" },
-  { label: "Coaches Box", icon: "▣", group: "FRANCHISE" },\n  { label: "Current Fixtures", icon: "◷", group: "FIXTURE" },\n  { label: "Past Fixtures", icon: "↶", group: "FIXTURE" },\n  { label: "Future Fixtures", icon: "↷", group: "FIXTURE" },\n  { label: "Round-by-round Ladder", icon: "↗", group: "LADDER & AWARDS" },\n  { label: "Player Awards", icon: "✦", group: "LADDER & AWARDS" },\n  { label: "Coach Awards", icon: "★", group: "LADDER & AWARDS" },\n  { label: "Players on Offer", icon: "⇄", group: "MARKETPLACE" },\n  { label: "RFA", icon: "R", group: "MARKETPLACE" },\n  { label: "FA", icon: "F", group: "MARKETPLACE" },\n  { label: "Classic Marketplace", icon: "♙", group: "MARKETPLACE" },\n  { label: "Settings", icon: "⚙", group: "SYSTEM" }
+  { label: "Coaches Box", icon: "▣", group: "FRANCHISE" },
+  { label: "Current Fixtures", icon: "◷", group: "FIXTURE" },
+  { label: "Past Fixtures", icon: "↶", group: "FIXTURE" },
+  { label: "Future Fixtures", icon: "↷", group: "FIXTURE" },
+  { label: "Round-by-round Ladder", icon: "↗", group: "LADDER & AWARDS" },
+  { label: "Player Awards", icon: "✦", group: "LADDER & AWARDS" },
+  { label: "Coach Awards", icon: "★", group: "LADDER & AWARDS" },
+  { label: "Players on Offer", icon: "⇄", group: "MARKETPLACE" },
+  { label: "RFA", icon: "R", group: "MARKETPLACE" },
+  { label: "FA", icon: "F", group: "MARKETPLACE" },
+  { label: "Classic Marketplace", icon: "♙", group: "MARKETPLACE" },
+  { label: "Settings", icon: "⚙", group: "SYSTEM" }
 ];
 
 const descriptions: Record<Section, string> = {
@@ -29,7 +41,18 @@ const descriptions: Record<Section, string> = {
   Awards: "Season honours, round awards and player recognition.",
   Roster: "Manage your squad, starting side and player availability.",
   Market: "Player movement and roster transactions for supported game modes.",
-  Settings: "Manage your platform and competition preferences.",\n  "Coaches Box": "Coach chatroom and franchise communication.",\n  "Current Fixtures": "View the active round fixtures and match schedule.",\n  "Past Fixtures": "Review completed fixtures and previous results.",\n  "Future Fixtures": "Preview upcoming rounds and scheduled matches.",\n  "Round-by-round Ladder": "Review ladder positions for past, current and future rounds where available.",\n  "Player Awards": "Player ladder awards and round-by-round recognition.",\n  "Coach Awards": "Coach ladder awards and round-by-round recognition.",\n  "Players on Offer": "Review players currently available for roster movement.",\n  RFA: "Review Restricted Free Agents.",\n  FA: "Review Free Agents.",\n  "Classic Marketplace": "Every player not selected in a Classic Cup team is available in this marketplace."
+  Settings: "Manage your platform and competition preferences.",
+  "Coaches Box": "Coach chatroom and franchise communication.",
+  "Current Fixtures": "View the active round fixtures and match schedule.",
+  "Past Fixtures": "Review completed fixtures and previous results.",
+  "Future Fixtures": "Preview upcoming rounds and scheduled matches.",
+  "Round-by-round Ladder": "Review ladder positions for past, current and future rounds where available.",
+  "Player Awards": "Player ladder awards and round-by-round recognition.",
+  "Coach Awards": "Coach ladder awards and round-by-round recognition.",
+  "Players on Offer": "Review players currently available for roster movement.",
+  RFA: "Review Restricted Free Agents.",
+  FA: "Review Free Agents.",
+  "Classic Marketplace": "Every player not selected in a Classic Cup team is available in this marketplace."
 };
 
 const modules: { title: string; detail: string; section: Section; tag: string }[] = [
@@ -89,7 +112,29 @@ function DrlDashboard() {
   const [sport, setSport] = useState<Sport>("DRL");
   const [section, setSection] = useState<Section>("Overview");
   const [query, setQuery] = useState("");
-  const [mobileMenu, setMobileMenu] = useState(false);\n  const touchStart = useRef<{ x: number; y: number } | null>(null);\n\n  const handleTouchStart = (event: TouchEvent<HTMLDivElement>) => {\n    const touch = event.touches[0];\n    if (!touch) return;\n    const withinClosedEdge = !mobileMenu && touch.clientX <= 26;\n    const withinOpenDrawer = mobileMenu && touch.clientX <= 290;\n    touchStart.current = withinClosedEdge || withinOpenDrawer ? { x: touch.clientX, y: touch.clientY } : null;\n  };\n\n  const handleTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {\n    const start = touchStart.current;\n    touchStart.current = null;\n    if (!start) return;\n    const touch = event.changedTouches[0];\n    if (!touch) return;\n    const dx = touch.clientX - start.x;\n    const dy = touch.clientY - start.y;\n    if (Math.abs(dx) < 55 || Math.abs(dx) < Math.abs(dy) * 1.35) return;\n    if (!mobileMenu && dx > 0) setMobileMenu(true);\n    if (mobileMenu && dx < 0) setMobileMenu(false);\n  };
+  const [mobileMenu, setMobileMenu] = useState(false);
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
+
+  const handleTouchStart = (event: TouchEvent<HTMLDivElement>) => {
+    const touch = event.touches[0];
+    if (!touch) return;
+    const withinClosedEdge = !mobileMenu && touch.clientX <= 26;
+    const withinOpenDrawer = mobileMenu && touch.clientX <= 290;
+    touchStart.current = withinClosedEdge || withinOpenDrawer ? { x: touch.clientX, y: touch.clientY } : null;
+  };
+
+  const handleTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
+    const start = touchStart.current;
+    touchStart.current = null;
+    if (!start) return;
+    const touch = event.changedTouches[0];
+    if (!touch) return;
+    const dx = touch.clientX - start.x;
+    const dy = touch.clientY - start.y;
+    if (Math.abs(dx) < 55 || Math.abs(dx) < Math.abs(dy) * 1.35) return;
+    if (!mobileMenu && dx > 0) setMobileMenu(true);
+    if (mobileMenu && dx < 0) setMobileMenu(false);
+  };
 
   const visibleSections = useMemo(
     () => sections.filter((item) => item.label.toLowerCase().includes(query.toLowerCase())),
@@ -124,7 +169,12 @@ function DrlDashboard() {
           </div>
         </div>
 
-        <div className="drawer-shortcuts" aria-label="Headquarters navigation">\n          <button className="drawer-home" onClick={() => { setSport("DFM"); navigate("Overview"); }}>DFM HQ <span>↗</span></button>\n          <button className="drawer-coming-soon" disabled>FRANCHISE HQ <small>COMING SOON</small></button>\n        </div>\n\n        <div className="sport-switch" role="group" aria-label="Select platform">
+        <div className="drawer-shortcuts" aria-label="Headquarters navigation">
+          <button className="drawer-home" onClick={() => { setSport("DFM"); navigate("Overview"); }}>DFM HQ <span>↗</span></button>
+          <button className="drawer-coming-soon" disabled>FRANCHISE HQ <small>COMING SOON</small></button>
+        </div>
+
+        <div className="sport-switch" role="group" aria-label="Select platform">
           <button className={sport === "DFM" ? "selected" : ""} onClick={() => { setSport("DFM"); navigate("Overview"); }}>DFM HQ</button>
           <button className={sport === "DRL" ? "selected" : ""} onClick={() => { setSport("DRL"); navigate("Overview"); }}>DRL</button>
         </div>
