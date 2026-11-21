@@ -5,7 +5,7 @@
       "path": "./apps/api"
     },
     {
-      "path": "./apps/web"
+      "path": "./frontend"
     },
     {
       "path": "./packages/contracts"

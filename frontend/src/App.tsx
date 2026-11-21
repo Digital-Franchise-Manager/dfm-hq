@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import SiteFooter from "./components/SiteFooter";
 
 type Section = "Overview" | "Competitions" | "Leagues" | "Fixtures" | "Live Match" | "Ladder" | "Newsroom" | "Awards" | "Roster" | "Market" | "Settings";
 type Sport = "DFM" | "DRL";
@@ -79,7 +80,7 @@ function PlatformSelector() {
         </a>
         <p className="selector-footnote">MORE SPORTS AND COMPETITIONS WILL BE ADDED AS THEY BECOME AVAILABLE.</p>
       </section>
-      <footer className="selector-footer"><span>DIGITAL FRANCHISE MANAGER</span><span>BUILT FOR THE NEXT GENERATION OF FANTASY SPORT</span></footer>
+      <SiteFooter />
     </main>
   );
 }
@@ -203,7 +204,7 @@ function DrlDashboard() {
             </section>
           )}
 
-          <footer className="page-footer"><span>DFM HQ <b>×</b> DIGITAL RUGBY LEAGUE</span><span>BUILT FOR THE NEXT GENERATION OF FANTASY SPORT</span></footer>
+          <SiteFooter />
         </div>
       </main>
       {mobileMenu && <button className="mobile-scrim" aria-label="Close navigation" onClick={() => setMobileMenu(false)} />}
