@@ -1,7 +1,8 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import type { TouchEvent } from "react";
 import SiteFooter from "./components/SiteFooter";
 
-type Section = "Overview" | "Competitions" | "Leagues" | "Fixtures" | "Live Match" | "Ladder" | "Newsroom" | "Awards" | "Roster" | "Market" | "Settings";
+type Section = "Overview" | "Competitions" | "Leagues" | "Fixtures" | "Match Centre Live" | "Ladder" | "Newsroom" | "Awards" | "Roster" | "Market" | "Settings" | "Coaches Box" | "Current Fixtures" | "Past Fixtures" | "Future Fixtures" | "Round-by-round Ladder" | "Player Awards" | "Coach Awards" | "Players on Offer" | "RFA" | "FA" | "Classic Marketplace";
 type Sport = "DFM" | "DRL";
 
 const sections: { label: Section; icon: string; group: string }[] = [
@@ -9,12 +10,20 @@ const sections: { label: Section; icon: string; group: string }[] = [
   { label: "Competitions", icon: "◈", group: "HQ" },
   { label: "Leagues", icon: "♧", group: "MANAGE" },
   { label: "Fixtures", icon: "▤", group: "MATCH CENTRE" },
-  { label: "Live Match", icon: "◉", group: "MATCH CENTRE" },
-  { label: "Ladder", icon: "↗", group: "MATCH CENTRE" },
-  { label: "Newsroom", icon: "▧", group: "FRANCHISE" },
-  { label: "Awards", icon: "✦", group: "FRANCHISE" },
-  { label: "Roster", icon: "♙", group: "FRANCHISE" },
-  { label: "Market", icon: "⇄", group: "FRANCHISE" },
+      { label: "Newsroom", icon: "▧", group: "NEWSROOM" },
+  { label: "Match Centre Live", icon: "◉", group: "NEWSROOM" },
+    { label: "Roster", icon: "♙", group: "FRANCHISE" },
+    { label: "Coaches Box", icon: "▣", group: "FRANCHISE" },
+  { label: "Current Fixtures", icon: "◷", group: "FIXTURE" },
+  { label: "Past Fixtures", icon: "↶", group: "FIXTURE" },
+  { label: "Future Fixtures", icon: "↷", group: "FIXTURE" },
+  { label: "Round-by-round Ladder", icon: "↗", group: "LADDER & AWARDS" },
+  { label: "Player Awards", icon: "✦", group: "LADDER & AWARDS" },
+  { label: "Coach Awards", icon: "★", group: "LADDER & AWARDS" },
+  { label: "Players on Offer", icon: "⇄", group: "MARKETPLACE" },
+  { label: "RFA", icon: "R", group: "MARKETPLACE" },
+  { label: "FA", icon: "F", group: "MARKETPLACE" },
+  { label: "Classic Marketplace", icon: "♙", group: "MARKETPLACE" },
   { label: "Settings", icon: "⚙", group: "SYSTEM" }
 ];
 
@@ -23,13 +32,24 @@ const descriptions: Record<Section, string> = {
   Competitions: "Choose a game mode and enter the competition hub.",
   Leagues: "Create a private league, join an existing league or manage your leagues.",
   Fixtures: "Round-by-round fixtures, match previews and results.",
-  "Live Match": "Follow match-day action and live scoring when feeds are connected.",
+  "Match Centre Live": "Follow match-day action and live scoring when feeds are connected.",
   Ladder: "Track standings, form and movement across the competition.",
   Newsroom: "Competition updates, franchise announcements and match reports.",
   Awards: "Season honours, round awards and player recognition.",
   Roster: "Manage your squad, starting side and player availability.",
   Market: "Player movement and roster transactions for supported game modes.",
-  Settings: "Manage your platform and competition preferences."
+  Settings: "Manage your platform and competition preferences.",
+  "Coaches Box": "Coach chatroom and franchise communication.",
+  "Current Fixtures": "View the active round fixtures and match schedule.",
+  "Past Fixtures": "Review completed fixtures and previous results.",
+  "Future Fixtures": "Preview upcoming rounds and scheduled matches.",
+  "Round-by-round Ladder": "Review ladder positions for past, current and future rounds where available.",
+  "Player Awards": "Player ladder awards and round-by-round recognition.",
+  "Coach Awards": "Coach ladder awards and round-by-round recognition.",
+  "Players on Offer": "Review players currently available for roster movement.",
+  RFA: "Review Restricted Free Agents.",
+  FA: "Review Free Agents.",
+  "Classic Marketplace": "Every player not selected in a Classic Cup team is available in this marketplace."
 };
 
 const modules: { title: string; detail: string; section: Section; tag: string }[] = [
@@ -90,6 +110,28 @@ function DrlDashboard() {
   const [section, setSection] = useState<Section>("Overview");
   const [query, setQuery] = useState("");
   const [mobileMenu, setMobileMenu] = useState(false);
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
+
+  const handleTouchStart = (event: TouchEvent<HTMLDivElement>) => {
+    const touch = event.touches[0];
+    if (!touch) return;
+    const withinClosedEdge = !mobileMenu && touch.clientX <= 26;
+    const withinOpenDrawer = mobileMenu && touch.clientX <= 290;
+    touchStart.current = withinClosedEdge || withinOpenDrawer ? { x: touch.clientX, y: touch.clientY } : null;
+  };
+
+  const handleTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
+    const start = touchStart.current;
+    touchStart.current = null;
+    if (!start) return;
+    const touch = event.changedTouches[0];
+    if (!touch) return;
+    const dx = touch.clientX - start.x;
+    const dy = touch.clientY - start.y;
+    if (Math.abs(dx) < 55 || Math.abs(dx) < Math.abs(dy) * 1.35) return;
+    if (!mobileMenu && dx > 0) setMobileMenu(true);
+    if (mobileMenu && dx < 0) setMobileMenu(false);
+  };
 
   const visibleSections = useMemo(
     () => sections.filter((item) => item.label.toLowerCase().includes(query.toLowerCase())),
@@ -102,7 +144,7 @@ function DrlDashboard() {
   };
 
   return (
-    <div className={`site-shell ${sport === "DRL" ? "sport-drl" : "sport-dfm"}`}>
+    <div className={`site-shell ${sport === "DRL" ? "sport-drl" : "sport-dfm"}`} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       <div className="edge-art" aria-hidden="true">
         <span className="paint-splash splash-one" />
         <span className="paint-splash splash-two" />
@@ -124,6 +166,11 @@ function DrlDashboard() {
           </div>
         </div>
 
+        <div className="drawer-shortcuts" aria-label="Headquarters navigation">
+          <button className="drawer-home" onClick={() => { setSport("DFM"); navigate("Overview"); }}>DFM HQ <span>↗</span></button>
+          <button className="drawer-coming-soon" disabled>FRANCHISE HQ <small>COMING SOON</small></button>
+        </div>
+
         <div className="sport-switch" role="group" aria-label="Select platform">
           <button className={sport === "DFM" ? "selected" : ""} onClick={() => { setSport("DFM"); navigate("Overview"); }}>DFM HQ</button>
           <button className={sport === "DRL" ? "selected" : ""} onClick={() => { setSport("DRL"); navigate("Overview"); }}>DRL</button>
@@ -136,15 +183,15 @@ function DrlDashboard() {
         </label>
 
         <nav className="main-nav" aria-label="Main navigation">
-          {(["HQ", "MANAGE", "MATCH CENTRE", "FRANCHISE", "SYSTEM"] as const).map((group) => {
+          {(["HQ", "MANAGE", "NEWSROOM", "FIXTURE", "LADDER & AWARDS", "FRANCHISE", "MARKETPLACE", "SYSTEM"] as const).map((group) => {
             const items = visibleSections.filter((item) => item.group === group);
             if (!items.length) return null;
             return <div className="nav-group" key={group}>
-              <p className="nav-heading">{group}</p>
+              <p className="nav-heading">{group === "FIXTURE" ? "FIXTURE" : group === "LADDER & AWARDS" ? "LADDER & AWARDS" : group === "MARKETPLACE" ? "MARKETPLACE" : group}</p>
               {items.map((item) => (
                 <button key={item.label} className={section === item.label ? "nav-item active" : "nav-item"} onClick={() => navigate(item.label)}>
                   <span className="nav-icon">{item.icon}</span><span>{item.label}</span>
-                  {item.label === "Live Match" && <i className="live-dot" />}
+                  {item.label === "Match Centre Live" && <i className="live-dot" />}
                 </button>
               ))}
             </div>;
