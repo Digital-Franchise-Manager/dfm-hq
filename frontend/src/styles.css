@@ -228,3 +228,30 @@ h1 em{color:var(--lime);font-style:normal}
 .nav-group{margin-bottom:14px}
 .nav-group .nav-item{min-height:35px}
 @media(max-width:700px){.site-shell{touch-action:pan-y}.sidebar{touch-action:pan-y}.sidebar.sidebar-open{will-change:transform}}
+
+
+/* DFM gateway mobile navigation and compact fixed footer. */
+.gateway-menu-button{display:none;border:1px solid rgba(199,255,0,.4);background:rgba(199,255,0,.08);color:var(--lime);width:38px;height:36px;font-size:19px;cursor:pointer}
+.selector-wordmark small{display:block;max-width:none;font-size:10px;line-height:1.25;letter-spacing:.15em}
+.gateway-drawer{position:fixed;z-index:31;top:0;bottom:0;left:0;width:min(280px,82vw);padding:22px 18px;background:rgba(8,9,8,.98);border-right:1px solid var(--lime);transform:translateX(-102%);transition:transform .22s ease;box-shadow:15px 0 45px rgba(0,0,0,.5)}
+.gateway-drawer.gateway-drawer-open{transform:translateX(0)}
+.gateway-drawer-heading{display:flex;align-items:center;justify-content:space-between;padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid var(--line);color:var(--lime);font-family:'Barlow Condensed',sans-serif;font-size:22px}
+.gateway-drawer-heading button{border:0;background:none;color:var(--lime);font-size:27px;cursor:pointer}
+.gateway-drawer>a{display:flex;align-items:center;justify-content:space-between;padding:14px 12px;border:1px solid rgba(199,255,0,.35);background:rgba(199,255,0,.07);color:var(--lime);font-size:10px;font-weight:900;letter-spacing:.1em;text-decoration:none}
+.gateway-menu-scrim{position:fixed;z-index:30;inset:0;border:0;background:rgba(0,0,0,.65)}
+@media(max-width:600px){
+  .gateway-menu-button{display:block;flex:0 0 38px}
+  .selector-header{gap:13px;justify-content:flex-start}
+  .selector-wordmark{flex:1}
+  .selector-status{margin-left:auto}
+  .platform-selector{touch-action:pan-y}
+  .site-footer{max-height:158px;overflow:hidden}
+  .site-footer-columns{gap:7px 12px;padding-bottom:5px}
+  .footer-column{gap:3px}
+  .footer-column h2{font-size:8px;letter-spacing:.12em}
+  .footer-column h3,.footer-column a,.footer-muted,.footer-social-row{font-size:8px;line-height:1.25}
+  .footer-social-icon{width:16px;height:16px;font-size:12px}
+  .footer-legal{flex-wrap:wrap;justify-content:center;gap:4px 9px;padding:5px 0 4px}
+  .footer-legal a{font-size:6px}
+  .footer-copyright{font-size:6px}
+}
