@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import SiteFooter from "./components/SiteFooter";
+import FranchiseHQ from "./components/dfm/FranchiseHQ";
 type Section = "Overview"|"Competitions"|"Leagues"|"Newsroom"|"Match Centre"|"Roster"|"Coaches Box"|"Fixture"|"Competition Ladder"|"Player Awards"|"Coach Awards"|"Marketplace"|"Settings";
 type Scope = "past"|"current"|"future"|"all";
 const base:{label:Section;icon:string;group:string}[]=[
@@ -9,9 +10,10 @@ const base:{label:Section;icon:string;group:string}[]=[
 const desc:Record<Section,string>={Overview:"Your command centre for Digital Rugby League.",Competitions:"Choose a game mode and enter its competition hub.",Leagues:"Create, join and manage your fantasy leagues.",Newsroom:"Competition updates, team news, franchise announcements, debut news and transfer reports.","Match Centre":"Live NRL match coverage and scoring.",Roster:"Manage your squad, starting side and player availability.","Coaches Box":"Coach chatroom and franchise communication.",Fixture:"Head-to-head league fixtures by round.","Competition Ladder":"Head-to-head standings by round, with Player and Coach Awards.","Player Awards":"Player awards for the selected round or all rounds.","Coach Awards":"Coach awards for the selected round or all rounds.",Marketplace:"Browse available players, average points, total points and Classic prices.",Settings:"Manage platform and competition preferences."};
 function Shield(){const [bad,setBad]=useState(false);return bad?null:<img className="brand-shield" src="/assets/drl_official_logo.png" alt="Digital Rugby League shield" onError={()=>setBad(true)}/>;}
 function PlatformSelector(){
-  const [page,setPage]=useState<"home"|"newsroom">("home");
+  const [page,setPage]=useState<"home"|"newsroom"|"franchise">("home");
   const [menuOpen,setMenuOpen]=useState(false);
-  const go=(next:"home"|"newsroom")=>{setPage(next);setMenuOpen(false);};
+  const go=(next:"home"|"newsroom"|"franchise")=>{setPage(next);setMenuOpen(false);};
+  if(page==="franchise") return <FranchiseHQ onExit={()=>go("home")}/>;
   return <main className="dfm-hq-shell">
     <header className="dfm-hq-topbar">
       <button className="dfm-hq-menu-button" type="button" aria-label="Open navigation" aria-expanded={menuOpen} onClick={()=>setMenuOpen(!menuOpen)}>☰</button>
@@ -32,7 +34,7 @@ function PlatformSelector(){
         <p>{page==="home"?"Your central headquarters. Select a destination to enter its dedicated environment.":"Platform announcements, competition updates and franchise news will be published here."}</p>
       </div>
       {page==="home"?<div className="dfm-hq-module-grid">
-        <a className="dfm-hq-module" href="#franchise" aria-disabled="true" onClick={e=>e.preventDefault()}><span className="module-number">01 / FRANCHISE</span><strong>FRANCHISE HQ</strong><small>COMING SOON</small><b aria-hidden="true">↗</b></a>
+        <button className="dfm-hq-module" type="button" onClick={()=>go("franchise")}><span className="module-number">01 / FRANCHISE</span><strong>FRANCHISE HQ</strong><small>OPEN FRANCHISE WORKSPACE</small><b aria-hidden="true">↗</b></button>
         <button className="dfm-hq-module" type="button" onClick={()=>go("newsroom")}><span className="module-number">02 / MEDIA</span><strong>NEWSROOM</strong><small>PLATFORM UPDATES</small><b aria-hidden="true">↗</b></button>
         <a className="dfm-hq-module available" href="https://drl.digitalfranchisemanager.com/"><span className="module-number">03 / SPORT</span><strong>DIGITAL RUGBY LEAGUE</strong><small>ENTER DRL HEADQUARTERS</small><b aria-hidden="true">↗</b></a>
         <a className="dfm-hq-module" href="#drlw" aria-disabled="true" onClick={e=>e.preventDefault()}><span className="module-number">04 / SPORT</span><strong>DRLW</strong><small>COMING SOON</small><b aria-hidden="true">↗</b></a>
