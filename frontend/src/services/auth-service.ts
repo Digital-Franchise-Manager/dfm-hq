@@ -9,12 +9,12 @@ export interface DfmSession {
 }
 
 async function request<T>(path: string, body?: Record<string, string>): Promise<T> {
-  const response = await fetch(path, {
-    method: body ? "POST" : "GET",
-    credentials: "same-origin",
-    headers: body ? { "Content-Type": "application/json" } : undefined,
-    body: body ? JSON.stringify(body) : undefined
-  });
+  const init: RequestInit = { method: body ? "POST" : "GET", credentials: "same-origin" };
+  if (body) {
+    init.headers = { "Content-Type": "application/json" };
+    init.body = JSON.stringify(body);
+  }
+  const response = await fetch(path, init);
   const payload = await response.json().catch(() => ({})) as T & { error?: string };
   if (!response.ok) throw new Error(payload.error || "The request could not be completed.");
   return payload;
