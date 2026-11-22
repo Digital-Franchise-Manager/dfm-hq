@@ -8,7 +8,40 @@ const base:{label:Section;icon:string;group:string}[]=[
 {label:"Marketplace",icon:"⇄",group:"MARKETPLACE"},{label:"Settings",icon:"⚙",group:"SYSTEM"}];
 const desc:Record<Section,string>={Overview:"Your command centre for Digital Rugby League.",Competitions:"Choose a game mode and enter its competition hub.",Leagues:"Create, join and manage your fantasy leagues.",Newsroom:"Competition updates, team news, franchise announcements, debut news and transfer reports.","Match Centre":"Live NRL match coverage and scoring.",Roster:"Manage your squad, starting side and player availability.","Coaches Box":"Coach chatroom and franchise communication.",Fixture:"Head-to-head league fixtures by round.","Competition Ladder":"Head-to-head standings by round, with Player and Coach Awards.","Player Awards":"Player awards for the selected round or all rounds.","Coach Awards":"Coach awards for the selected round or all rounds.",Marketplace:"Browse available players, average points, total points and Classic prices.",Settings:"Manage platform and competition preferences."};
 function Shield(){const [bad,setBad]=useState(false);return bad?null:<img className="brand-shield" src="/assets/drl_official_logo.png" alt="Digital Rugby League shield" onError={()=>setBad(true)}/>;}
-function PlatformSelector(){return <main className="platform-selector"><header className="selector-header"><div className="selector-wordmark"><span>DFM</span><small>DIGITAL FRANCHISE MANAGER</small></div><span className="selector-status"><i/> PLATFORM GATEWAY</span></header><section className="selector-content"><p className="eyebrow"><span/> ONE PLATFORM. MULTIPLE SPORTS.</p><h1>CHOOSE YOUR<br/><em>COMPETITION.</em></h1><p className="selector-intro">Select a platform to enter its dedicated headquarters.</p><a className="platform-option" href="https://drl.digitalfranchisemanager.com/"><div className="platform-option-logo"><img src="/assets/drl_official_logo.png" alt="Digital Rugby League shield"/></div><div className="platform-option-copy"><span className="section-kicker">AVAILABLE PLATFORM · 01</span><h2>DIGITAL RUGBY LEAGUE</h2><p>Enter DRL Competition HQ</p></div><span className="platform-option-arrow">↗</span></a></section><SiteFooter/></main>;}
+function PlatformSelector(){
+  const [page,setPage]=useState<"home"|"newsroom">("home");
+  const [menuOpen,setMenuOpen]=useState(false);
+  const go=(next:"home"|"newsroom")=>{setPage(next);setMenuOpen(false);};
+  return <main className="dfm-hq-shell">
+    <header className="dfm-hq-topbar">
+      <button className="dfm-hq-menu-button" type="button" aria-label="Open navigation" aria-expanded={menuOpen} onClick={()=>setMenuOpen(!menuOpen)}>☰</button>
+      <a className="dfm-hq-wordmark" href="/" aria-label="Digital Franchise Manager home"><span>DIGITAL</span><span>FRANCHISE</span><span>MANAGER</span></a>
+      <div className="dfm-hq-topbar-label">HEADQUARTERS</div>
+    </header>
+    {menuOpen&&<button className="dfm-hq-scrim" aria-label="Close navigation" onClick={()=>setMenuOpen(false)}/>}
+    <aside className={menuOpen?"dfm-hq-drawer open":"dfm-hq-drawer"} aria-label="DFM navigation">
+      <p className="dfm-hq-drawer-title">HEADQUARTERS</p>
+      <button className={page==="home"?"active":""} onClick={()=>go("home")}>HQ OVERVIEW</button>
+      <button className={page==="newsroom"?"active":""} onClick={()=>go("newsroom")}>NEWSROOM</button>
+      <a href="https://drl.digitalfranchisemanager.com/">DIGITAL RUGBY LEAGUE ↗</a>
+    </aside>
+    <section className="dfm-hq-main">
+      <div className="dfm-hq-intro">
+        <p className="dfm-hq-kicker"><i/> DIGITAL FRANCHISE MANAGER · HQ</p>
+        <h1>{page==="home"?<>ONE PLATFORM.<br/><em>MULTIPLE SPORTS.</em></>:<>DFM<br/><em>NEWSROOM.</em></>}</h1>
+        <p>{page==="home"?"Your central headquarters. Select a destination to enter its dedicated environment.":"Platform announcements, competition updates and franchise news will be published here."}</p>
+      </div>
+      {page==="home"?<div className="dfm-hq-module-grid">
+        <a className="dfm-hq-module" href="#franchise" aria-disabled="true" onClick={e=>e.preventDefault()}><span className="module-number">01 / FRANCHISE</span><strong>FRANCHISE HQ</strong><small>COMING SOON</small><b aria-hidden="true">↗</b></a>
+        <button className="dfm-hq-module" type="button" onClick={()=>go("newsroom")}><span className="module-number">02 / MEDIA</span><strong>NEWSROOM</strong><small>PLATFORM UPDATES</small><b aria-hidden="true">↗</b></button>
+        <a className="dfm-hq-module available" href="https://drl.digitalfranchisemanager.com/"><span className="module-number">03 / SPORT</span><strong>DIGITAL RUGBY LEAGUE</strong><small>ENTER DRL HEADQUARTERS</small><b aria-hidden="true">↗</b></a>
+        <a className="dfm-hq-module" href="#drlw" aria-disabled="true" onClick={e=>e.preventDefault()}><span className="module-number">04 / SPORT</span><strong>DIGITAL RUGBY LEAGUE WOMEN</strong><small>COMING SOON</small><b aria-hidden="true">↗</b></a>
+      </div>:<section className="dfm-hq-news-panel"><span className="module-number">DFM / NEWSROOM</span><h2>NEWS FEED NOT CONNECTED</h2><p>The Newsroom destination is established. Articles, announcements and publication tools will be added in a later development milestone. No sample stories or fabricated announcements are displayed.</p><button type="button" onClick={()=>go("home")}>← BACK TO HQ</button></section>}
+      <div className="dfm-hq-footer-note"><span>DFM · DIGITAL FRANCHISE MANAGER</span><span>BUILD FOUNDATION · MOBILE FIRST</span></div>
+    </section>
+    <SiteFooter/>
+  </main>;
+}
 function DrlDashboard(){
 const [section,setSection]=useState<Section>("Overview"),[gameMode,setGameMode]=useState<"classic"|"draft">("draft"),[leagueType,setLeagueType]=useState<"none"|"head-to-head"|"classic">("none"),[scope,setScope]=useState<Scope>("current"),[round,setRound]=useState(""),[query,setQuery]=useState(""),[mobileMenu,setMobileMenu]=useState(false);
 const liveNrlGameActive=false;
