@@ -53,11 +53,9 @@ async function authRequest(
     "Content-Type": "application/json"
   });
   if (accessToken) headers.set("Authorization", `Bearer ${accessToken}`);
-  return fetch(`${config.url}/auth/v1/${path}`, {
-    method,
-    headers,
-    body: body === undefined ? undefined : JSON.stringify(body)
-  });
+  const init: RequestInit = { method, headers };
+  if (body !== undefined) init.body = JSON.stringify(body);
+  return fetch(`${config.url}/auth/v1/${path}`, init);
 }
 
 function safeAuthError(payload: Record<string, unknown>, status: number): Response {
