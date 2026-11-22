@@ -161,6 +161,16 @@ async function handleAuth(request: Request, env: WorkerEnv): Promise<Response> {
 export default {
   async fetch(request: Request, env: WorkerEnv): Promise<Response> {
     const url = new URL(request.url);
+    if (request.method === "POST") {
+      const origin = request.headers.get("Origin");
+      if (origin) {
+        try {
+          if (new URL(origin).origin !== url.origin) return json({ error: "Cross-origin request rejected." }, 403);
+        } catch {
+          return json({ error: "Invalid request origin." }, 403);
+        }
+      }
+    }
     if (url.pathname.startsWith("/api/")) {
       if (request.method !== "GET" && request.method !== "POST") {
         return json({ error: "Method not allowed." }, 405, { Allow: "GET, POST" });
