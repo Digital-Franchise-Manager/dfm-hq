@@ -50,7 +50,7 @@ function ClubManagement({ onBack }: { onBack: () => void }) {
   const [section, setSection] = useState<ClubSection>("Overview");
   const [selectedAsset, setSelectedAsset] = useState<AssetCategory>("Stadium & Grounds");
   const [mobileNav, setMobileNav] = useState(false);
-  const activeAsset = useMemo(() => assetPaths.find((asset) => asset.category === selectedAsset) ?? assetPaths[0], [selectedAsset]);
+  const activeAsset = useMemo(() => assetPaths.find((asset) => asset.category === selectedAsset) ?? assetPaths[0]!, [selectedAsset]);
   const selectSection = (next: ClubSection) => { setSection(next); setMobileNav(false); };
   const sectionCopy: Record<ClubSection, string> = {
     Overview: "Your sporting organisation's command centre. Develop your franchise, build facilities and manage its commercial operations.",
