@@ -10,6 +10,7 @@ interface ProfileRow {
   points: number | null; tackles: number | null; tackle_efficiency: number | null;
   metres_gained: number | null; line_breaks: number | null; errors: number | null;
   penalties_conceded: number | null; storage_object_path: string | null; photo_alt: string | null;
+  current_club_name: string | null; current_squad_id: number | null;
 }
 const json = (body: unknown, status = 200): Response => new Response(JSON.stringify(body), {
   status,
@@ -90,11 +91,13 @@ async function handlePlayerProfiles(request: Request, env: Env): Promise<Respons
           const signed = await signedResponse.json() as { signedURL?: string };
           if (signed.signedURL?.startsWith("/storage/v1/")) photoUrl = supabaseUrl + signed.signedURL;
         }
-      } catch { /* Missing media signature does not prevent the player profile. */ }
+      } catch { /* A missing media signature never blocks a player profile. */ }
     }
     return {
       drl_player_id: row.drl_player_id, first_name: row.first_name, last_name: row.last_name,
-      team_name: null, position: null, photo_url: photoUrl, photo_alt: photoUrl ? row.photo_alt : null,
+      team_name: row.current_club_name, position: null, photo_url: photoUrl,
+      photo_alt: photoUrl ? row.photo_alt : null,
+      photo_kind: photoUrl ? "verified_action_photo" : null,
       stats: {
         appearances: row.appearances, tries: row.tries, try_assists: row.try_assists,
         points: row.points, tackles: row.tackles, tackle_efficiency: row.tackle_efficiency,

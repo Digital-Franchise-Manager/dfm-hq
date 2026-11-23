@@ -145,3 +145,51 @@ After successful authentication, the Worker calls `public.drl_nrl_player_profile
 The current master schema does not provide team or playing-position columns in the verified player master record, and the new season statistics table does not add them. The API therefore returns null for team and position rather than inventing values. The API returns only the 2026 season until additional season data and identity mapping are verified.
 
 This branch does not configure live Worker secrets, apply the SQL migration, deploy the Worker, or publish any media. Those operations require their own operational approval and migration-history reconciliation.
+
+
+## 2026 action-photo completion requirement
+
+The target is one genuine match-action photograph for every player in the 2026 player archive, showing the player in their current club's playing uniform. A headshot, training image, generic team image, or former-club uniform does not satisfy the requirement.
+
+The archive contains 588 player rows, but only 416 seasonal identity mappings were previously confirmed as verified; 172 remain unresolved. The unresolved identities must be reconciled before any image is attached to those permanent DRL player IDs. Do not infer identity from name alone. Current-club verification is a separate gate and must use the current 2026 squad assignment, not an old club assignment.
+
+### Source and review policy
+
+- Prefer official NRL match reports, official NRL media, and official club match-report/media pages.
+- Candidate discovery is free/manual and source-page based; no paid scraping, stock-photo service, or image API is used.
+- Each candidate must identify the exact player, current squad ID and club, original image URL, official source page, photographer credit, rights status and evidence URL.
+- A human reviewer must confirm the correct player, genuine match action, and current club uniform.
+- A discoverable image is not a licence. Only `licensed`, `permission_granted`, or `public_domain` with a recorded HTTPS evidence URL can progress to upload review.
+- Candidates remain private and unpublished. The validator never downloads, uploads, writes to JARVIS, or publishes images.
+
+### Candidate validation
+
+Run `backend/dfm/drl/nrl/extractor/player_media.py` on Android Termux or another Python 3 environment with the two JSON inputs exported locally:
+
+```sh
+python player_media.py --players jarvis-verified-players-2026.json --candidates action-photo-candidates-2026.json --output action-photo-review-2026.json
+```
+
+The player export must contain `drl_player_id`, `squad_id`, and `identity_status`. Candidate rows must contain:
+
+- `drl_player_id`, `season` (2026), `squad_id`, `current_club_name`
+- `current_club_verified: true`, `current_club_source_url` (official NRL/club squad evidence)
+- `image_url`, `source_page_url`, `photographer_credit`
+- `rights_status`, `rights_evidence_url`
+- `identity_confirmed: true`, `action_photo_confirmed: true`, `current_uniform_confirmed: true`
+
+The validator rejects unverified player identities, mismatched squad IDs, unverified current-club assignments, missing official club evidence, non-HTTPS URLs, non-official source pages, missing visual confirmations, uncleared rights, and duplicate player-season candidates. A result marked `ready_for_separate_upload_approval` is only a reviewed candidate; it is not uploaded or published.
+
+### Private media record and publication gate
+
+The migration `20261123120000_add_drl_player_media_workflow.sql` adds current-club, current-squad, action-photo verification, uniform verification, source-page and rights-evidence fields to the existing private media table. It is committed for review only and has NOT been applied.
+
+The authenticated read function returns an action image only when permanent player identity is verified, action-photo and current-uniform review flags are true, rights status is cleared with evidence, and a private Storage object path exists. The Cloudflare Worker signs only that private stored object. It never returns original source URLs, rights evidence, or private Storage paths to the browser.
+
+### Frontend behaviour
+
+The DRL player list and profile show only media explicitly marked `verified_action_photo`. Otherwise, the UI displays `PHOTO PENDING`; it does not substitute a headshot or an unverified image.
+
+### Operational boundaries
+
+This PR changes GitHub source files only. It does not apply migrations, write to JARVIS, export player data, download/upload photographs, configure Cloudflare secrets, deploy a Worker, or merge itself. Each of those actions requires separate approval.
