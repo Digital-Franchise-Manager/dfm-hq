@@ -33,3 +33,10 @@
 .drl-player-no-results{padding:18px;color:#92958d;font-size:10px}
 @media(max-width:850px){.drl-player-toolbar{grid-template-columns:1fr 1fr}.drl-player-layout{grid-template-columns:1fr}.drl-player-detail{position:static}}
 @media(max-width:520px){.drl-player-toolbar{grid-template-columns:1fr}.drl-player-row{grid-template-columns:20px 40px minmax(0,1fr) auto;gap:8px;padding:8px}.drl-player-row img,.drl-player-photo-fallback.compact{width:40px;height:40px}.drl-player-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.drl-card-collection{margin-top:24px}
+.drl-card-collection-heading{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:10px;margin-bottom:12px}
+.drl-card-collection-heading div{display:flex;flex-direction:column;gap:5px}
+.drl-card-collection-heading strong{color:#c7ff00;font-size:12px;font-weight:900;letter-spacing:.12em}
+.drl-card-collection-heading span,.drl-card-collection-heading small{color:#92958d;font-size:9px}
+.drl-card-data-warning{margin:8px 0;padding:10px;border:1px solid rgba(199,255,0,.3);background:rgba(199,255,0,.05);color:#dce5c8;font-size:9px;line-height:1.5}
