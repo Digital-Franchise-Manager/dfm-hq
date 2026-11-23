@@ -9,10 +9,20 @@ does not write to JARVIS, upload media or publish photographs.
 from __future__ import annotations
 
 import argparse
+import base64
+import hashlib
 import json
+import os
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlparse
+from urllib.parse import quote, urlparse
+from urllib.request import Request, urlopen
+from urllib.error import HTTPError, URLError
+
+try:
+    from .photo_audit import image_info
+except ImportError:
+    from photo_audit import image_info
 
 SEASON = 2026
 OFFICIAL_SOURCE_HOSTS = {
@@ -102,6 +112,134 @@ def validate_candidate(player: dict[str, Any], candidate: dict[str, Any]) -> lis
     return issues
 
 
+
+def _privileged_supabase_key(value: str) -> bool:
+    """Accept only a Supabase secret key or legacy service_role JWT."""
+    if value.startswith("sb_secret_"):
+        return True
+    parts = value.split(".")
+    if len(parts) != 3:
+        return False
+    try:
+        payload = parts[1] + "=" * (-len(parts[1]) % 4)
+        claims = json.loads(base64.urlsafe_b64decode(payload.encode("ascii")))
+        return claims.get("role") == "service_role"
+    except (ValueError, UnicodeError, json.JSONDecodeError):
+        return False
+
+
+def _jarvis_request(base_url: str, secret: str, path: str, method: str,
+                    body: bytes | None = None, content_type: str = "application/json",
+                    extra_headers: dict[str, str] | None = None) -> bytes:
+    url = base_url.rstrip("/") + path
+    headers = {
+        "apikey": secret,
+        "Authorization": "Bearer " + secret,
+        "Content-Type": content_type,
+        "Accept": "application/json",
+    }
+    if extra_headers:
+        headers.update(extra_headers)
+    request = Request(url, data=body, headers=headers, method=method)
+    try:
+        with urlopen(request, timeout=60) as response:
+            return response.read(1024 * 1024)
+    except HTTPError as error:
+        # Never echo response bodies or request headers: they may contain private details.
+        raise RuntimeError(f"JARVIS request failed with HTTP {error.code}") from None
+    except (URLError, TimeoutError, OSError):
+        raise RuntimeError("JARVIS request could not be completed") from None
+
+
+def sync_approved_photos_to_jarvis(players: list[dict[str, Any]],
+                                   candidates: list[dict[str, Any]],
+                                   staging: Path) -> list[dict[str, Any]]:
+    """Upload only fully approved, downloaded photographs to private JARVIS storage."""
+    base_url = os.environ.get("SUPABASE_URL", "").strip()
+    secret = (os.environ.get("SUPABASE_SECRET_KEY")
+              or os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or "").strip()
+    parsed = urlparse(base_url)
+    if parsed.scheme != "https" or not parsed.hostname or parsed.username or parsed.password:
+        raise SystemExit("Set SUPABASE_URL to the HTTPS project URL in the private Termux environment.")
+    if not _privileged_supabase_key(secret):
+        raise SystemExit("Set SUPABASE_SECRET_KEY or SUPABASE_SERVICE_ROLE_KEY to a privileged server-side key.")
+    if not staging.exists() or not staging.is_dir():
+        raise SystemExit("--staging must point to the existing private image staging directory.")
+
+    root = staging.resolve()
+    player_index: dict[int, dict[str, Any]] = {}
+    for player in players:
+        try:
+            player_index[int(player["drl_player_id"])] = player
+        except (KeyError, TypeError, ValueError):
+            continue
+
+    report: list[dict[str, Any]] = []
+    for candidate in candidates:
+        if candidate.get("status") != "downloaded_private" or not candidate.get("download_path"):
+            continue
+        try:
+            player_id = int(candidate["drl_player_id"])
+            player = player_index.get(player_id)
+            if player is None:
+                raise ValueError("player_not_found_in_export")
+            issues = validate_candidate(player, candidate)
+            if issues:
+                raise ValueError("candidate_not_approved:" + ",".join(sorted(set(issues))))
+            relative = Path(str(candidate["download_path"]))
+            local_file = (root / relative).resolve() if not relative.is_absolute() else relative.resolve()
+            if not local_file.is_relative_to(root) or not local_file.is_file():
+                raise ValueError("download_file_missing_or_outside_staging")
+            details = image_info(local_file)
+            formats = {"jpeg": ("image/jpeg", "jpg"), "png": ("image/png", "png"), "webp": ("image/webp", "webp")}
+            if details.get("format") not in formats or not details.get("width") or not details.get("height"):
+                raise ValueError("image_format_or_dimensions_invalid")
+            mime_type, extension = formats[details["format"]]
+            file_size = int(details["bytes"])
+            if file_size <= 0 or file_size > 10 * 1024 * 1024:
+                raise ValueError("image_exceeds_private_bucket_size_limit")
+            digest = details["sha256"]
+            photo_type = "profile" if candidate.get("media_kind") == "profile_photo" else "action"
+            object_path = f"players/{player_id}/{photo_type}/{digest}.{extension}"
+            encoded_path = quote(object_path, safe="/")
+            _jarvis_request(
+                base_url, secret, f"/storage/v1/object/drl-player-media/{encoded_path}",
+                "POST", local_file.read_bytes(), mime_type,
+                {"x-upsert": "true", "cache-control": "31536000"},
+            )
+            asset = {
+                "drl_player_id": player_id,
+                "photo_type": photo_type,
+                "object_path": object_path,
+                "source_url": candidate["image_url"],
+                "rights_status": candidate["rights_status"],
+                "rights_evidence_url": candidate["rights_evidence_url"],
+                "mime_type": mime_type,
+                "file_size_bytes": file_size,
+                "image_width": details["width"],
+                "image_height": details["height"],
+                "checksum_sha256": digest,
+            }
+            rpc_body = json.dumps({"p_asset": asset}, separators=(",", ":")).encode("utf-8")
+            _jarvis_request(
+                base_url, secret, "/rest/v1/rpc/drl_register_player_photo_asset",
+                "POST", rpc_body, "application/json",
+            )
+            report.append({
+                "drl_player_id": player_id, "photo_type": photo_type,
+                "object_path": object_path, "status": "uploaded_and_registered",
+                "bytes": file_size, "sha256": digest,
+            })
+        except Exception as error:
+            # Keep diagnostics categorical; never serialize URLs, secrets or response bodies.
+            report.append({
+                "drl_player_id": candidate.get("drl_player_id"),
+                "status": "upload_or_registration_failed",
+                "reason": str(error)[:240] if isinstance(error, ValueError) else type(error).__name__,
+            })
+    return report
+
+
 def load_candidates(path: Path) -> list[dict[str, Any]]:
     value = json.loads(path.read_text(encoding="utf-8"))
     if isinstance(value, dict):
@@ -125,11 +263,24 @@ def main() -> int:
     parser.add_argument("--candidates", required=True, type=Path,
                         help="Candidate array or photo-discovery manifest")
     parser.add_argument("--output", required=True, type=Path,
-                        help="Review report JSON; no database writes are performed")
+                        help="Review or upload report JSON; stored locally in private staging")
+    parser.add_argument("--sync-jarvis", action="store_true",
+                        help="Upload only downloaded, identity-confirmed and rights-cleared images to private JARVIS storage")
+    parser.add_argument("--staging", type=Path,
+                        help="Private local image staging directory; required with --sync-jarvis")
     args = parser.parse_args()
 
     players = load_players(args.players)
     candidates = load_candidates(args.candidates)
+    if args.sync_jarvis:
+        if not args.staging:
+            parser.error("--staging is required with --sync-jarvis")
+        report = sync_approved_photos_to_jarvis(players, candidates, args.staging)
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\\n", encoding="utf-8")
+        uploaded = sum(row.get("status") == "uploaded_and_registered" for row in report)
+        print(f"JARVIS photo sync finished: {uploaded} uploaded and registered; {len(report)-uploaded} failed.")
+        return 0 if uploaded == len(report) else 1
     player_index = {}
     for player in players:
         try:
