@@ -224,3 +224,10 @@ No medal, Origin status, appearance tier, fantasy score or action-photo status m
 ### Current completion boundary
 
 The card component, gallery integration and DPP-aware medal allocator are code deliverables, not evidence that the 588 records are complete. The existing profile feed currently exposes verified profile rows and NRL statistics only. The backend contract and source exports must be extended through separately reviewed work to supply verified fantasy scoring, fantasy-position eligibility, career appearances and Origin match minutes. The historical identity gap (416 verified / 172 unresolved in the last verified audit) must also be reconciled before claiming 588 verified cards. No database migration, JARVIS write, media upload, Cloudflare secret change or deployment is performed by this frontend implementation.
+### Verified 2026 fantasy source fields
+
+A read-only audit of the live 2026 source table confirmed 588 player rows with a `stats.total_points` value and populated fantasy position arrays. A strict join requiring both `drl_nrl_player_master.identity_status = verified` and the matching 2026 `drl_nrl_player_source_map.identity_status = verified` returned 426 players; all 426 had a fantasy total and a mapped primary/eligible position. The remaining 162 rows are excluded from the authenticated profile feed until their permanent identity mapping is verified.
+
+The position ID mapping used by the 2026 source array is: 1 HOK, 2 MID, 3 EDG, 4 HLF, 5 CTR, 6 WFB. The first position in the source array is treated as primary; subsequent entries are secondary eligible positions. The mapping was cross-checked against known 2026 records, including Nathan Cleary (HLF), Angus Crichton (EDG), Harry Grant (HOK), Payne Haas (MID) and Latrell Mitchell (WFB/CTR).
+
+The profile-read RPC migration now joins the verified 2026 season row and verified source-map row, then returns `fantasy_points`, `primary_fantasy_position` and `eligible_fantasy_positions`. The Cloudflare Worker response passes those fields through to the frontend. The migration is a draft in this PR and has not been applied to JARVIS; the Worker has not been deployed.
