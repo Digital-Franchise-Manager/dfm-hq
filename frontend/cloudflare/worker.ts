@@ -45,33 +45,35 @@ function isSameOrigin(request: Request): boolean {
   }
 }
 
+function isSafeStoragePath(path: string): boolean {
+  const segments = path.split("/");
+  return segments.length > 0 &&
+    segments.every((segment) =>
+      segment.length > 0 &&
+      segment !== "." &&
+      segment !== ".." &&
+      !/[\\\\\u0000-\u001f]/.test(segment)
+    );
+}
+
 async function handlePlayerProfiles(request: Request, env: Env): Promise<Response> {
-  if (request.method !== "GET") {
-    return json({ error: "Method not allowed" }, 405);
-  }
-  if (!isSameOrigin(request)) {
-    return json({ error: "Forbidden" }, 403);
-  }
+  if (request.method !== "GET") return json({ error: "Method not allowed" }, 405);
+  if (!isSameOrigin(request)) return json({ error: "Forbidden" }, 403);
 
-  const token = request.headers.get("Authorization")?.match(/^Bearer\s+(.+)$/i)?.[1];
-  if (!token || token.length > 8192) {
-    return json({ error: "Unauthorized" }, 401);
-  }
+  const token = request.headers.get("Authorization")?.match(/^Bearer\\s+(.+)$/i)?.[1];
+  if (!token || token.length > 8192) return json({ error: "Unauthorized" }, 401);
 
-  const supabaseUrl = env.SUPABASE_URL.replace(/\/$/, "");
-  if (!/^https:\/\/[a-z0-9.-]+$/i.test(supabaseUrl) ||
+  const supabaseUrl = env.SUPABASE_URL.replace(/\\/$/, "");
+  if (!/^https:\\/\\/[a-z0-9.-]+$/i.test(supabaseUrl) ||
       !env.SUPABASE_ANON_KEY || !env.SUPABASE_SERVICE_ROLE_KEY) {
     return json({ error: "Player service unavailable" }, 503);
   }
 
-  // Validate the bearer token with Supabase Auth; never trust decoded JWT claims.
+  // Validate the access token with Supabase Auth; never trust decoded JWT claims.
   let authResponse: Response;
   try {
     authResponse = await fetch(`${supabaseUrl}/auth/v1/user`, {
-      headers: {
-        apikey: env.SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${token}`
-      }
+      headers: { apikey: env.SUPABASE_ANON_KEY, Authorization: `Bearer ${token}` }
     });
   } catch {
     return json({ error: "Authentication service unavailable" }, 503);
@@ -79,12 +81,9 @@ async function handlePlayerProfiles(request: Request, env: Env): Promise<Respons
   if (!authResponse.ok) return json({ error: "Unauthorized" }, 401);
 
   const seasonValue = new URL(request.url).searchParams.get("season") ?? "2026";
-  if (!/^20[0-9]{2}$/.test(seasonValue) || seasonValue !== "2026") {
-    return json({ error: "Season unavailable" }, 400);
-  }
+  if (seasonValue !== "2026") return json({ error: "Season unavailable" }, 400);
 
-  // This narrow RPC is executable only by service_role. Browser roles have no
-  // privileges on the private schema or the RPC.
+  // This narrow RPC is executable only by service_role.
   let dataResponse: Response;
   try {
     dataResponse = await fetch(`${supabaseUrl}/rest/v1/rpc/drl_nrl_player_profiles_read`, {
@@ -95,7 +94,7 @@ async function handlePlayerProfiles(request: Request, env: Env): Promise<Respons
         "Content-Type": "application/json",
         Accept: "application/json"
       },
-      body: JSON.stringify({ p_season: Number(seasonValue) })
+      body: JSON.stringify({ p_season: 2026 })
     });
   } catch {
     return json({ error: "Player service unavailable" }, 503);
@@ -109,8 +108,9 @@ async function handlePlayerProfiles(request: Request, env: Env): Promise<Respons
 
   const players = await Promise.all(rows.map(async (row) => {
     let photoUrl: string | null = null;
-    if (row.storage_object_path) {
-      const objectPath = row.storage_object_path.split("/").map(encodeURIComponent).join("/");
+    const storagePath = row.storage_object_path;
+    if (storagePath && isSafeStoragePath(storagePath)) {
+      const objectPath = storagePath.split("/").map(encodeURIComponent).join("/");
       try {
         const signedResponse = await fetch(
           `${supabaseUrl}/storage/v1/object/sign/drl-player-media/${objectPath}`,
@@ -126,7 +126,7 @@ async function handlePlayerProfiles(request: Request, env: Env): Promise<Respons
         );
         if (signedResponse.ok) {
           const signed = await signedResponse.json() as { signedURL?: string };
-          if (signed.signedURL && signed.signedURL.startsWith("/storage/v1/")) {
+          if (signed.signedURL?.startsWith("/storage/v1/")) {
             photoUrl = `${supabaseUrl}${signed.signedURL}`;
           }
         }
@@ -158,18 +158,14 @@ async function handlePlayerProfiles(request: Request, env: Env): Promise<Respons
     };
   }));
 
-  return json({ season: Number(seasonValue), source_status: "connected", players });
+  return json({ season: 2026, source_status: "connected", players });
 }
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
-    if (url.pathname === "/api/drl/nrl/players") {
-      return handlePlayerProfiles(request, env);
-    }
-    if (url.pathname.startsWith("/api/")) {
-      return json({ error: "Not found" }, 404);
-    }
+    if (url.pathname === "/api/drl/nrl/players") return handlePlayerProfiles(request, env);
+    if (url.pathname.startsWith("/api/")) return json({ error: "Not found" }, 404);
     return env.ASSETS.fetch(request);
   }
 };
