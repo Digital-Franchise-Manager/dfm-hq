@@ -52,7 +52,10 @@ returns table (
   storage_object_path text,
   photo_alt text,
   current_club_name text,
-  current_squad_id bigint
+  current_squad_id bigint,
+  fantasy_points numeric,
+  primary_fantasy_position text,
+  eligible_fantasy_positions text[]
 )
 language sql
 stable
@@ -76,8 +79,31 @@ as $function$
     media.storage_object_path,
     media.alt_text,
     media.current_club_name,
-    media.current_squad_id
+    media.current_squad_id,
+    nullif(season_player.stats->>'total_points', '')::numeric,
+    case season_player.positions[1]
+      when 1 then 'HOK' when 2 then 'MID' when 3 then 'EDG'
+      when 4 then 'HLF' when 5 then 'CTR' when 6 then 'WFB'
+      else null
+    end,
+    array(
+      select case position_item.position_id
+        when 1 then 'HOK' when 2 then 'MID' when 3 then 'EDG'
+        when 4 then 'HLF' when 5 then 'CTR' when 6 then 'WFB'
+        else null
+      end
+      from unnest(season_player.positions) with ordinality as position_item(position_id, position_order)
+      where position_item.position_id between 1 and 6
+      order by position_item.position_order
+    )
   from dfm_private.drl_nrl_player_master as master
+  inner join dfm_private.drl_nrl_players_2026 as season_player
+    on season_player.drl_player_id = master.drl_player_id
+  inner join dfm_private.drl_nrl_player_source_map as source_map
+    on source_map.season = 2026
+   and source_map.season_player_id = season_player.drl_player_2026_id
+   and source_map.drl_player_id = season_player.drl_player_id
+   and source_map.identity_status = 'verified'
   left join dfm_private.drl_nrl_player_season_stats as stats
     on stats.drl_player_id = master.drl_player_id
    and stats.season = p_season
