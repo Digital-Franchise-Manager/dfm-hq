@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../../utils/supabaseClient";
+import DRLPlayerCard, { type DrlCardPlayer } from "./DRLPlayerCard";
+import { allocateDrlPositionalMedals, type MedalCandidate } from "./drlPlayerMedals";
 import "./DRLPlayerProfiles.css";
 
 type PlayerStats = {
@@ -13,6 +15,12 @@ type PlayerProfile = {
   team_name: string | null; position: string | null; photo_url: string | null;
   photo_alt: string | null; photo_kind?: "verified_action_photo" | null;
   stats: PlayerStats | null;
+  fantasy_points?: number | null;
+  primary_fantasy_position?: "HOK" | "MID" | "EDG" | "HLF" | "CTR" | "WFB" | null;
+  eligible_fantasy_positions?: Array<"HOK" | "MID" | "EDG" | "HLF" | "CTR" | "WFB">;
+  nrl_career_appearances?: number | null;
+  origin_state?: "NSW" | "QLD" | null;
+  origin_minutes_played?: number | null;
 };
 type PlayerFeed = { season: number; players: PlayerProfile[]; source_status: "connected" | "unavailable" };
 type SortKey = "points" | "tries" | "try_assists" | "tackles" | "metres_gained" | "line_breaks" | "appearances";
@@ -82,6 +90,14 @@ export default function DRLPlayerProfiles() {
     });
   }, [players, search, sortKey, sortDirection]);
   const selected = players.find((player) => player.drl_player_id === selectedId) ?? null;
+  const medalAwards = useMemo(() => {
+    const candidates: MedalCandidate[] = players.flatMap((player) => {
+      if (typeof player.fantasy_points !== "number" || !player.primary_fantasy_position || !player.eligible_fantasy_positions?.length) return [];
+      return [{ drl_player_id: player.drl_player_id, fantasy_points: player.fantasy_points, primary_position: player.primary_fantasy_position, eligible_positions: player.eligible_fantasy_positions }];
+    });
+    return allocateDrlPositionalMedals(candidates);
+  }, [players]);
+  const awardsByPlayer = useMemo(() => new Map(medalAwards.map((award) => [award.drl_player_id, { medal: award.medal, position: award.position }])), [medalAwards]);
 
   return <section className="drl-player-profiles" aria-label="NRL player profiles">
     <div className="drl-player-toolbar">
@@ -115,5 +131,20 @@ export default function DRLPlayerProfiles() {
         </> : <div className="drl-player-empty"><strong>SELECT A PLAYER</strong><p>Choose a player to view their season profile and verified statistics.</p></div>}
       </aside>
     </div>}
+    {!loading && !feedError && <section className="drl-card-collection" aria-label="DRL player card collection">
+      <div className="drl-card-collection-heading"><div><strong>DRL PLAYER CARD COLLECTION</strong><span>{players.length} player records loaded · target 588</span></div><small>{medalAwards.length} positional medals allocated from supplied fantasy data</small></div>
+      {players.length !== 588 && <p className="drl-card-data-warning" role="status">COLLECTION INCOMPLETE — {588 - players.length} player records are not present in the authenticated feed. Missing records will not be fabricated.</p>}
+      {players.some((player) => typeof player.fantasy_points !== "number" || !player.primary_fantasy_position || !player.eligible_fantasy_positions?.length) && <p className="drl-card-data-warning" role="status">FANTASY DATA PENDING — cards are displayed without invented fantasy points, positions or medal awards until verified data is supplied.</p>}
+      <div className="drl-card-gallery">{players.map((player) => {
+        const card: DrlCardPlayer = {
+          drl_player_id: player.drl_player_id, first_name: player.first_name, last_name: player.last_name, team_name: player.team_name,
+          primary_fantasy_position: player.primary_fantasy_position ?? null, eligible_fantasy_positions: player.eligible_fantasy_positions ?? [],
+          fantasy_points: player.fantasy_points ?? null, nrl_career_appearances: player.nrl_career_appearances ?? null,
+          origin_state: player.origin_state ?? null, origin_minutes_played: player.origin_minutes_played ?? null,
+          photo_url: player.photo_kind === "verified_action_photo" ? player.photo_url : null, photo_alt: player.photo_alt
+        };
+        return <DRLPlayerCard key={player.drl_player_id} player={card} medal={awardsByPlayer.get(player.drl_player_id) ?? null} />;
+      })}</div>
+    </section>}
   </section>;
 }
