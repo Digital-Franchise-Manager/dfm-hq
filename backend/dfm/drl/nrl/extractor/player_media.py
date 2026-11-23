@@ -1,17 +1,15 @@
 #!/usr/bin/env python3
-"""Validate DRL 2026 NRL photo candidates before private staging.
+"""Validate DRL 2026 NRL photo candidates and optionally sync approved files to private JARVIS.
 
-A source URL is not permission. Candidate files must be sourced from approved
-official NRL/club/NRL Fantasy pages, linked to a verified permanent DRL player
-ID, and pass the applicable human identity and rights checks. This validator
-does not write to JARVIS, upload media or publish photographs.
+A source URL is not permission. Uploads require an approved official source,
+a verified permanent DRL player ID, human identity/type review and documented
+reuse rights. The default validation mode is read-only; JARVIS sync is explicit.
 """
 from __future__ import annotations
 
 import argparse
 import base64
 import binascii
-import hashlib
 import json
 import os
 from pathlib import Path
