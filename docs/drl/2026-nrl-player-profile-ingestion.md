@@ -128,3 +128,20 @@ Response shape:
 The API must authenticate the session, read `dfm_private` server-side only, filter out unverified identity mappings, and return a signed URL only for media whose player identity is verified and whose rights status is cleared. Never return the private Storage object path, source-only image URL, database credentials, or raw source payload to the browser.
 
 The frontend intentionally shows a disconnected state until this authenticated Cloudflare API route is implemented. This PR does not change Cloudflare Worker routing because that is a separate infrastructure change requiring its own approval.
+
+## Cloudflare authenticated profile API (implementation branch)
+
+The Worker entry point is `frontend/cloudflare/worker.ts`; Wrangler serves the built frontend through the `ASSETS` binding and runs the Worker first for `/api/*`. The only player API handler currently accepted is the same-origin GET route documented above.
+
+Required Cloudflare Worker secret bindings (configure through the Cloudflare secret manager; never commit values):
+- `SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+
+The browser uses the existing pinned `@supabase/supabase-js` dependency and public build-time settings `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. These are client configuration values, not privileged credentials. The browser sends the current access token in the Authorization header. The Worker validates it by calling Supabase Auth's user endpoint; it does not trust decoded claims or client-supplied user IDs.
+
+After successful authentication, the Worker calls `public.drl_nrl_player_profiles_read` using its server-only service-role binding. The function is a fixed-search-path SECURITY DEFINER function, with EXECUTE revoked from PUBLIC, anon and authenticated and granted only to service_role. It returns verified master identities and season statistics, and only media paths with verified identity plus cleared rights status. The Worker uses any returned media path internally to request a five-minute signed URL; the storage path and original source URL are never returned to the browser.
+
+The current master schema does not provide team or playing-position columns in the verified player master record, and the new season statistics table does not add them. The API therefore returns null for team and position rather than inventing values. The API returns only the 2026 season until additional season data and identity mapping are verified.
+
+This branch does not configure live Worker secrets, apply the SQL migration, deploy the Worker, or publish any media. Those operations require their own operational approval and migration-history reconciliation.
