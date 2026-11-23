@@ -43,7 +43,7 @@ Achievement cards are displayed only when a verified record exists in the privat
 2. Silver
 3. Bronze
 4. Platinum
-5. State of Origin Blue / Burgundy
+5. State of Origin Blue and State of Origin Burgundy (equal rank)
 6. Emerald Green
 7. Neon Lime
 8. Mint
