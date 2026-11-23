@@ -139,4 +139,4 @@ python -m unittest discover -s tests/unit -p 'test_*.py' -v
 - NRL directory matching is limited to squad IDs already defined by the existing player-profile extractor.
 - Page parsing discovers image candidates; it cannot prove that an image depicts the named player in genuine match action. Human confirmation remains mandatory.
 - Rights metadata must be supplied and evidenced. A source domain alone never clears copyright.
-- This stage is local private staging only. Separate approval is required before any upload to JARVIS or publication/delivery change.
+- Discovery and validation remain local-only. The separately invoked `--sync-jarvis` mode uploads only approved local files into private JARVIS storage. Publication or delivery changes remain out of scope.
