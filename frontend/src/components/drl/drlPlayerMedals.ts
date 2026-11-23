@@ -42,7 +42,7 @@ export function allocateDrlPositionalMedals(candidates: MedalCandidate[]): Posit
   const medalOrder: Medal[] = ["GOLD", "SILVER", "BRONZE"];
 
   // Primary-position rankings always take precedence over secondary DPP claims.
-  for ( (const position of DRL_FANTASY_POSITIONS) {
+  for (const position of DRL_FANTASY_POSITIONS) {
     const ranked = [...unique.values()]
       .filter((player) => player.primary_position === position)
       .sort((a, b) => b.fantasy_points - a.fantasy_points || a.drl_player_id - b.drl_player_id);
