@@ -77,21 +77,14 @@ def same_official_family(page_url: str, image_url: str) -> bool:
         return False
     page_host = (urlparse(page_url).hostname or "").lower()
     image_host = (urlparse(image_url).hostname or "").lower()
-    if page_host == image_host:
-        return True
-    return any(
-        (page_host == root or page_host.endswith("." + root))
-        and (image_host == root or image_host.endswith("." + root))
-        for root in FAMILY_ROOTS
-    ) and any(
-        page_host == root or page_host.endswith("." + root)
-        for root in FAMILY_ROOTS
-    ) and any(
-        image_host == root or image_host.endswith("." + root)
-        for root in FAMILY_ROOTS
-    ) and next((root for root in FAMILY_ROOTS if page_host == root or page_host.endswith("." + root)), None) == next(
-        (root for root in FAMILY_ROOTS if image_host == root or image_host.endswith("." + root)), None
-    )
+
+    def family(host: str) -> str | None:
+        return next(
+            (root for root in FAMILY_ROOTS if host == root or host.endswith("." + root)),
+            None,
+        )
+
+    return family(page_host) is not None and family(page_host) == family(image_host)
 
 
 def fetch_bytes(url: str, accept: str, max_bytes: int = MAX_PAGE_BYTES) -> tuple[bytes, str, str]:
@@ -212,8 +205,15 @@ def discover_page_images(page_url: str, media_kind: str, player: dict[str, Any])
     return results
 
 
-def discover_nrl_directory_profile(player: dict[str, Any], delay: float = 1.0) -> dict[str, Any] | None:
-    """Resolve a verified player to a unique exact NRL directory profile."""
+def discover_nrl_directory_profile(
+    player: dict[str, Any],
+    delay: float = 1.0,
+    directory_cache: dict[int, list[dict[str, Any]]] | None = None,
+) -> dict[str, Any] | None:
+    """Resolve a verified player to a unique exact NRL directory profile.
+
+    A per-squad cache prevents one directory request per player in a squad.
+    """
     if str(player.get("identity_status", "")).casefold() != "verified":
         return None
     try:
@@ -222,31 +222,36 @@ def discover_nrl_directory_profile(player: dict[str, Any], delay: float = 1.0) -
         return None
     if squad_id not in SQUAD_IDS:
         return None
-    query = urlencode({"competition": COMPETITION_ID, "team": squad_id})
-    payload, _, _ = fetch_bytes(f"{DIRECTORY_ENDPOINT}?{query}", "application/json")
-    data = json.loads(payload.decode("utf-8", errors="replace"))
-    found: list[dict[str, Any]] = []
-
-    def walk(value: Any) -> None:
-        if isinstance(value, dict):
-            if all(key in value for key in ("firstName", "lastName", "url")):
-                found.append(value)
-            for child in value.values():
-                if isinstance(child, (dict, list)):
-                    walk(child)
-        elif isinstance(value, list):
-            for child in value:
-                walk(child)
-
-    walk(data)
     first, last = normalized(player.get("first_name")), normalized(player.get("last_name"))
+    if not first or not last:
+        return None
+    cache = directory_cache if directory_cache is not None else {}
+    if squad_id not in cache:
+        query = urlencode({"competition": COMPETITION_ID, "team": squad_id})
+        payload, _, _ = fetch_bytes(f"{DIRECTORY_ENDPOINT}?{query}", "application/json")
+        data = json.loads(payload.decode("utf-8", errors="replace"))
+        found: list[dict[str, Any]] = []
+
+        def walk(value: Any) -> None:
+            if isinstance(value, dict):
+                if all(key in value for key in ("firstName", "lastName", "url")):
+                    found.append(value)
+                for child in value.values():
+                    if isinstance(child, (dict, list)):
+                        walk(child)
+            elif isinstance(value, list):
+                for child in value:
+                    walk(child)
+
+        walk(data)
+        cache[squad_id] = found
+        if delay:
+            time.sleep(max(0, delay))
     matches = [
-        item for item in found
+        item for item in cache[squad_id]
         if normalized(item.get("firstName")) == first
         and normalized(item.get("lastName")) == last
     ]
-    if delay:
-        time.sleep(max(0, delay))
     if len(matches) != 1:
         return None
     profile_url = urljoin(NRL_ORIGIN, str(matches[0].get("url", "")))
@@ -282,11 +287,16 @@ class NRLFantasySource:
 class OfficialNRLSource:
     name = "official_nrl"
 
+    def __init__(self) -> None:
+        self.directory_cache: dict[int, list[dict[str, Any]]] = {}
+
     def discover(self, player: dict[str, Any], delay: float = 1.0) -> list[dict[str, Any]]:
         profile_url = player.get("nrl_profile_url")
         image_url = player.get("nrl_profile_image_url")
         if not profile_url:
-            match = discover_nrl_directory_profile(player, delay=delay)
+            match = discover_nrl_directory_profile(
+                player, delay=delay, directory_cache=self.directory_cache
+            )
             if match:
                 profile_url = match["profile_url"]
                 image_url = image_url or match.get("image_url")
