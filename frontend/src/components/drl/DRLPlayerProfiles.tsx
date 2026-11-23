@@ -38,7 +38,7 @@ const achievementCardDetails: Record<AchievementCardCode, { label: string; class
   silver: { label: "2ND PLACE · SILVER", className: "silver", rank: 2 },
   bronze: { label: "3RD PLACE · BRONZE", className: "bronze", rank: 3 },
   state_of_origin_blue: { label: "STATE OF ORIGIN · BLUE", className: "origin-blue", rank: 5 },
-  state_of_origin_burgundy: { label: "STATE OF ORIGIN · BURGUNDY", className: "origin-burgundy", rank: 6 }
+  state_of_origin_burgundy: { label: "STATE OF ORIGIN · BURGUNDY", className: "origin-burgundy", rank: 5 }
 };
 function displayStat(value: number | null | undefined, suffix = ""): string {
   return value === null || value === undefined ? "Not supplied" : `${value.toLocaleString()}${suffix}`;
