@@ -12,7 +12,7 @@ sys.path.insert(0, str(EXTRACTOR))
 from photo_manifest import merge_candidates, write_manifest, load_manifest
 from photo_sources import official_host, same_official_family, ImagePageParser
 from photo_audit import image_info
-from player_media import validate_candidate
+from player_media import validate_candidate, _privileged_supabase_key
 
 
 class PhotoSourceTests(unittest.TestCase):
@@ -84,6 +84,25 @@ class PhotoValidationTests(unittest.TestCase):
     def test_wrong_player_id_is_rejected(self):
         candidate = dict(self.candidate, drl_player_id=99)
         self.assertIn("candidate_drl_player_id_mismatch", validate_candidate(self.player, candidate))
+
+
+class JarvisUploadSecurityTests(unittest.TestCase):
+    def test_rejects_publishable_or_anon_keys(self):
+        self.assertFalse(_privileged_supabase_key("sb_publishable_example"))
+        self.assertFalse(_privileged_supabase_key("eyJhbGciOiJub25lIn0.eyJyb2xlIjoiYW5vbiJ9.signature"))
+
+    def test_accepts_secret_key_prefix(self):
+        self.assertTrue(_privileged_supabase_key("sb_secret_example"))
+
+    def test_accepts_legacy_service_role_jwt(self):
+        import base64
+        payload = base64.urlsafe_b64encode(b'{"role":"service_role"}').decode().rstrip("=")
+        self.assertTrue(_privileged_supabase_key("header." + payload + ".signature"))
+
+    def test_rejects_legacy_anon_jwt(self):
+        import base64
+        payload = base64.urlsafe_b64encode(b'{"role":"anon"}').decode().rstrip("=")
+        self.assertFalse(_privileged_supabase_key("header." + payload + ".signature"))
 
 
 class ImageAuditTests(unittest.TestCase):
