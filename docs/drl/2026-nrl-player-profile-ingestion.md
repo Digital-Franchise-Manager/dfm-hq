@@ -193,3 +193,34 @@ The DRL player list and profile show only media explicitly marked `verified_acti
 ### Operational boundaries
 
 This PR changes GitHub source files only. It does not apply migrations, write to JARVIS, export player data, download/upload photographs, configure Cloudflare secrets, deploy a Worker, or merge itself. Each of those actions requires separate approval.
+
+## DRL 588-card collection and positional medal rules
+
+The frontend card gallery is implemented as a reviewable presentation layer. It renders only the player rows returned by the authenticated profile feed; it does not manufacture missing player records. The current authenticated profile contract does not yet supply DRL fantasy points, primary/secondary fantasy-position eligibility, NRL career appearance totals, or verified Origin minutes. Those values must remain pending until sourced from authoritative DRL/JARVIS records.
+
+### Fantasy positions
+
+The six eligible positions are HOK, MID, EDG, HLF, CTR and WFB. Each player record must provide one primary position and an explicit list of all eligible positions. A DPP player is eligible in every listed position.
+
+### Medal allocation
+
+- Ranking metric: total 2026 DRL Fantasy Points, not NRL competition points or individual NRL statistics.
+- Each position has Gold, Silver and Bronze places.
+- Primary-position candidates are allocated first across all six positions.
+- Secondary-position DPP candidates fill any unfilled places only after all primary-position allocations.
+- A player can receive one medal maximum across the entire six-position system. Once awarded, they are excluded from all other medal places; the next eligible player fills the vacancy.
+- Within a position, higher total DRL Fantasy Points ranks first. Equal scores use ascending permanent drl_player_id as a deterministic tie-break until a formal DRL tie policy is approved.
+
+The allocator is implemented in frontend/src/components/drl/drlPlayerMedals.ts; the reusable card is frontend/src/components/drl/DRLPlayerCard.tsx with styles in frontend/src/components/drl/DRLPlayerCard.css.
+
+### Card classification priority
+
+1. Gold, Silver or Bronze positional medal.
+2. State of Origin — NSW blue or Queensland burgundy, only when the player actually recorded minutes in an Origin match.
+3. NRL career appearances: 51+ neon lime; 25–50 mint; 0–24 white.
+
+No medal, Origin status, appearance tier, fantasy score or action-photo status may be inferred from missing data. An action photo is displayed only when the authenticated feed marks it verified_action_photo and provides the cleared private-media delivery URL.
+
+### Current completion boundary
+
+The card component, gallery integration and DPP-aware medal allocator are code deliverables, not evidence that the 588 records are complete. The existing profile feed currently exposes verified profile rows and NRL statistics only. The backend contract and source exports must be extended through separately reviewed work to supply verified fantasy scoring, fantasy-position eligibility, career appearances and Origin match minutes. The historical identity gap (416 verified / 172 unresolved in the last verified audit) must also be reconciled before claiming 588 verified cards. No database migration, JARVIS write, media upload, Cloudflare secret change or deployment is performed by this frontend implementation.
