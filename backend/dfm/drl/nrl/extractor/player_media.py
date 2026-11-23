@@ -104,6 +104,10 @@ def main() -> int:
             issues.append("candidate_not_for_2026_season")
         if not str(candidate.get("current_club_name", "")).strip():
             issues.append("current_club_name_missing")
+        if candidate.get("current_club_verified") is not True:
+            issues.append("current_club_not_human_verified_against_2026_squad")
+        if not official_source_page(candidate.get("current_club_source_url")):
+            issues.append("current_club_source_must_be_an_official_nrl_or_club_domain")
         if not https_url(candidate.get("image_url")):
             issues.append("image_url_must_be_https")
         if not official_source_page(candidate.get("source_page_url")):
@@ -130,6 +134,7 @@ def main() -> int:
             "season": season,
             "current_squad_id": squad_id,
             "current_club_name": str(candidate.get("current_club_name", "")).strip() or None,
+            "current_club_source_url": candidate.get("current_club_source_url"),
             "media_kind": "action_photo",
             "source_provider": urlparse(candidate["source_page_url"]).hostname
                 if official_source_page(candidate.get("source_page_url")) else None,
