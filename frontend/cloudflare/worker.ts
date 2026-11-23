@@ -95,9 +95,12 @@ async function handlePlayerProfiles(request: Request, env: Env): Promise<Respons
     }
     return {
       drl_player_id: row.drl_player_id, first_name: row.first_name, last_name: row.last_name,
-      team_name: row.current_club_name, position: null, photo_url: photoUrl,
+      team_name: row.current_club_name, position: row.primary_fantasy_position, photo_url: photoUrl,
       photo_alt: photoUrl ? row.photo_alt : null,
       photo_kind: photoUrl ? "verified_action_photo" : null,
+      fantasy_points: row.fantasy_points,
+      primary_fantasy_position: row.primary_fantasy_position,
+      eligible_fantasy_positions: Array.isArray(row.eligible_fantasy_positions) ? row.eligible_fantasy_positions : [],
       stats: {
         appearances: row.appearances, tries: row.tries, try_assists: row.try_assists,
         points: row.points, tackles: row.tackles, tackle_efficiency: row.tackle_efficiency,
