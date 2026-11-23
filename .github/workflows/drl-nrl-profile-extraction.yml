@@ -1,6 +1,11 @@
 name: DRL NRL Player Profile Extraction
 
 on:
+  push:
+    branches:
+      - feat/drl-588-player-card-implementation
+    paths:
+      - .github/workflows/drl-nrl-profile-extraction.yml
   workflow_dispatch:
     inputs:
       request_delay:
@@ -93,7 +98,7 @@ jobs:
           python backend/dfm/drl/nrl/extractor/player_profiles.py \
             --players drl-nrl-players.json \
             --output drl-nrl-profile-review.json \
-            --delay "${{ inputs.request_delay }}"
+            --delay "${{ inputs.request_delay || '1.0' }}"
 
       - name: Validate extraction report
         run: |
