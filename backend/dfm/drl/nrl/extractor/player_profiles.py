@@ -2,11 +2,11 @@
 """Discover and extract 2026 NRL player profiles for verified DRL identities.
 
 Input JSON is an export of the existing JARVIS player rows. Each row must include:
-  drl_player_id, first_name, last_name, squad_id, position,
+  drl_player_id, first_name, last_name, squad_id,
   identity_status (the literal value "verified")
 
 The extractor queries the official NRL player directory by squad, then requires a
-unique exact match on first name, last name, position and squad. Unverified,
+unique exact match on first name, last name and squad. Position is taken from the official directory. Unverified,
 missing, ambiguous and unmatched identities are excluded from extraction.
 
 Output is a reviewable JSON file only. This script does not connect to Supabase,
@@ -127,15 +127,13 @@ def match_player(row: dict[str, Any], directory: list[dict[str, Any]]) -> tuple[
         return None, "unknown_squad_id"
     first = normalized(row.get("first_name"))
     last = normalized(row.get("last_name"))
-    position = normalized(row.get("position"))
-    if not first or not last or not position:
-        return None, "missing_name_or_position"
+    if not first or not last:
+        return None, "missing_name"
     candidates = [
         item for item in directory
         if item["directory_squad_id"] == squad_id
         and normalized(item["first_name"]) == first
         and normalized(item["last_name"]) == last
-        and normalized(item["position"]) == position
     ]
     if len(candidates) == 1:
         return candidates[0], "matched"
