@@ -278,7 +278,7 @@ def main() -> int:
             parser.error("--staging is required with --sync-jarvis")
         report = sync_approved_photos_to_jarvis(players, candidates, args.staging)
         args.output.parent.mkdir(parents=True, exist_ok=True)
-        args.output.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\\n", encoding="utf-8")
+        args.output.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
         uploaded = sum(row.get("status") == "uploaded_and_registered" for row in report)
         print(f"JARVIS photo sync finished: {uploaded} uploaded and registered; {len(report)-uploaded} failed.")
         return 0 if uploaded == len(report) else 1
