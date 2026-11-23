@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import base64
+import binascii
 import hashlib
 import json
 import os
@@ -124,7 +125,7 @@ def _privileged_supabase_key(value: str) -> bool:
         payload = parts[1] + "=" * (-len(parts[1]) % 4)
         claims = json.loads(base64.urlsafe_b64decode(payload.encode("ascii")))
         return claims.get("role") == "service_role"
-    except (ValueError, UnicodeError, json.JSONDecodeError):
+    except (ValueError, UnicodeError, binascii.Error):
         return False
 
 
