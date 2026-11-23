@@ -46,13 +46,22 @@ def image_info(path: Path) -> dict[str, Any]:
     return info
 
 
-def audit_manifest(manifest: dict[str, Any], staging: Path) -> dict[str, Any]:
+def audit_manifest(manifest: dict[str, Any], staging: Path, players: list[dict[str, Any]] | None = None) -> dict[str, Any]:
     candidates = manifest.get("candidates", [])
-    players = {str(item.get("drl_player_id")) for item in candidates if item.get("drl_player_id") is not None}
+    expected_ids = {
+        str(item.get("drl_player_id")) for item in (players or [])
+        if item.get("drl_player_id") is not None
+    }
+    if not expected_ids:
+        expected_ids = {
+            str(item.get("drl_player_id")) for item in candidates
+            if item.get("drl_player_id") is not None
+        }
     seen_hashes: dict[str, str] = {}
     duplicate_files: list[dict[str, str]] = []
     missing_files: list[dict[str, Any]] = []
     file_errors: list[dict[str, Any]] = []
+    downloaded_by_kind: dict[str, set[str]] = {"profile_photo": set(), "action_photo": set()}
     downloaded = 0
     for item in candidates:
         relative = item.get("download_path")
@@ -65,6 +74,9 @@ def audit_manifest(manifest: dict[str, Any], staging: Path) -> dict[str, Any]:
             missing_files.append({"drl_player_id": item.get("drl_player_id"), "path": str(path)})
             continue
         downloaded += 1
+        kind = str(item.get("media_kind", ""))
+        if kind in downloaded_by_kind:
+            downloaded_by_kind[kind].add(str(item.get("drl_player_id")))
         try:
             info = image_info(path)
             digest = info["sha256"]
@@ -81,11 +93,18 @@ def audit_manifest(manifest: dict[str, Any], staging: Path) -> dict[str, Any]:
     for item in candidates:
         status = str(item.get("status", "unknown"))
         statuses[status] = statuses.get(status, 0) + 1
+    profile_missing = sorted(expected_ids - downloaded_by_kind["profile_photo"])
+    action_missing = sorted(expected_ids - downloaded_by_kind["action_photo"])
+    any_downloaded = downloaded_by_kind["profile_photo"] | downloaded_by_kind["action_photo"]
     return {
-        "players_with_candidates": len(players), "candidate_count": len(candidates),
-        "downloaded_count": downloaded, "missing_download_files": missing_files,
-        "duplicate_files": duplicate_files, "file_errors": file_errors,
-        "status_counts": statuses,
+        "expected_player_count": len(expected_ids),
+        "players_with_any_downloaded_photo": len(any_downloaded),
+        "players_missing_all_photos": sorted(expected_ids - any_downloaded),
+        "players_missing_profile_photo": profile_missing,
+        "players_missing_action_photo": action_missing,
+        "candidate_count": len(candidates), "downloaded_count": downloaded,
+        "missing_download_files": missing_files, "duplicate_files": duplicate_files,
+        "file_errors": file_errors, "status_counts": statuses,
     }
 
 
@@ -94,9 +113,15 @@ def main() -> int:
     parser.add_argument("--manifest", required=True, type=Path)
     parser.add_argument("--staging", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--players", type=Path, help="Optional complete JARVIS player export for 588-player coverage audit")
     args = parser.parse_args()
     manifest = json.loads(args.manifest.read_text(encoding="utf-8"))
-    report = audit_manifest(manifest, args.staging)
+    players = None
+    if args.players:
+        players = json.loads(args.players.read_text(encoding="utf-8"))
+        if not isinstance(players, list):
+            raise SystemExit("--players must contain a JSON array.")
+    report = audit_manifest(manifest, args.staging, players)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print(json.dumps(report, indent=2))
