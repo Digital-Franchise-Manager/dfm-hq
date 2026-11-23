@@ -48,7 +48,7 @@ ROUND_LABELS = {"round", "opponent", "score", "position", "minutes played"}
 
 
 def clean(value: str) -> str:
-    return re.sub(r"\\s+", " ", value).strip()
+    return re.sub(r"\s+", " ", value).strip()
 
 
 def normalized(value: Any) -> str:
@@ -59,7 +59,7 @@ def as_int(value: str) -> int | None:
     value = clean(value).replace(",", "")
     if not value or value in {"-", "—", "–"}:
         return None
-    return int(value) if re.fullmatch(r"-?\\d+", value) else None
+    return int(value) if re.fullmatch(r"-?\d+", value) else None
 
 
 def fetch_bytes(url: str, accept: str) -> bytes:
@@ -234,7 +234,7 @@ def extract_profile(profile: dict[str, Any], drl_player_id: int) -> dict[str, An
     parser.feed(html)
     totals, rounds = extract_round_table(parser.tables)
     page_text = clean(" ".join(parser._text_parts))
-    efficiency = re.search(r"Tackle\\s*Efficiency\\s*(\\d+(?:\\.\\d+)?)\\s*%", page_text, re.I)
+    efficiency = re.search(r"Tackle\s*Efficiency\s*(\d+(?:\.\d+)?)\s*%", page_text, re.I)
     totals["tackle_efficiency"] = float(efficiency.group(1)) if efficiency else None
     # Errors and penalties are not included in the inspected profile round table.
     totals["errors"] = None
@@ -323,7 +323,7 @@ def main() -> int:
         if index + 1 < len(eligible):
             time.sleep(max(0, args.delay))
 
-    args.output.write_text(json.dumps(results, indent=2, ensure_ascii=False) + "\\n", encoding="utf-8")
+    args.output.write_text(json.dumps(results, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     counts: dict[str, int] = {}
     for item in results:
         key = str(item.get("status", "unknown"))
