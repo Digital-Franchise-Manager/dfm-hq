@@ -6,6 +6,11 @@ on:
       - feat/drl-588-player-card-implementation
     paths:
       - .github/workflows/drl-nrl-profile-extraction.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/drl-nrl-profile-extraction.yml
   workflow_dispatch:
     inputs:
       request_delay:
