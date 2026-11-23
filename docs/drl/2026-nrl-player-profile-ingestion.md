@@ -26,11 +26,12 @@ python player_media.py --players jarvis-verified-players-2026.json --candidates 
 The player export must contain `drl_player_id`, `squad_id`, and `identity_status`. Candidate rows must contain:
 
 - `drl_player_id`, `season` (2026), `squad_id`, `current_club_name`
+- `current_club_verified: true`, `current_club_source_url` (official NRL/club squad evidence)
 - `image_url`, `source_page_url`, `photographer_credit`
 - `rights_status`, `rights_evidence_url`
 - `identity_confirmed: true`, `action_photo_confirmed: true`, `current_uniform_confirmed: true`
 
-The validator rejects unverified player identities, mismatched squad IDs, non-HTTPS URLs, non-official source pages, missing visual confirmations, uncleared rights, and duplicate player-season candidates. A result marked `ready_for_separate_upload_approval` is only a reviewed candidate; it is not uploaded or published.
+The validator rejects unverified player identities, mismatched squad IDs, unverified current-club assignments, missing official club evidence, non-HTTPS URLs, non-official source pages, missing visual confirmations, uncleared rights, and duplicate player-season candidates. A result marked `ready_for_separate_upload_approval` is only a reviewed candidate; it is not uploaded or published.
 
 ## Private media record and publication gate
 
