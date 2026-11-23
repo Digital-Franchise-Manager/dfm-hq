@@ -22,6 +22,26 @@
 .drl-player-profile-head span{color:#c7ff00;font-size:8px;font-weight:900;letter-spacing:.12em}
 .drl-player-profile-head h2{margin:7px 0;font-family:'Barlow Condensed',Impact,sans-serif;font-size:29px;line-height:.95}
 .drl-player-profile-head p{margin:0;color:#92958d;font-size:9px}
+.drl-player-card-collection{margin:14px 0;padding:12px;border:1px solid rgba(255,255,255,.12);background:#090b09}
+.drl-player-card-heading{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}
+.drl-player-card-heading strong{color:#f4f5f1;font-size:8px;font-weight:900;letter-spacing:.12em}
+.drl-player-card-heading span{color:#c7ff00;font-size:8px;font-weight:900;text-align:right}
+.drl-player-card-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.drl-milestone-card{display:flex;min-height:76px;flex-direction:column;justify-content:space-between;padding:9px;border:1px solid rgba(255,255,255,.22);border-radius:3px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)}
+.drl-milestone-card .drl-card-mark{font-size:8px;font-weight:1000;letter-spacing:.14em}
+.drl-milestone-card strong{font-size:9px;font-weight:1000;line-height:1.2}
+.drl-milestone-card small{font-size:7px;font-weight:900;letter-spacing:.08em;opacity:.78}
+.drl-milestone-card.white{background:#f4f4f4;color:#171717;border-color:#fff}
+.drl-milestone-card.mint{background:#a8e8ce;color:#173d31;border-color:#d0ffeb}
+.drl-milestone-card.neon-lime{background:#b7ff00;color:#111;border-color:#e2ff8c}
+.drl-milestone-card.emerald{background:#087f45;color:#fff;border-color:#54c58b}
+.drl-milestone-card.platinum{background:linear-gradient(135deg,#f4f6f8,#aeb8c4 48%,#e5e9ed);color:#202a35;border-color:#fff}
+.drl-milestone-card.gold{background:linear-gradient(135deg,#fff0a6,#d4a51d 55%,#fff1a8);color:#332400;border-color:#ffe48a}
+.drl-milestone-card.silver{background:linear-gradient(135deg,#fff,#aeb7c0 55%,#e7ebef);color:#202a35;border-color:#fff}
+.drl-milestone-card.bronze{background:linear-gradient(135deg,#f3c39c,#a9683e 55%,#e5ad7f);color:#321a0d;border-color:#efc5a5}
+.drl-milestone-card.origin-blue{background:#1768c4;color:#fff;border-color:#80b9ff}
+.drl-milestone-card.origin-burgundy{background:#76243c;color:#fff;border-color:#d17b91}
+.drl-card-pending{margin:4px 0 0;color:#aeb4a8;font-size:9px;line-height:1.55}
 .drl-player-stat-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:14px}
 .drl-player-stat-grid article{display:flex;min-width:0;flex-direction:column;gap:7px;padding:11px;border:1px solid rgba(255,255,255,.1);background:#0b0d0a}
 .drl-player-stat-grid article span{color:#92958d;font-size:8px;font-weight:800}
@@ -32,4 +52,4 @@
 .drl-player-empty small{color:#858a7e;font-size:9px;line-height:1.6}
 .drl-player-no-results{padding:18px;color:#92958d;font-size:10px}
 @media(max-width:850px){.drl-player-toolbar{grid-template-columns:1fr 1fr}.drl-player-layout{grid-template-columns:1fr}.drl-player-detail{position:static}}
-@media(max-width:520px){.drl-player-toolbar{grid-template-columns:1fr}.drl-player-row{grid-template-columns:20px 40px minmax(0,1fr) auto;gap:8px;padding:8px}.drl-player-row img,.drl-player-photo-fallback.compact{width:40px;height:40px}.drl-player-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.drl-player-toolbar{grid-template-columns:1fr}.drl-player-row{grid-template-columns:20px 40px minmax(0,1fr) auto;gap:8px;padding:8px}.drl-player-row img,.drl-player-photo-fallback.compact{width:40px;height:40px}.drl-player-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.drl-player-card-grid{grid-template-columns:1fr 1fr}.drl-player-card-heading{align-items:flex-start;flex-direction:column}.drl-player-card-heading span{text-align:left}}

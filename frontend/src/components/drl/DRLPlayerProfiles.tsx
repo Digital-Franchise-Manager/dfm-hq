@@ -8,23 +8,60 @@ type PlayerStats = {
   metres_gained: number | null; line_breaks: number | null; errors: number | null;
   penalties_conceded: number | null;
 };
+type AchievementCardCode = "state_of_origin_blue" | "state_of_origin_burgundy" | "gold" | "silver" | "bronze";
 type PlayerProfile = {
   drl_player_id: number; first_name: string; last_name: string;
   team_name: string | null; position: string | null; photo_url: string | null;
   photo_alt: string | null; photo_kind?: "verified_action_photo" | null;
+  career_appearances: number | null;
+  achievement_cards: AchievementCardCode[];
   stats: PlayerStats | null;
 };
 type PlayerFeed = { season: number; players: PlayerProfile[]; source_status: "connected" | "unavailable" };
 type SortKey = "points" | "tries" | "try_assists" | "tackles" | "metres_gained" | "line_breaks" | "appearances";
 const statLabels: Array<{ key: keyof PlayerStats; label: string; suffix?: string }> = [
-  { key: "appearances", label: "Appearances" }, { key: "tries", label: "Tries" },
+  { key: "appearances", label: "Season appearances" }, { key: "tries", label: "Tries" },
   { key: "try_assists", label: "Try assists" }, { key: "points", label: "Points" },
   { key: "tackles", label: "Tackles" }, { key: "tackle_efficiency", label: "Tackle efficiency", suffix: "%" },
   { key: "metres_gained", label: "Metres gained", suffix: "m" }, { key: "line_breaks", label: "Line breaks" },
   { key: "errors", label: "Errors" }, { key: "penalties_conceded", label: "Penalties conceded" }
 ];
+const milestoneCards = [
+  { code: "white", label: "0–49 NRL GAMES", className: "white", minimum: 0, rank: 10 },
+  { code: "mint", label: "50–99 NRL GAMES", className: "mint", minimum: 50, rank: 9 },
+  { code: "neon-lime", label: "100–149 NRL GAMES", className: "neon-lime", minimum: 100, rank: 8 },
+  { code: "emerald", label: "150–299 NRL GAMES", className: "emerald", minimum: 150, rank: 7 },
+  { code: "platinum", label: "300+ NRL GAMES", className: "platinum", minimum: 300, rank: 4 }
+] as const;
+const achievementCardDetails: Record<AchievementCardCode, { label: string; className: string; rank: number }> = {
+  gold: { label: "1ST PLACE · GOLD", className: "gold", rank: 1 },
+  silver: { label: "2ND PLACE · SILVER", className: "silver", rank: 2 },
+  bronze: { label: "3RD PLACE · BRONZE", className: "bronze", rank: 3 },
+  state_of_origin_blue: { label: "STATE OF ORIGIN · BLUE", className: "origin-blue", rank: 5 },
+  state_of_origin_burgundy: { label: "STATE OF ORIGIN · BURGUNDY", className: "origin-burgundy", rank: 5 }
+};
 function displayStat(value: number | null | undefined, suffix = ""): string {
   return value === null || value === undefined ? "Not supplied" : `${value.toLocaleString()}${suffix}`;
+}
+function PlayerCardCollection({ player }: { player: PlayerProfile }) {
+  const careerVerified = player.career_appearances !== null && player.career_appearances !== undefined;
+  const earned = careerVerified
+    ? milestoneCards.filter((card) => player.career_appearances! >= card.minimum)
+    : [];
+  const achievements = (player.achievement_cards ?? [])
+    .filter((code): code is AchievementCardCode => code in achievementCardDetails)
+    .map((code) => ({ code, ...achievementCardDetails[code] }));
+  const cards = [...earned, ...achievements].sort((a, b) => a.rank - b.rank);
+  return <section className="drl-player-card-collection" aria-label="Player card collection">
+    <div className="drl-player-card-heading"><strong>PLAYER CARD COLLECTION</strong><span>{careerVerified ? `${player.career_appearances!.toLocaleString()} CAREER NRL GAMES` : "CAREER TOTAL UNVERIFIED"}</span></div>
+    {!careerVerified && <p className="drl-card-pending">Career appearance records have not been verified. Career milestone cards are withheld; independently verified achievement cards remain displayed.</p>}
+    <div className="drl-player-card-grid">
+      {cards.map((card) => <article key={card.code} className={`drl-milestone-card ${card.className}`}>
+        <span className="drl-card-mark">DRL</span><strong>{card.label}</strong><small>{card.code === "white" || card.code === "mint" || card.code === "neon-lime" || card.code === "emerald" || card.code === "platinum" ? "CAREER MILESTONE" : "ACHIEVEMENT CARD"}</small>
+      </article>)}
+    </div>
+    {careerVerified && cards.length === 0 && <p className="drl-card-pending">No verified milestone or achievement cards have been awarded.</p>}
+  </section>;
 }
 function ActionPhoto({ player, compact = false }: { player: PlayerProfile; compact?: boolean }) {
   return player.photo_url && player.photo_kind === "verified_action_photo"
@@ -90,7 +127,7 @@ export default function DRLPlayerProfiles() {
       <label>SORT BY<select value={sortKey} onChange={(event) => setSortKey(event.target.value as SortKey)}>
         <option value="points">Points</option><option value="tries">Tries</option><option value="try_assists">Try assists</option>
         <option value="tackles">Tackles</option><option value="metres_gained">Metres gained</option>
-        <option value="line_breaks">Line breaks</option><option value="appearances">Appearances</option>
+        <option value="line_breaks">Line breaks</option><option value="appearances">Season appearances</option>
       </select></label>
       <button type="button" className="drl-sort-direction" onClick={() => setSortDirection((direction) => direction === "desc" ? "asc" : "desc")} aria-label="Toggle sort direction">{sortDirection === "desc" ? "HIGHEST FIRST ↓" : "LOWEST FIRST ↑"}</button>
     </div>
@@ -111,8 +148,9 @@ export default function DRLPlayerProfiles() {
           <div className="drl-player-profile-head"><ActionPhoto player={selected} />
             <div><span>2026 NRL PLAYER PROFILE</span><h2>{selected.first_name} {selected.last_name}</h2><p>{selected.team_name ?? "Current club not verified"} · {selected.position ?? "Position not supplied"}</p></div>
           </div>
+          <PlayerCardCollection player={selected} />
           <div className="drl-player-stat-grid">{statLabels.map((stat) => <article key={stat.key}><span>{stat.label}</span><strong>{displayStat(selected.stats?.[stat.key], stat.suffix)}</strong></article>)}</div>
-        </> : <div className="drl-player-empty"><strong>SELECT A PLAYER</strong><p>Choose a player to view their season profile and verified statistics.</p></div>}
+        </> : <div className="drl-player-empty"><strong>SELECT A PLAYER</strong><p>Choose a player to view their season profile, card collection and verified statistics.</p></div>}
       </aside>
     </div>}
   </section>;
