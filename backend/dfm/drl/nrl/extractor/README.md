@@ -70,16 +70,28 @@ python photo_discovery.py \\
 
 The default mode downloads only candidates that pass every verification and rights gate. Use \`--no-download\` for discovery-only mode.
 
+## Validate candidates separately
+
+\`\`\`sh
+python player_media.py \\
+  --players /path/to/private-jarvis-player-export.json \\
+  --candidates /path/to/private-staging/photo-manifest-2026.json \\
+  --output /path/to/private-staging/photo-validation-report.json
+\`\`\`
+
+The validator accepts the complete manifest produced by \`photo_discovery.py\`.
+
 ## Audit downloaded files
 
 \`\`\`sh
 python photo_audit.py \\
   --manifest /path/to/private-staging/photo-manifest-2026.json \\
+  --players /path/to/private-jarvis-player-export.json \\
   --staging /path/to/private-staging/images \\
   --output /path/to/private-staging/photo-audit-2026.json
 \`\`\`
 
-The audit reports candidates, downloaded files, missing files, duplicate SHA-256 hashes, image formats and readable dimensions.
+The audit compares downloaded profile and action photos against the supplied player export, and reports missing players, duplicate SHA-256 hashes, image formats and readable dimensions.
 
 ## Tests
 
@@ -89,7 +101,7 @@ python -m unittest discover -s tests/unit -p 'test_*.py' -v
 
 ## Current limitations
 
-- The current JARVIS export does not guarantee Fantasy player-page URLs or club match-photo page URLs. Supply these in the optional fields; this implementation deliberately does not invent an endpoint or search result.
+- The JARVIS export does not guarantee Fantasy player-page URLs or club match-photo page URLs. Supply these in the optional fields; this implementation deliberately does not invent an endpoint or search result.
 - NRL directory matching is limited to squad IDs already defined by the existing player-profile extractor.
 - Page parsing discovers image candidates; it cannot prove that an image depicts the named player in genuine match action. Human confirmation remains mandatory.
 - Rights metadata must be supplied and evidenced. A source domain alone never clears copyright.
