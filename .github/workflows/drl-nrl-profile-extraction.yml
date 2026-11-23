@@ -118,17 +118,14 @@ jobs:
           for row in rows:
               status = row.get("status", "unknown")
               counts[status] = counts.get(status, 0) + 1
-          print(json.dumps({"records": len(rows), "statuses": counts}, indent=2))
+          summary = json.dumps({"records": len(rows), "statuses": counts}, indent=2)
+          print(summary)
+          with open("${{ github.step_summary }}", "a", encoding="utf-8") as summary_file:
+              summary_file.write("## DRL NRL profile extraction summary\n\n")
+              summary_file.write("```json\n" + summary + "\n```\n")
           if not rows:
               raise SystemExit("Extraction produced no review records.")
           PY
 
-      - name: Upload private review artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: drl-nrl-profile-review
-          path: |
-            drl-nrl-profile-review.json
-            drl-nrl-players.json
-          if-no-files-found: error
-          retention-days: 14
+      # Raw player exports and profile records stay on the ephemeral runner.
+      # The repository is public, so no raw artifact or player-level data is uploaded.
