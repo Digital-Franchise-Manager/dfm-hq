@@ -11,6 +11,7 @@ interface ProfileRow {
   metres_gained: number | null; line_breaks: number | null; errors: number | null;
   penalties_conceded: number | null; storage_object_path: string | null; photo_alt: string | null;
   current_club_name: string | null; current_squad_id: number | null;
+  career_appearances: number | null; achievement_cards: string[] | null;
 }
 const json = (body: unknown, status = 200): Response => new Response(JSON.stringify(body), {
   status,
@@ -98,6 +99,8 @@ async function handlePlayerProfiles(request: Request, env: Env): Promise<Respons
       team_name: row.current_club_name, position: null, photo_url: photoUrl,
       photo_alt: photoUrl ? row.photo_alt : null,
       photo_kind: photoUrl ? "verified_action_photo" : null,
+      career_appearances: row.career_appearances,
+      achievement_cards: Array.isArray(row.achievement_cards) ? row.achievement_cards : [],
       stats: {
         appearances: row.appearances, tries: row.tries, try_assists: row.try_assists,
         points: row.points, tackles: row.tackles, tackle_efficiency: row.tackle_efficiency,
