@@ -102,10 +102,19 @@ def validate_candidate(player: dict[str, Any], candidate: dict[str, Any]) -> lis
     return issues
 
 
-def load_array(path: Path, label: str) -> list[dict[str, Any]]:
+def load_candidates(path: Path) -> list[dict[str, Any]]:
+    value = json.loads(path.read_text(encoding="utf-8"))
+    if isinstance(value, dict):
+        value = value.get("candidates")
+    if not isinstance(value, list) or any(not isinstance(row, dict) for row in value):
+        raise SystemExit("--candidates must be a JSON array or an engine manifest containing a candidates array.")
+    return value
+
+
+def load_players(path: Path) -> list[dict[str, Any]]:
     value = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(value, list) or any(not isinstance(row, dict) for row in value):
-        raise SystemExit(f"{label} must be a JSON array of objects.")
+        raise SystemExit("--players must be a JSON array of objects.")
     return value
 
 
@@ -114,23 +123,22 @@ def main() -> int:
     parser.add_argument("--players", required=True, type=Path,
                         help="Private JARVIS export: drl_player_id, squad_id, identity_status")
     parser.add_argument("--candidates", required=True, type=Path,
-                        help="Candidate manifest containing profile_photo and/or action_photo rows")
+                        help="Candidate array or photo-discovery manifest")
     parser.add_argument("--output", required=True, type=Path,
                         help="Review report JSON; no database writes are performed")
     args = parser.parse_args()
 
-    players = load_array(args.players, "Players")
-    candidates = load_array(args.candidates, "Candidates")
-    verified = {}
+    players = load_players(args.players)
+    candidates = load_candidates(args.candidates)
+    player_index = {}
     for player in players:
         try:
-            player_id = int(player["drl_player_id"])
+            player_index[int(player["drl_player_id"])] = player
         except (KeyError, TypeError, ValueError):
             continue
-        verified[player_id] = player
 
     report = []
-    seen: set[tuple[int, int, str]] = set()
+    seen: set[tuple[int, int, str, str]] = set()
     for candidate in candidates:
         try:
             player_id = int(candidate.get("drl_player_id"))
@@ -138,16 +146,17 @@ def main() -> int:
         except (TypeError, ValueError):
             report.append({"status": "rejected", "reason": "invalid_player_or_season_id"})
             continue
-        player = verified.get(player_id)
+        player = player_index.get(player_id)
         issues = ["player_not_found_in_player_export"] if player is None else validate_candidate(player, candidate)
-        key = (player_id, season, str(candidate.get("media_kind", "action_photo")))
+        key = (player_id, season, str(candidate.get("media_kind", "action_photo")), str(candidate.get("image_url", "")))
         if key in seen:
-            issues.append("duplicate_player_season_media_kind_candidate")
+            issues.append("duplicate_player_season_media_candidate")
         seen.add(key)
         report.append({
             **candidate,
             "status": "ready_for_private_download" if not issues else "review_required",
-            "issues": sorted(set(issues)), "downloaded": False, "uploaded": False, "published": False,
+            "issues": sorted(set(issues)), "downloaded": bool(candidate.get("download_path")),
+            "uploaded": False, "published": False,
         })
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
