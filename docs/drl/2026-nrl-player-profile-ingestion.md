@@ -55,3 +55,43 @@ A discoverable image URL is not proof of permission to copy or republish. Record
 6. Connect the DRL roster/profile UI to the authenticated API; do not query `dfm_private` directly from the browser.
 
 No live database schema changes or public media publication are performed by this PR.
+
+## Authenticated frontend response contract
+
+The DRL roster UI expects the same-origin authenticated route:
+
+`GET /api/drl/nrl/players?season=2026`
+
+Response shape:
+
+```json
+{
+  "season": 2026,
+  "source_status": "connected",
+  "players": [{
+    "drl_player_id": 12345,
+    "first_name": "Verified first name",
+    "last_name": "Verified last name",
+    "team_name": "Verified club",
+    "position": "Verified position",
+    "photo_url": "short-lived signed URL or null",
+    "photo_alt": "Accessible image description",
+    "stats": {
+      "appearances": null,
+      "tries": null,
+      "try_assists": null,
+      "points": null,
+      "tackles": null,
+      "tackle_efficiency": null,
+      "metres_gained": null,
+      "line_breaks": null,
+      "errors": null,
+      "penalties_conceded": null
+    }
+  }]
+}
+```
+
+The API must authenticate the session, read `dfm_private` server-side only, filter out unverified identity mappings, and return a signed URL only for media whose player identity is verified and whose rights status is cleared. Never return the private Storage object path, source-only image URL, database credentials, or raw source payload to the browser.
+
+The frontend intentionally shows a disconnected state until this authenticated Cloudflare API route is implemented. This PR does not change Cloudflare Worker routing because that is a separate infrastructure change requiring its own approval.
