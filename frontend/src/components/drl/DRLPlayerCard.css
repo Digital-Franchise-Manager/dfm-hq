@@ -1,0 +1,23 @@
+.drl-card-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px}
+.drl-collectible-card{position:relative;display:flex;min-width:0;flex-direction:column;overflow:hidden;aspect-ratio:2/3;padding:12px;border:1px solid rgba(255,255,255,.24);background:#080908;color:#fff;box-shadow:0 8px 24px rgba(0,0,0,.28)}
+.drl-card-brand{display:flex;justify-content:space-between;align-items:center;gap:8px;color:#c7ff00;font-size:8px;font-weight:900;letter-spacing:.12em}
+.drl-card-brand span:first-child{display:grid;place-items:center;width:30px;height:30px;border:1px solid #c7ff00;border-radius:50%;font-size:10px}
+.drl-card-photo{display:grid;place-items:center;flex:1;min-height:0;margin:10px -12px 0;background:#151815}
+.drl-card-photo img{width:100%;height:100%;object-fit:cover;object-position:center}
+.drl-card-photo-pending{color:#c7ff00;font-size:11px;font-weight:900;line-height:1.5;text-align:center;letter-spacing:.12em}
+.drl-card-classification{margin:10px 0 5px;padding:5px 7px;background:#c7ff00;color:#080908;font-size:9px;font-weight:1000;letter-spacing:.1em}
+.drl-collectible-card h3{margin:3px 0;font-family:'Barlow Condensed',Impact,sans-serif;font-size:21px;line-height:1}
+.drl-card-club{margin:3px 0 8px;color:#c7ff00;font-size:9px;font-weight:800}
+.drl-card-meta{display:flex;flex-wrap:wrap;gap:4px 9px;color:#aeb3a8;font-size:7px;font-weight:800}
+.drl-card-score{display:flex;align-items:baseline;justify-content:space-between;margin-top:9px;padding-top:7px;border-top:1px solid rgba(255,255,255,.18)}
+.drl-card-score strong{color:#c7ff00;font-size:20px;font-variant-numeric:tabular-nums}
+.drl-card-score span{font-size:7px;font-weight:900;letter-spacing:.08em}
+.drl-collectible-card footer{margin-top:7px;color:#aeb3a8;font-size:7px;font-weight:800}
+.drl-card-gold .drl-card-classification{background:#d9ae36;color:#090909}
+.drl-card-silver .drl-card-classification{background:#c3c7ca;color:#090909}
+.drl-card-bronze .drl-card-classification{background:#b87333;color:#090909}
+.drl-card-origin .drl-card-classification{background:#245ba8;color:#fff}
+.drl-card-mint .drl-card-classification{background:#a8e6cf;color:#101b16}
+.drl-card-neon-lime .drl-card-classification{background:#c7ff00;color:#080908}
+.drl-card-white .drl-card-classification{background:#fff;color:#080908}
+@media(max-width:520px){.drl-card-gallery{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.drl-collectible-card{padding:8px}.drl-card-photo{margin:8px -8px 0}.drl-card-brand span:first-child{width:25px;height:25px}.drl-collectible-card h3{font-size:17px}}
