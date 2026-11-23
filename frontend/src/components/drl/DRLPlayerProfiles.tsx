@@ -44,27 +44,23 @@ function displayStat(value: number | null | undefined, suffix = ""): string {
   return value === null || value === undefined ? "Not supplied" : `${value.toLocaleString()}${suffix}`;
 }
 function PlayerCardCollection({ player }: { player: PlayerProfile }) {
-  if (player.career_appearances === null || player.career_appearances === undefined) {
-    return <section className="drl-player-card-collection" aria-label="Player cards">
-      <div className="drl-player-card-heading"><strong>PLAYER CARD COLLECTION</strong><span>CAREER TOTAL UNVERIFIED</span></div>
-      <p className="drl-card-pending">Career appearance records have not been verified for this player. Milestone cards are withheld until an official career total is available.</p>
-    </section>;
-  }
-  const earned = milestoneCards
-    .filter((card) => player.career_appearances! >= card.minimum)
-    .map((card) => ({ ...card, rank: card.rank }));
+  const careerVerified = player.career_appearances !== null && player.career_appearances !== undefined;
+  const earned = careerVerified
+    ? milestoneCards.filter((card) => player.career_appearances! >= card.minimum)
+    : [];
   const achievements = (player.achievement_cards ?? [])
     .filter((code): code is AchievementCardCode => code in achievementCardDetails)
     .map((code) => ({ code, ...achievementCardDetails[code] }));
   const cards = [...earned, ...achievements].sort((a, b) => a.rank - b.rank);
   return <section className="drl-player-card-collection" aria-label="Player card collection">
-    <div className="drl-player-card-heading"><strong>PLAYER CARD COLLECTION</strong><span>{player.career_appearances.toLocaleString()} CAREER NRL GAMES</span></div>
+    <div className="drl-player-card-heading"><strong>PLAYER CARD COLLECTION</strong><span>{careerVerified ? `${player.career_appearances!.toLocaleString()} CAREER NRL GAMES` : "CAREER TOTAL UNVERIFIED"}</span></div>
+    {!careerVerified && <p className="drl-card-pending">Career appearance records have not been verified. Career milestone cards are withheld; independently verified achievement cards remain displayed.</p>}
     <div className="drl-player-card-grid">
       {cards.map((card) => <article key={card.code} className={`drl-milestone-card ${card.className}`}>
         <span className="drl-card-mark">DRL</span><strong>{card.label}</strong><small>{card.code === "white" || card.code === "mint" || card.code === "neon-lime" || card.code === "emerald" || card.code === "platinum" ? "CAREER MILESTONE" : "ACHIEVEMENT CARD"}</small>
       </article>)}
     </div>
-    {cards.length === 0 && <p className="drl-card-pending">No verified milestone or achievement cards have been awarded.</p>}
+    {careerVerified && cards.length === 0 && <p className="drl-card-pending">No verified milestone or achievement cards have been awarded.</p>}
   </section>;
 }
 function ActionPhoto({ player, compact = false }: { player: PlayerProfile; compact?: boolean }) {
