@@ -1,40 +1,33 @@
 #!/usr/bin/env python3
-"""Validate manually reviewed 2026 DRL action-photo candidates.
+"""Validate DRL 2026 NRL photo candidates before private staging.
 
-This is a zero-cost, review-first workflow. It does not scrape search engines,
-download images, upload media, or write to JARVIS. Candidate URLs must come from
-an official NRL/club source page. A human reviewer must confirm the player,
-current club uniform, action context, and evidence of image-use rights.
+A source URL is not permission. Candidate files must be sourced from approved
+official NRL/club/NRL Fantasy pages, linked to a verified permanent DRL player
+ID, and pass the applicable human identity and rights checks. This validator
+does not write to JARVIS, upload media or publish photographs.
 """
 from __future__ import annotations
 
 import argparse
 import json
-import re
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
 SEASON = 2026
 OFFICIAL_SOURCE_HOSTS = {
-    "nrl.com", "www.nrl.com",
-    "broncos.com.au", "www.broncos.com.au",
-    "raiders.com.au", "www.raiders.com.au",
+    "nrl.com", "www.nrl.com", "fantasy.nrl.com",
+    "broncos.com.au", "www.broncos.com.au", "raiders.com.au", "www.raiders.com.au",
     "canberraraiders.com.au", "www.canberraraiders.com.au",
-    "bulldogs.com.au", "www.bulldogs.com.au",
-    "cowboys.com.au", "www.cowboys.com.au",
+    "bulldogs.com.au", "www.bulldogs.com.au", "cowboys.com.au", "www.cowboys.com.au",
     "dolphinsnrl.com.au", "www.dolphinsnrl.com.au",
     "manlyseaeagles.com.au", "www.manlyseaeagles.com.au",
     "melbournestorm.com.au", "www.melbournestorm.com.au",
     "newcastleknights.com.au", "www.newcastleknights.com.au",
-    "parraeels.com.au", "www.parraeels.com.au",
-    "panthers.com.au", "www.panthers.com.au",
-    "rabbitohs.com.au", "www.rabbitohs.com.au",
-    "dragons.com.au", "www.dragons.com.au",
-    "titans.com.au", "www.titans.com.au",
-    "warriors.kiwi", "www.warriors.kiwi",
-    "weststigers.com.au", "www.weststigers.com.au",
-    "sharks.com.au", "www.sharks.com.au",
+    "parraeels.com.au", "www.parraeels.com.au", "panthers.com.au", "www.panthers.com.au",
+    "rabbitohs.com.au", "www.rabbitohs.com.au", "dragons.com.au", "www.dragons.com.au",
+    "titans.com.au", "www.titans.com.au", "warriors.kiwi", "www.warriors.kiwi",
+    "weststigers.com.au", "www.weststigers.com.au", "sharks.com.au", "www.sharks.com.au",
 }
 CLEARED_RIGHTS = {"licensed", "permission_granted", "public_domain"}
 
@@ -43,14 +36,70 @@ def https_url(value: Any) -> bool:
     if not isinstance(value, str) or len(value) > 2048:
         return False
     parsed = urlparse(value)
-    return parsed.scheme == "https" and bool(parsed.hostname) and not parsed.username and not parsed.password
+    try:
+        port_ok = parsed.port in (None, 443)
+    except ValueError:
+        return False
+    return parsed.scheme == "https" and bool(parsed.hostname) and not parsed.username and not parsed.password and port_ok
 
 
 def official_source_page(value: Any) -> bool:
-    if not https_url(value):
-        return False
-    host = (urlparse(value).hostname or "").lower()
-    return host in OFFICIAL_SOURCE_HOSTS
+    return https_url(value) and (urlparse(str(value)).hostname or "").lower() in OFFICIAL_SOURCE_HOSTS
+
+
+def validate_candidate(player: dict[str, Any], candidate: dict[str, Any]) -> list[str]:
+    """Return reasons a candidate must not be downloaded or progressed."""
+    issues: list[str] = []
+    try:
+        player_id, candidate_id = int(player.get("drl_player_id")), int(candidate.get("drl_player_id"))
+        player_squad, candidate_squad = int(player.get("squad_id")), int(candidate.get("squad_id"))
+        season = int(candidate.get("season", SEASON))
+    except (TypeError, ValueError):
+        return ["invalid_player_or_squad_identifier"]
+    if player_id != candidate_id:
+        issues.append("candidate_drl_player_id_mismatch")
+    if str(player.get("identity_status", "")).casefold() != "verified":
+        issues.append("player_identity_not_verified_in_JARVIS")
+    if player_squad != candidate_squad:
+        issues.append("candidate_squad_does_not_match_verified_current_squad")
+    if season != SEASON:
+        issues.append("candidate_not_for_2026_season")
+    if not official_source_page(candidate.get("source_page_url")):
+        issues.append("source_page_must_be_an_official_nrl_fantasy_nrl_or_club_domain")
+    if not https_url(candidate.get("image_url")):
+        issues.append("image_url_must_be_https")
+    else:
+        page_host = (urlparse(str(candidate.get("source_page_url") or "")).hostname or "").lower()
+        image_host = (urlparse(str(candidate.get("image_url"))).hostname or "").lower()
+        if image_host not in OFFICIAL_SOURCE_HOSTS or not (
+            image_host == page_host or image_host.endswith("." + page_host)
+            or page_host.endswith("." + image_host)
+        ):
+            issues.append("image_host_must_be_on_the_official_source_domain")
+    if candidate.get("identity_confirmed") is not True:
+        issues.append("human_player_identity_review_not_confirmed")
+    media_kind = str(candidate.get("media_kind", "action_photo")).casefold()
+    if media_kind == "action_photo":
+        if candidate.get("action_photo_confirmed") is not True:
+            issues.append("human_match_action_photo_review_not_confirmed")
+        if candidate.get("current_uniform_confirmed") is not True:
+            issues.append("human_current_club_uniform_review_not_confirmed")
+        if candidate.get("current_club_verified") is not True:
+            issues.append("current_club_not_human_verified_against_2026_squad")
+        if not str(candidate.get("current_club_name", "")).strip():
+            issues.append("current_club_name_missing")
+        if not official_source_page(candidate.get("current_club_source_url")):
+            issues.append("current_club_source_must_be_official")
+    elif media_kind == "profile_photo":
+        if candidate.get("profile_photo_confirmed") is not True:
+            issues.append("human_profile_photo_review_not_confirmed")
+    else:
+        issues.append("unsupported_media_kind")
+    if str(candidate.get("rights_status", "pending_review")).casefold() not in CLEARED_RIGHTS:
+        issues.append("image_usage_rights_not_cleared")
+    if not https_url(candidate.get("rights_evidence_url")):
+        issues.append("rights_evidence_url_missing_or_invalid")
+    return issues
 
 
 def load_array(path: Path, label: str) -> list[dict[str, Any]]:
@@ -65,97 +114,46 @@ def main() -> int:
     parser.add_argument("--players", required=True, type=Path,
                         help="Private JARVIS export: drl_player_id, squad_id, identity_status")
     parser.add_argument("--candidates", required=True, type=Path,
-                        help="Human-reviewed action-photo candidate manifest")
+                        help="Candidate manifest containing profile_photo and/or action_photo rows")
     parser.add_argument("--output", required=True, type=Path,
                         help="Review report JSON; no database writes are performed")
     args = parser.parse_args()
 
     players = load_array(args.players, "Players")
     candidates = load_array(args.candidates, "Candidates")
-    verified: dict[int, dict[str, Any]] = {}
+    verified = {}
     for player in players:
         try:
             player_id = int(player["drl_player_id"])
-            squad_id = int(player["squad_id"])
         except (KeyError, TypeError, ValueError):
             continue
-        if str(player.get("identity_status", "")).casefold() == "verified":
-            verified[player_id] = {"squad_id": squad_id}
+        verified[player_id] = player
 
-    report: list[dict[str, Any]] = []
-    seen: set[tuple[int, int]] = set()
+    report = []
+    seen: set[tuple[int, int, str]] = set()
     for candidate in candidates:
-        issues: list[str] = []
         try:
             player_id = int(candidate.get("drl_player_id"))
             season = int(candidate.get("season", SEASON))
-            squad_id = int(candidate.get("squad_id"))
         except (TypeError, ValueError):
-            report.append({"status": "rejected", "reason": "invalid_player_season_or_squad_id"})
+            report.append({"status": "rejected", "reason": "invalid_player_or_season_id"})
             continue
-
-        identity = verified.get(player_id)
-        if identity is None:
-            issues.append("player_identity_not_verified_in_JARVIS")
-        elif identity["squad_id"] != squad_id:
-            issues.append("candidate_squad_does_not_match_verified_current_squad")
-
-        if season != SEASON:
-            issues.append("candidate_not_for_2026_season")
-        if not str(candidate.get("current_club_name", "")).strip():
-            issues.append("current_club_name_missing")
-        if candidate.get("current_club_verified") is not True:
-            issues.append("current_club_not_human_verified_against_2026_squad")
-        if not official_source_page(candidate.get("current_club_source_url")):
-            issues.append("current_club_source_must_be_an_official_nrl_or_club_domain")
-        if not https_url(candidate.get("image_url")):
-            issues.append("image_url_must_be_https")
-        if not official_source_page(candidate.get("source_page_url")):
-            issues.append("source_page_must_be_an_official_nrl_or_club_domain")
-        if candidate.get("identity_confirmed") is not True:
-            issues.append("human_player_identity_review_not_confirmed")
-        if candidate.get("action_photo_confirmed") is not True:
-            issues.append("human_match_action_photo_review_not_confirmed")
-        if candidate.get("current_uniform_confirmed") is not True:
-            issues.append("human_current_club_uniform_review_not_confirmed")
-        rights = str(candidate.get("rights_status", "pending_review")).casefold()
-        if rights not in CLEARED_RIGHTS:
-            issues.append("image_usage_rights_not_cleared")
-        if not https_url(candidate.get("rights_evidence_url")):
-            issues.append("rights_evidence_url_missing_or_invalid")
-
-        key = (player_id, season)
+        player = verified.get(player_id)
+        issues = ["player_not_found_in_player_export"] if player is None else validate_candidate(player, candidate)
+        key = (player_id, season, str(candidate.get("media_kind", "action_photo")))
         if key in seen:
-            issues.append("duplicate_player_season_candidate")
+            issues.append("duplicate_player_season_media_kind_candidate")
         seen.add(key)
-
         report.append({
-            "drl_player_id": player_id,
-            "season": season,
-            "current_squad_id": squad_id,
-            "current_club_name": str(candidate.get("current_club_name", "")).strip() or None,
-            "current_club_source_url": candidate.get("current_club_source_url"),
-            "media_kind": "action_photo",
-            "source_provider": urlparse(candidate["source_page_url"]).hostname
-                if official_source_page(candidate.get("source_page_url")) else None,
-            "source_url": candidate.get("image_url"),
-            "source_page_url": candidate.get("source_page_url"),
-            "photographer_credit": candidate.get("photographer_credit"),
-            "rights_status": rights if rights in CLEARED_RIGHTS else "pending_review",
-            "rights_evidence_url": candidate.get("rights_evidence_url"),
-            "verified_identity": not any(issue.startswith("player_identity") or issue.startswith("candidate_squad") for issue in issues),
-            "action_photo_verified": candidate.get("action_photo_confirmed") is True,
-            "uniform_verified": candidate.get("current_uniform_confirmed") is True,
-            "status": "ready_for_separate_upload_approval" if not issues else "review_required",
-            "issues": issues,
-            "storage_object_path": None,
-            "uploaded": False,
-            "published": False,
+            **candidate,
+            "status": "ready_for_private_download" if not issues else "review_required",
+            "issues": sorted(set(issues)), "downloaded": False, "uploaded": False, "published": False,
         })
 
+    args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    ready = sum(item["status"] == "ready_for_separate_upload_approval" for item in report)
-    print(f"Reviewed {len(report)} candidates; {ready} ready for separate upload approval; {len(report)-ready} require review.")
+    ready = sum(item["status"] == "ready_for_private_download" for item in report)
+    print(f"Reviewed {len(report)} candidates; {ready} eligible for private download; {len(report)-ready} require review.")
     return 0
 
 
