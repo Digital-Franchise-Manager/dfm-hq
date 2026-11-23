@@ -24,7 +24,7 @@ returns table (
 language sql
 stable
 security definer
-set search_path = pg_catalog, public, dfm_private
+set search_path = pg_catalog, dfm_private
 as $function$
   select
     master.drl_player_id,
