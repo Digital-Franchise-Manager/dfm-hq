@@ -21,3 +21,6 @@
 .drl-card-neon-lime .drl-card-classification{background:#c7ff00;color:#080908}
 .drl-card-white .drl-card-classification{background:#fff;color:#080908}
 @media(max-width:520px){.drl-card-gallery{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.drl-collectible-card{padding:8px}.drl-card-photo{margin:8px -8px 0}.drl-card-brand span:first-child{width:25px;height:25px}.drl-collectible-card h3{font-size:17px}}
+
+.drl-card-origin-nsw .drl-card-classification{background:#245ba8;color:#fff}
+.drl-card-origin-qld .drl-card-classification{background:#7b2438;color:#fff}
