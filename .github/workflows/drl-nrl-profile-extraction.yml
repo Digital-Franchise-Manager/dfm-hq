@@ -1,0 +1,124 @@
+name: DRL NRL Player Profile Extraction
+
+on:
+  workflow_dispatch:
+    inputs:
+      request_delay:
+        description: "Delay in seconds between official NRL requests"
+        required: false
+        default: "1.0"
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: drl-nrl-profile-extraction
+  cancel-in-progress: false
+
+jobs:
+  extract:
+    name: Extract verified 2026 NRL profiles (review only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out approved extractor
+        uses: actions/checkout@v4
+        with:
+          ref: feat/drl-588-player-card-implementation
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes postgresql-client
+
+      - name: Validate private database connection
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "::error::The repository secret SUPABASE_DB_URL is not configured. No database credentials should be added to workflow files."
+            exit 1
+          fi
+
+      - name: Export canonical verified player identities from JARVIS
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          set -euo pipefail
+          psql "$SUPABASE_DB_URL" --no-psqlrc --set=ON_ERROR_STOP=1 --csv \
+            --command="
+              select
+                p.drl_player_id,
+                m.first_name,
+                m.last_name,
+                p.squad_id,
+                m.identity_status
+              from dfm_private.drl_nrl_players_2026 p
+              join dfm_private.drl_nrl_player_master m
+                on m.drl_player_id = p.drl_player_id
+              where m.identity_status = 'verified'
+                and exists (
+                  select 1
+                  from dfm_private.drl_nrl_player_source_map sm
+                  where sm.drl_player_id = p.drl_player_id
+                    and sm.season = 2026
+                    and sm.identity_status = 'verified'
+                )
+              order by p.drl_player_id
+            " > /tmp/drl-players.csv
+          python - <<'PY'
+          import csv, json
+          with open("/tmp/drl-players.csv", newline="", encoding="utf-8") as source:
+              rows = list(csv.DictReader(source))
+          if not rows:
+              raise SystemExit("No verified canonical player identities were returned.")
+          ids = [row["drl_player_id"] for row in rows]
+          if len(ids) != len(set(ids)):
+              raise SystemExit("Identity export contains duplicate DRL player IDs; refusing extraction.")
+          with open("drl-nrl-players.json", "w", encoding="utf-8") as target:
+              json.dump(rows, target, ensure_ascii=False, indent=2)
+          print(f"Prepared {len(rows)} unique verified player identities.")
+          PY
+
+      - name: Run existing official NRL profile extractor
+        run: |
+          set -euo pipefail
+          python backend/dfm/drl/nrl/extractor/player_profiles.py \
+            --players drl-nrl-players.json \
+            --output drl-nrl-profile-review.json \
+            --delay "${{ inputs.request_delay }}"
+
+      - name: Validate extraction report
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path("drl-nrl-profile-review.json")
+          rows = json.loads(path.read_text(encoding="utf-8"))
+          if not isinstance(rows, list):
+              raise SystemExit("Extraction output is not a JSON array.")
+          counts = {}
+          for row in rows:
+              status = row.get("status", "unknown")
+              counts[status] = counts.get(status, 0) + 1
+          print(json.dumps({"records": len(rows), "statuses": counts}, indent=2))
+          if not rows:
+              raise SystemExit("Extraction produced no review records.")
+          PY
+
+      - name: Upload private review artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: drl-nrl-profile-review
+          path: |
+            drl-nrl-profile-review.json
+            drl-nrl-players.json
+          if-no-files-found: error
+          retention-days: 14
