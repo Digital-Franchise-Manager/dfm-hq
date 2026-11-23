@@ -94,7 +94,7 @@ Response shape:
 
 The API must authenticate the session, read `dfm_private` server-side only, filter out unverified identity mappings, and return a signed URL only for media whose player identity is verified and whose rights status is cleared. Never return the private Storage object path, source-only image URL, database credentials, or raw source payload to the browser.
 
-The frontend intentionally shows a disconnected state until this authenticated Cloudflare API route is implemented. This PR does not change Cloudflare Worker routing because that is a separate infrastructure change requiring its own approval.
+The frontend calls the authenticated same-origin Cloudflare API route. The implementation and required secret bindings are described in the Cloudflare authenticated profile API section below. The Worker is committed for review but has not been deployed.
 
 ## Authenticated frontend response contract
 
