@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { supabase } from "../../utils/supabaseClient";
 import "./DRLPlayerProfiles.css";
 
 type PlayerStats = {
@@ -66,13 +67,26 @@ export default function DRLPlayerProfiles() {
       setLoading(true);
       setFeedError("");
       try {
+        if (!supabase) throw new Error("Secure sign-in is not configured on this environment.");
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError || !session?.access_token) {
+          throw new Error("Sign in to view player profiles.");
+        }
+
         const response = await fetch(`/api/drl/nrl/players?season=${encodeURIComponent(season)}`, {
           method: "GET",
           credentials: "same-origin",
-          headers: { Accept: "application/json" },
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${session.access_token}`
+          },
           signal: controller.signal
         });
-        if (!response.ok) throw new Error(response.status === 401 ? "Sign in to view player profiles." : "The secure player service is currently unavailable.");
+        if (!response.ok) {
+          throw new Error(response.status === 401
+            ? "Your sign-in session is missing or expired. Sign in again to view player profiles."
+            : "The secure player service is currently unavailable.");
+        }
         const payload = await response.json() as PlayerFeed;
         if (payload.source_status !== "connected" || !Array.isArray(payload.players)) {
           throw new Error("Verified player data is not available for this season yet.");
@@ -102,10 +116,6 @@ export default function DRLPlayerProfiles() {
   }, [players, search, sortKey, sortDirection]);
 
   const selected = players.find((player) => player.drl_player_id === selectedId) ?? null;
-  const toggleSort = (key: SortKey) => {
-    if (sortKey === key) setSortDirection((direction) => direction === "desc" ? "asc" : "desc");
-    else { setSortKey(key); setSortDirection("desc"); }
-  };
 
   return <section className="drl-player-profiles" aria-label="NRL player profiles">
     <div className="drl-player-toolbar">
