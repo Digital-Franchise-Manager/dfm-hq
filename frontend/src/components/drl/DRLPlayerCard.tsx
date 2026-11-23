@@ -38,8 +38,10 @@ export default function DRLPlayerCard({ player, medal }: Props) {
       ? player.origin_state === "NSW" ? "STATE OF ORIGIN — NSW" : "STATE OF ORIGIN — QLD"
       : tier;
 
+  const classificationClass = medal ? medal.medal.toLowerCase() : originQualified ? (player.origin_state === "NSW" ? "origin-nsw" : "origin-qld") : tier.toLowerCase().replaceAll(" ", "-");
+
   return (
-    <article className={`drl-collectible-card drl-card-${medal?.medal.toLowerCase() ?? (originQualified ? "origin" : tier.toLowerCase().replaceAll(" ", "-"))}`}
+    <article className={`drl-collectible-card drl-card-${classificationClass}`}
       data-player-id={player.drl_player_id}>
       <div className="drl-card-brand"><span>DRL</span><span>DIGITAL RUGBY LEAGUE</span></div>
       <div className="drl-card-photo">
