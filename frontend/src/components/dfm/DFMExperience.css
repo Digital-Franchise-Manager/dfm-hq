@@ -46,3 +46,16 @@
 .dfme-drl-entry:hover{background:rgba(199,255,0,.16)}
 @media(max-width:850px){.dfme-destination-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:650px){.dfme-destination-grid{grid-template-columns:1fr}.dfme-destination-grid .dfme-featured{grid-column:auto;min-height:130px}}
+
+
+/* Cross-device layout safeguards: iOS/iPadOS and Android phones/tablets. */
+.dfme-shell,.dfme-club-shell,.dfme-main,.dfme-content,.dfme-club-main{min-width:0;max-width:100%}
+.dfme-content,.dfme-club-main{overflow-wrap:anywhere}
+.dfme-flow-panel,.dfme-empty,.dfme-asset-grid,.dfme-standings-grid{min-width:0}
+.dfme-flow-links,.dfme-tabs{max-width:100%;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
+.dfme-standings-card,.dfme-asset-card{min-width:0}
+.dfme-standings-card select,.dfme-flow-links button,.dfme-tabs button{max-width:100%}
+.dfme-shell button,.dfme-club-shell button{touch-action:manipulation}
+@media(max-width:900px){.dfme-main{margin-left:0}.dfme-sidebar{z-index:35}.dfme-content{width:100%}}
+@media(max-width:600px){.dfme-header{padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right))}.dfme-content,.dfme-club-main{padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right))}.dfme-flow-links{grid-template-columns:repeat(2,minmax(150px,1fr))}.dfme-page-heading h1{overflow-wrap:anywhere}}
+@media(orientation:landscape) and (max-height:520px){.dfme-sidebar{max-height:calc(100dvh - 64px)}.dfme-content{padding-top:14px}}
