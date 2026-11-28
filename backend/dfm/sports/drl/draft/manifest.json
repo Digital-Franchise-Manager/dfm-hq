@@ -1,0 +1,25 @@
+{
+  "module": "drl.draft",
+  "sport_code": "DRL",
+  "game_mode": "draft",
+  "version": "0.3.0",
+  "core_path": "backend/dfm/sports/drl/draft/core",
+  "packages_path": "backend/dfm/sports/drl/draft/packages",
+  "typescript_package": "@dfm/game-draft",
+  "integrations": [
+    "core/integrations/newsroom_translator.py"
+  ],
+  "engines": [
+    "core/odds_engine",
+    "core/awards_engine",
+    "core/newsroom",
+    "core/ladder_engine",
+    "core/squad_engine",
+    "core/points_engine",
+    "core/draft_engine",
+    "core/draft_order_engine",
+    "core/lockout_engine",
+    "core/trade_engine",
+    "core/waiver_engine"
+  ]
+}

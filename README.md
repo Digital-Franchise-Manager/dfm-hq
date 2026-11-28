@@ -8,11 +8,11 @@ Digital Franchise Manager (DFM) is a multi-sport fantasy platform. Digital Rugby
 - `apps/api/` — authenticated TypeScript request-handler foundation; no application routes are enabled or deployed.
 - `packages/contracts/` — shared domain contracts and DTO types.
 - `packages/platform-core/` — shared identity, franchise and league boundaries.
-- `backend/dfm/drl/classic/core/` — independent Classic Odds, Awards, Newsroom and Ladder engines.
-- `backend/dfm/drl/draft/core/` — independent Draft Odds, Awards, Newsroom and Ladder engines.
-- `backend/dfm/drl/classic/packages/` and `backend/dfm/drl/draft/packages/` — mode-specific TypeScript package boundaries.
-- `backend/dfm/drl/core/` — shared DRL foundations only; no Classic or Draft competition engines.
-- `backend/dfm/drl/packages/` — DRL sport-specific packages, including the Rugby League fantasy engine.
+- `backend/dfm/sports/drl/classic/core/` — independent Classic Odds, Awards, Newsroom and Ladder engines.
+- `backend/dfm/sports/drl/draft/core/` — independent Draft Odds, Awards, Newsroom and Ladder engines.
+- `backend/dfm/sports/drl/classic/packages/` and `backend/dfm/sports/drl/draft/packages/` — mode-specific TypeScript package boundaries.
+- `backend/dfm/sports/drl/core/` — shared DRL foundations only; no Classic or Draft competition engines.
+- `backend/dfm/sports/drl/packages/` — DRL sport-specific packages, including the Rugby League fantasy engine.
 - `supabase/migrations/` — versioned JARVIS database migrations.
 
 Classic and Draft engine implementations, calculations, histories, publication feeds and standings are deliberately isolated. Neither mode imports or reads the other's engine package.
@@ -32,5 +32,5 @@ npm run typecheck
 npm test
 npm run build
 npm run check
-python -m unittest discover -s backend/dfm/drl/tests -t . -p "test_*.py"
+python -m unittest discover -s backend/dfm/sports/drl/tests -t . -p "test_*.py"
 ```

@@ -72,4 +72,4 @@ jobs:
         with:
           python-version: "3.12"
       - name: Run independent mode engine tests
-        run: python -m unittest discover -s backend/dfm/drl/tests -t . -p "test_*.py"
+        run: python -m unittest discover -s backend/dfm/sports/drl/tests -t . -p "test_*.py"
