@@ -18,12 +18,6 @@ from typing import Any
 # User-confirmed identity decisions.
 SOURCE_ID_ALIASES = {507949: 100003377}  # Connelly Lemuelu: earliest ID from 2020.
 DISPLAY_NAME_OVERRIDES = {504325: ("Greg", "Marzhew")}
-UNRESOLVED_COLLISIONS = {
-    (504325, "greg leleisiuao"): (
-        "ID 504325 is assigned to Greg Marzhew from 2021; the 2019-2020 "
-        "Greg Leleisiuao records must remain separate pending a distinct ID."
-    )
-}
 SIONE_IDENTITIES = {(501240): "winger", (503922): "hooker"}
 
 
@@ -77,9 +71,6 @@ def read_seasons(input_dir: Path) -> dict[int, list[dict[str, Any]]]:
 
 def resolve(row: dict[str, Any]) -> tuple[int | None, str, str | None]:
     source_id = int(row["id"])
-    issue = UNRESOLVED_COLLISIONS.get((source_id, name_key(row)))
-    if issue:
-        return None, "unresolved_source_id_collision", issue
     target = SOURCE_ID_ALIASES.get(source_id, source_id)
     method = "explicit_earliest_id_alias" if target != source_id else "earliest_season_source_id"
     return target, method, None
@@ -150,6 +141,12 @@ def build_outputs(seasons: dict[int, list[dict[str, Any]]], output_dir: Path) ->
             "source_player_id": item["season_player_id"],
             "first_seen_squad_id": item["squad_id"],
             "first_seen_positions": item["positions"],
+            "historical_name_variants": "; ".join(sorted({
+                " ".join(f"{r['first_name']} {r['last_name']}".split())
+                for _, r in observations[canonical]
+                if " ".join(f"{r['first_name']} {r['last_name']}".split()).casefold()
+                != f"{first} {last}".casefold()
+            })),
             "identity_status": "verified",
         }
 
@@ -194,7 +191,7 @@ def build_outputs(seasons: dict[int, list[dict[str, Any]]], output_dir: Path) ->
         "user_confirmed_identity_rules": {
             "sione_katoa_501240": "winger; separate identity",
             "sione_katoa_503922": "hooker; separate identity",
-            "greg_504325": "Greg Marzhew",
+            "greg_504325": "canonical Greg Marzhew; historical Greg Leleisiuao records retained under the same source identity",
             "connelly_507949": "canonical ID 100003377 from earliest 2020 appearance",
         },
         "database_write_performed": False,
