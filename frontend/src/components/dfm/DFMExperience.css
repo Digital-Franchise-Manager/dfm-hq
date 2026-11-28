@@ -59,3 +59,13 @@
 @media(max-width:900px){.dfme-main{margin-left:0}.dfme-sidebar{z-index:35}.dfme-content{width:100%}}
 @media(max-width:600px){.dfme-header{padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right))}.dfme-content,.dfme-club-main{padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right))}.dfme-flow-links{grid-template-columns:repeat(2,minmax(150px,1fr))}.dfme-page-heading h1{overflow-wrap:anywhere}}
 @media(orientation:landscape) and (max-height:520px){.dfme-sidebar{max-height:calc(100dvh - 64px)}.dfme-content{padding-top:14px}}
+
+
+/* DRL round controls: horizontal swipe is scoped to round navigation only. */
+.drl-round-swipe{touch-action:pan-y}
+.drl-round-stepper{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:12px 0;padding:10px;border:1px solid rgba(199,255,0,.25);background:#0d100c}
+.drl-round-stepper strong{color:#c7ff00;font-size:12px;white-space:nowrap}
+.drl-round-stepper button{min-height:40px;padding:8px 10px;border:1px solid rgba(199,255,0,.25);background:#171a16;color:#f5f7f1;font-size:9px;font-weight:800}
+.drl-round-stepper button:disabled{opacity:.4}
+.drl-round-swipe button,.drl-round-swipe select{touch-action:manipulation}
+@media(max-width:480px){.drl-round-stepper{gap:6px}.drl-round-stepper button{font-size:8px;padding:7px}}
