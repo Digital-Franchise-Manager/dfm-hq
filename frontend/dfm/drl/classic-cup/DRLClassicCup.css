@@ -39,3 +39,22 @@
 .drlcc-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:45px;padding:18px 0;border-top:1px solid var(--drlcc-line);color:var(--drlcc-muted);font-size:9px;letter-spacing:.12em}.drlcc-footer button{border:0;background:transparent;color:var(--drlcc-lime);font-size:9px;font-weight:800;cursor:pointer}
 @media(max-width:760px){.drlcc-header{grid-template-columns:1fr auto;gap:8px}.drlcc-brand{grid-column:1;grid-row:2}.drlcc-back{grid-column:1;grid-row:1}.drlcc-season{grid-column:2;grid-row:1/3}.drlcc-main{padding-top:18px}.drlcc-two-column{grid-template-columns:1fr}.drlcc-dashboard-grid{gap:9px}.drlcc-destination{min-height:140px;padding:14px}.drlcc-roster-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.drlcc-roster-grid-four{grid-template-columns:repeat(2,minmax(0,1fr))}.drlcc-summary-grid{grid-template-columns:1fr}}
 @media(max-width:420px){.drlcc-hero{padding:20px 15px}.drlcc-hero-mark{width:64px;height:64px;font-size:24px;margin:10px}.drlcc-dashboard-grid{grid-template-columns:1fr}.drlcc-destination-featured{grid-column:auto}.drlcc-player-actions{grid-template-columns:repeat(4,minmax(0,1fr))}.drlcc-panel{padding:14px}.drlcc-footer{flex-wrap:wrap}}
+
+
+/* Responsive support for Android/iPhone smartphones and tablets. */
+.drlcc-app,.drlcc-main,.drlcc-content{min-width:0;max-width:100%}
+.drlcc-main{overflow-x:hidden}
+.drlcc-content{overflow-wrap:anywhere}
+.drlcc-panel,.drlcc-two-column,.drlcc-form,.drlcc-roster-grid{min-width:0}
+.drlcc-panel{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.drlcc-tabs,.drlcc-league-tabs{max-width:100%;overflow-x:auto;flex-wrap:nowrap;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
+.drlcc-tabs button,.drlcc-league-tabs button{flex:0 0 auto;white-space:nowrap}
+.drlcc-round-stepper{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:12px 0;padding:10px;border:1px solid var(--drlcc-line);background:#0d100c}
+.drlcc-round-stepper strong{color:var(--drlcc-lime);font-size:12px;white-space:nowrap}
+.drlcc-round-stepper button{min-height:40px;padding:8px 10px;border:1px solid var(--drlcc-line);background:#171a16;color:#f5f7f1;font-size:9px;font-weight:800}
+.drlcc-round-stepper button:disabled{opacity:.4}
+.drlcc-round-swipe{touch-action:pan-y}
+.drlcc-app button,.drlcc-app input,.drlcc-app select{touch-action:manipulation}
+@media(max-width:760px){.drlcc-main{padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right))}.drlcc-header{padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right))}.drlcc-two-column{grid-template-columns:minmax(0,1fr)}.drlcc-dashboard-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:480px){.drlcc-dashboard-grid{grid-template-columns:minmax(0,1fr)}.drlcc-destination-featured{grid-column:auto}.drlcc-round-stepper{gap:6px}.drlcc-round-stepper button{font-size:8px;padding:7px}.drlcc-panel{padding:12px}.drlcc-footer{padding-bottom:max(18px,env(safe-area-inset-bottom))}}
+@media(orientation:landscape) and (max-height:520px){.drlcc-header{min-height:58px}.drlcc-main{padding-top:14px}}
