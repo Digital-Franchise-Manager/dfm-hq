@@ -28,7 +28,7 @@ export default function DRLClassicCup({ onExit }: Props) {
   const [leagueName, setLeagueName] = useState("");
   const [joinCode, setJoinCode] = useState("");
   const [leagueSearch, setLeagueSearch] = useState("");
-  const [notice, setNotice] = useState("");
+  const [notice, setNotice] = useState("");\n  const [fixtureRound, setFixtureRound] = useState(1);\n  const [fixtureTouchStart, setFixtureTouchStart] = useState<number | null>(null);\n  const fixtureSwipeProps = { onTouchStart: (event: React.TouchEvent<HTMLElement>) => setFixtureTouchStart(event.touches[0]?.clientX ?? null), onTouchEnd: (event: React.TouchEvent<HTMLElement>) => { if (fixtureTouchStart === null) return; const delta = (event.changedTouches[0]?.clientX ?? fixtureTouchStart) - fixtureTouchStart; if (Math.abs(delta) > 55) setFixtureRound((round) => Math.max(1, Math.min(30, round + (delta < 0 ? 1 : -1)))); setFixtureTouchStart(null); } };
 
   const navigate = (next: Screen) => { setNotice(""); setScreen(next); };
   const openLeaguePreview = () => { setLeagueTab("news"); navigate("league"); };
@@ -93,7 +93,7 @@ export default function DRLClassicCup({ onExit }: Props) {
       {leagueTab === "news" && <LeagueNewsPanel />}
       {leagueTab === "chatroom" && <section className="drlcc-panel"><div className="drlcc-panel-heading"><span>LEAGUE COMMUNICATION</span><h2>CHATROOM / COACHES BOX</h2></div><div className="drlcc-empty"><strong>CHAT SERVICE NOT CONNECTED</strong><p>League members' conversations and announcements will appear here when the secured Coaches Box service is connected.</p></div></section>}
       {leagueTab === "roster" && <><div className="drlcc-two-column"><RosterPanel onPlayerSelect={() => setNotice("Player details require the connected roster feed.")} /><PlayerProfilePanel /></div><LockoutNotice context="League roster actions" /></>}
-      {leagueTab === "fixture" && <section className="drlcc-panel"><div className="drlcc-panel-heading"><span>SELECTED LEAGUE</span><h2>FIXTURE</h2></div><div className="drlcc-empty"><strong>FIXTURE SERVICE NOT CONNECTED</strong><p>League matchups and round schedules will appear here when the fixture service is connected.</p></div></section>}
+      {leagueTab === "fixture" && <section className="drlcc-panel drlcc-round-swipe" {...fixtureSwipeProps}><div className="drlcc-panel-heading"><span>SELECTED LEAGUE</span><h2>FIXTURE</h2></div><div className="drlcc-round-stepper"><button type="button" onClick={() => setFixtureRound((round) => Math.max(1, round - 1))} disabled={fixtureRound === 1}>← PREVIOUS ROUND</button><strong>ROUND {fixtureRound}</strong><button type="button" onClick={() => setFixtureRound((round) => Math.min(30, round + 1))} disabled={fixtureRound === 30}>NEXT ROUND →</button></div><div className="drlcc-empty"><strong>FIXTURE SERVICE NOT CONNECTED</strong><p>League matchups and round schedules will appear here when the fixture service is connected.</p></div></section>}
       {leagueTab === "ladder" && <LeagueLadderPanel />}
       {leagueTab === "marketplace" && <MarketplacePanel />}
       {notice && <p className="drlcc-feedback" role="status">{notice}</p>}
