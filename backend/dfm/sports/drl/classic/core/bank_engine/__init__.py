@@ -1,6 +1,13 @@
-"""Classic franchise bank and squad valuation engine."""
+"""Classic franchise bank, player-pricing and squad valuation engine."""
 from .engine import ClassicBankEngine
-from .models import BankAccount, BankTransaction, BankTransactionType, PlayerHolding
+from .models import (
+    BankAccount,
+    BankTransaction,
+    BankTransactionType,
+    PlayerHolding,
+    PlayerPriceAssessment,
+    PlayerPricingConfig,
+)
 
 __all__ = [
     "ClassicBankEngine",
@@ -8,4 +15,6 @@ __all__ = [
     "BankTransaction",
     "BankTransactionType",
     "PlayerHolding",
+    "PlayerPriceAssessment",
+    "PlayerPricingConfig",
 ]
