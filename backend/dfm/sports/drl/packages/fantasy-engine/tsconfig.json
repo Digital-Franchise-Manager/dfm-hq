@@ -1,5 +1,5 @@
 {
-  "extends": "../../../../../tsconfig.base.json",
+  "extends": "../../../../../../tsconfig.base.json",
   "compilerOptions": {
     "composite": true,
     "declaration": true,
@@ -7,7 +7,7 @@
     "emitDeclarationOnly": true,
     "rootDir": "src",
     "outDir": "dist/types",
-    "tsBuildInfoFile": "../../../../../node_modules/.cache/tsbuildinfo/fantasy_engine.tsbuildinfo"
+    "tsBuildInfoFile": "../../../../../../node_modules/.cache/tsbuildinfo/fantasy_engine.tsbuildinfo"
   },
   "include": [
     "src"

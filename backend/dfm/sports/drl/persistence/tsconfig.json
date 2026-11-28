@@ -1,5 +1,5 @@
 {
-  "extends": "../../../../tsconfig.base.json",
+  "extends": "../../../../../tsconfig.base.json",
   "compilerOptions": {
     "composite": true,
     "declaration": true,
@@ -7,7 +7,7 @@
     "emitDeclarationOnly": true,
     "rootDir": ".",
     "outDir": "dist/types",
-    "tsBuildInfoFile": "../../../../node_modules/.cache/tsbuildinfo/drl_persistence.tsbuildinfo"
+    "tsBuildInfoFile": "../../../../../node_modules/.cache/tsbuildinfo/drl_persistence.tsbuildinfo"
   },
   "include": [
     "supabase",
