@@ -73,3 +73,5 @@ jobs:
           python-version: "3.12"
       - name: Run independent mode engine tests
         run: python -m unittest discover -s backend/dfm/sports/drl/tests -t . -p "test_*.py"
+      - name: Run player identity reconciliation tests
+        run: python -m unittest discover -s backend/dfm/sports/drl/nrl/extractor/tests -p "test_*.py"
