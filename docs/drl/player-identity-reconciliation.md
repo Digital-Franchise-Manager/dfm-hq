@@ -25,7 +25,7 @@ python backend/dfm/sports/drl/nrl/extractor/player_identity.py \
 2. Each source season's original ID remains in `season_player_id`; the permanent ID is a separate crosswalk value.
 3. Connelly Lemuelu's 2023–2026 ID `507949` maps to his earliest ID `100003377` from 2020.
 4. Sione Katoa `501240` (winger) and Sione Katoa `503922` (hooker) remain separate identities. Names alone are never used to merge them.
-5. ID `504325` is assigned to Greg Marzhew, as instructed. The 2019–2020 Greg Leleisiuao records carrying the same source ID are withheld for review and are not merged into Marzhew.
+5. ID `504325` is one user-confirmed DRL identity with canonical display name **Greg Marzhew**. Historical 2019–2020 source records labelled Greg Leleisiuao are mapped to the same permanent ID. Their original season names remain unchanged in `source-map.csv`, and `player-master.csv` records Greg Leleisiuao as a historical name variant. This is a platform identity-reconciliation instruction; it is not an independent claim about real-world identity.
 6. Other spelling variants on stable source IDs are preserved in each season record and listed in the audit output.
 
 ## Generated local files
@@ -42,4 +42,4 @@ Do not commit the generated player data or upload it to a public location. The o
 
 The live private schema has `dfm_private.drl_nrl_player_master` and `dfm_private.drl_nrl_player_source_map`; both were empty when inspected. Existing season archive tables were also empty. Intended destinations are the legacy archive for 2019 and 2025, the existing season-specific tables for 2020–2024 and 2026, and the source map for permanent-ID links.
 
-Only verified crosswalk rows are eligible for import. The two Greg Leleisiuao rows remain excluded until a distinct permanent ID is established. Database migration-history drift must be reconciled before import. This tool intentionally performs no database writes.
+Only verified crosswalk rows are eligible for import. The Greg Marzhew / Greg Leleisiuao records carrying source ID `504325` are included under one permanent ID, with original season names preserved in the source map. Database migration-history drift must be reconciled before import. This tool intentionally performs no database writes.
