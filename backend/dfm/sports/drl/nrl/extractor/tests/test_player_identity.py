@@ -26,7 +26,7 @@ class PlayerIdentityTests(unittest.TestCase):
         self.assertEqual(identity.resolve(winger)[0], 501240)
         self.assertEqual(identity.resolve(hooker)[0], 503922)
 
-    def test_m arzhew_keeps_id_and_leleisiuao_is_held_for_review(self):
+    def test_marzhew_keeps_id_and_leleisiuao_is_held_for_review(self):
         marzhew = record(504325, "Greg", "Marzhew", [6])
         leleisiuao = record(504325, "Greg", "Leleisiuao", [6])
         self.assertEqual(identity.resolve(marzhew)[0], 504325)
