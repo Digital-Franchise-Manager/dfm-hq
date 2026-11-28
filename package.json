@@ -11,10 +11,10 @@
     "frontend",
     "apps/api",
     "packages/*",
-    "backend/dfm/drl/packages/*",
-    "backend/dfm/drl/classic/packages",
-    "backend/dfm/drl/draft/packages",
-    "backend/dfm/drl/persistence"
+    "backend/dfm/sports/drl/packages/*",
+    "backend/dfm/sports/drl/classic/packages",
+    "backend/dfm/sports/drl/draft/packages",
+    "backend/dfm/sports/drl/persistence"
   ],
   "scripts": {
     "dev": "npm run dev --workspace @dfm/web",

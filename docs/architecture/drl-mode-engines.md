@@ -4,8 +4,8 @@
 
 Classic and Draft independently own their Odds, Awards, Newsroom and Ladder engines under their respective mode directories. No mode engine, calculation service, award history, odds history, newsroom feed or standings implementation is shared. The packages do not import one another.
 
-- Classic: `backend/dfm/drl/classic/core/{odds_engine,awards_engine,newsroom,ladder_engine}/`
-- Draft: `backend/dfm/drl/draft/core/{odds_engine,awards_engine,newsroom,ladder_engine}/`
+- Classic: `backend/dfm/sports/drl/classic/core/{odds_engine,awards_engine,newsroom,ladder_engine}/`
+- Draft: `backend/dfm/sports/drl/draft/core/{odds_engine,awards_engine,newsroom,ladder_engine}/`
 
 ## Awards
 

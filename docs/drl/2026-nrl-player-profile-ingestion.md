@@ -164,7 +164,7 @@ The archive contains 588 player rows, but only 416 seasonal identity mappings we
 
 ### Candidate validation
 
-Run `backend/dfm/drl/nrl/extractor/player_media.py` on Android Termux or another Python 3 environment with the two JSON inputs exported locally:
+Run `backend/dfm/sports/drl/nrl/extractor/player_media.py` on Android Termux or another Python 3 environment with the two JSON inputs exported locally:
 
 ```sh
 python player_media.py --players jarvis-verified-players-2026.json --candidates action-photo-candidates-2026.json --output action-photo-review-2026.json

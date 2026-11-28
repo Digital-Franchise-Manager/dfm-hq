@@ -14,19 +14,19 @@
       "path": "./packages/platform-core"
     },
     {
-      "path": "./backend/dfm/drl/classic/packages"
+      "path": "./backend/dfm/sports/drl/classic/packages"
     },
     {
-      "path": "./backend/dfm/drl/draft/packages"
+      "path": "./backend/dfm/sports/drl/draft/packages"
     },
     {
-      "path": "./backend/dfm/drl/packages/sport-drl"
+      "path": "./backend/dfm/sports/drl/packages/sport-drl"
     },
     {
-      "path": "./backend/dfm/drl/packages/fantasy-engine"
+      "path": "./backend/dfm/sports/drl/packages/fantasy-engine"
     },
     {
-      "path": "./backend/dfm/drl/persistence"
+      "path": "./backend/dfm/sports/drl/persistence"
     }
   ]
 }
