@@ -4,8 +4,9 @@
     "composite": true,
     "noEmit": true,
     "jsx": "react-jsx",
+    "types": ["vite/client"],
     "rootDir": "..",
     "tsBuildInfoFile": "../../../../node_modules/.cache/tsbuildinfo/drl-classic-frontend.tsbuildinfo"
   },
-  "include": ["src"]
+  "include": ["src", "../DRLClassicCup.tsx", "../core/**/*.tsx"]
 }

@@ -1,10 +1,8 @@
 import React, { useState } from "react";
 import { AwardsPanel } from "./core/awards_engine";
-import { BankSummary } from "./core/bank_engine";
 import { LeagueLadderPanel, OverallRankingsPanel, type RankingScope } from "./core/ladder_engine";
 import { LockoutNotice } from "./core/lockout_engine";
 import { LeagueNewsPanel } from "./core/newsroom";
-import { ScoringSummary } from "./core/points_engine";
 import { PlayerProfilePanel, RosterPanel } from "./core/squad_engine";
 import { MarketplacePanel, TradeStatus } from "./core/trade_engine";
 import "./DRLClassicCup.css";
@@ -29,14 +27,21 @@ export default function DRLClassicCup({ onExit }: Props) {
   const [rankingScope, setRankingScope] = useState<RankingScope>("AUS");
   const [leagueName, setLeagueName] = useState("");
   const [joinCode, setJoinCode] = useState("");
+  const [leagueSearch, setLeagueSearch] = useState("");
   const [notice, setNotice] = useState("");
 
   const navigate = (next: Screen) => { setNotice(""); setScreen(next); };
   const openLeaguePreview = () => { setLeagueTab("news"); navigate("league"); };
+  const goBack = () => {
+    if (screen === "dashboard") { onExit(); return; }
+    if (screen === "active-leagues" || screen === "create-league" || screen === "join-leagues") { navigate("leagues"); return; }
+    if (screen === "league") { navigate("active-leagues"); return; }
+    navigate("dashboard");
+  };
 
   const header = <header className="drlcc-header">
-    <button type="button" className="drlcc-back" onClick={screen === "dashboard" ? onExit : () => navigate("dashboard")}>
-      <span aria-hidden="true">←</span>{screen === "dashboard" ? "DRL DASHBOARD" : "CLASSIC CUP HOME"}
+    <button type="button" className="drlcc-back" onClick={goBack}>
+      <span aria-hidden="true">←</span>{screen === "dashboard" ? "DRL DASHBOARD" : screen === "active-leagues" || screen === "create-league" || screen === "join-leagues" ? "LEAGUES" : screen === "league" ? "ACTIVE LEAGUES" : "CLASSIC CUP HOME"}
     </button>
     <div className="drlcc-brand"><span>DRL</span><strong>CLASSIC CUP</strong></div>
     <span className="drlcc-season">CLASSIC COMPETITION</span>
@@ -53,7 +58,6 @@ export default function DRLClassicCup({ onExit }: Props) {
         <button type="button" className="drlcc-destination" onClick={() => navigate("rankings")}><span>03 / PLATFORM COMPETITION</span><strong>OVERALL RANKINGS</strong><small>Club · State · AUS</small><b>VIEW RANKINGS ↗</b></button>
         <button type="button" className="drlcc-destination drlcc-destination-featured" onClick={() => navigate("leagues")}><span>04 / LEAGUE MANAGEMENT</span><strong>LEAGUES</strong><small>Active, create and join leagues</small><b>MANAGE LEAGUES ↗</b></button>
       </div>
-      <div className="drlcc-summary-grid"><BankSummary /><ScoringSummary /></div>
     </>;
   } else if (screen === "roster") {
     content = <><div className="drlcc-page-title"><span>CLASSIC CUP / TEAM MANAGEMENT</span><h1>MY ROSTER</h1><p>Starting 13 · Interchange 4 · Emergencies 4</p></div><div className="drlcc-two-column"><RosterPanel onPlayerSelect={() => setNotice("Player details require the connected roster feed.")} /><PlayerProfilePanel /></div><LockoutNotice context="Swap and trade actions" /><TradeStatus /></>;
@@ -78,10 +82,10 @@ export default function DRLClassicCup({ onExit }: Props) {
     </form>{notice && <p className="drlcc-feedback" role="status">{notice}</p>}</>;
   } else if (screen === "join-leagues") {
     content = <><div className="drlcc-page-title"><span>CLASSIC CUP / LEAGUES</span><h1>JOIN LEAGUES</h1><p>Find a public league or enter an invitation code for a private league.</p></div><form className="drlcc-form" onSubmit={(event) => { event.preventDefault(); setNotice("League discovery and joining are not connected. No membership has been created."); }}>
-      <label>LEAGUE SEARCH<input placeholder="Search public leagues" /></label>
+      <label>LEAGUE SEARCH<input value={leagueSearch} onChange={(event) => setLeagueSearch(event.target.value)} placeholder="Search public leagues" /></label>
       <label>INVITATION CODE<input value={joinCode} onChange={(event) => setJoinCode(event.target.value)} placeholder="Enter private league code" maxLength={32} /></label>
       <p className="drlcc-inline-note">League discovery and membership changes require the authenticated Classic Cup league service. No league data is fabricated.</p>
-      <button type="submit" className="drlcc-primary-button" disabled={!joinCode.trim()}>CONTINUE</button>
+      <button type="submit" className="drlcc-primary-button" disabled={!joinCode.trim() && !leagueSearch.trim()}>CONTINUE</button>
     </form>{notice && <p className="drlcc-feedback" role="status">{notice}</p>}</>;
   } else {
     content = <><div className="drlcc-page-title"><span>CLASSIC CUP / LEAGUE WORKSPACE PREVIEW</span><h1>LEAGUE DASHBOARD</h1><p>League-specific facilities. Roster and Marketplace open the same shared Classic Cup modules.</p></div>
