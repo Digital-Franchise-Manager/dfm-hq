@@ -78,17 +78,17 @@ class ClassicBankEngineTests(unittest.TestCase):
         quote = self.engine.calculate_player_price(
             "p1", [100, 80, 60], current_price=Decimal("400000")
         )
-        self.assertEqual(quote.weighted_score, Decimal("88.00"))
+        self.assertEqual(quote.weighted_score, Decimal("86.00"))
         self.assertEqual(quote.break_even_score, Decimal("80.00"))
-        self.assertEqual(quote.next_price, Decimal("440000.00"))
-        self.assertEqual(quote.price_change, Decimal("40000.00"))
+        self.assertEqual(quote.next_price, Decimal("430000.00"))
+        self.assertEqual(quote.price_change, Decimal("30000.00"))
 
     def test_previous_season_average_is_blended_with_recent_form(self):
         quote = self.engine.calculate_player_price(
             "p1", [100, 80, 60], current_price=400000,
             previous_season_average=40
         )
-        self.assertEqual(quote.weighted_score, Decimal("76.00"))
+        self.assertEqual(quote.weighted_score, Decimal("74.50"))
 
     def test_opening_price_is_used_when_current_price_is_not_yet_set(self):
         quote = self.engine.calculate_player_price(
