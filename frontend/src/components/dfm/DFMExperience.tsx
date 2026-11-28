@@ -63,7 +63,7 @@ function ClubManagement({ onBack }: { onBack: () => void }) {
   </main>;
 }
 export default function DFMExperience() {
-  const [page, setPage] = useState<Page>("Competition");
+  const [page, setPage] = useState<Page>("HQ Overview");
   const [menuOpen, setMenuOpen] = useState(false);
   const [newsTab, setNewsTab] = useState("Platform");
   const [competitionTab, setCompetitionTab] = useState("DML Classic Cup");
