@@ -26,11 +26,11 @@ class PlayerIdentityTests(unittest.TestCase):
         self.assertEqual(identity.resolve(winger)[0], 501240)
         self.assertEqual(identity.resolve(hooker)[0], 503922)
 
-    def test_marzhew_keeps_id_and_leleisiuao_is_held_for_review(self):
+    def test_marzhew_and_leleisiuao_share_confirmed_canonical_identity(self):
         marzhew = record(504325, "Greg", "Marzhew", [6])
         leleisiuao = record(504325, "Greg", "Leleisiuao", [6])
         self.assertEqual(identity.resolve(marzhew)[0], 504325)
-        self.assertIsNone(identity.resolve(leleisiuao)[0])
+        self.assertEqual(identity.resolve(leleisiuao)[0], 504325)
 
     def test_master_uses_earliest_mapped_season(self):
         seasons = {
@@ -44,9 +44,14 @@ class PlayerIdentityTests(unittest.TestCase):
             with (Path(temp) / "player-master.csv").open(encoding="utf-8") as handle:
                 master = {int(row["drl_player_id"]): row for row in csv.DictReader(handle)}
             self.assertEqual(master[100003377]["source_season"], "2020")
-            self.assertEqual(master[504325]["source_season"], "2021")
+            self.assertEqual(master[504325]["source_season"], "2019")
             self.assertEqual(master[504325]["last_name"], "Marzhew")
-            self.assertEqual(summary["source_map_review_required_rows"], 1)
+            self.assertEqual(master[504325]["historical_name_variants"], "Greg Leleisiuao")
+            with (Path(temp) / "source-map.csv").open(encoding="utf-8") as handle:
+                source_map = list(csv.DictReader(handle))
+            greg_rows = [row for row in source_map if row["season_player_id"] == "504325"]
+            self.assertEqual({row["drl_player_id"] for row in greg_rows}, {"504325"})
+            self.assertEqual(summary["source_map_review_required_rows"], 0)
             self.assertFalse(summary["database_write_performed"])
 
 
