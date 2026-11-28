@@ -1,8 +1,11 @@
-"""Tests for the Classic franchise bank and 21-player squad valuation."""
+"""Tests for the Classic bank and transparent player-pricing model."""
 import unittest
 from decimal import Decimal
 
-from backend.dfm.sports.drl.classic.core.bank_engine import ClassicBankEngine, BankTransactionType
+from backend.dfm.sports.drl.classic.core.bank_engine import (
+    ClassicBankEngine, BankTransactionType, PlayerPricingConfig
+)
+from backend.dfm.sports.drl.core.points_scoring import PlayerAvailability
 
 
 class ClassicBankEngineTests(unittest.TestCase):
@@ -70,6 +73,90 @@ class ClassicBankEngineTests(unittest.TestCase):
         self.assertEqual(summary["squad_value"], Decimal("650.00"))
         self.assertEqual(summary["players_registered"], 1)
         self.assertEqual(summary["squad_slots_remaining"], 20)
+
+    def test_recent_scores_weight_most_recent_performance(self):
+        quote = self.engine.calculate_player_price(
+            "p1", [100, 80, 60], current_price=Decimal("400000")
+        )
+        self.assertEqual(quote.weighted_score, Decimal("88.00"))
+        self.assertEqual(quote.break_even_score, Decimal("80.00"))
+        self.assertEqual(quote.next_price, Decimal("440000.00"))
+        self.assertEqual(quote.price_change, Decimal("40000.00"))
+
+    def test_previous_season_average_is_blended_with_recent_form(self):
+        quote = self.engine.calculate_player_price(
+            "p1", [100, 80, 60], current_price=400000,
+            previous_season_average=40
+        )
+        self.assertEqual(quote.weighted_score, Decimal("76.00"))
+
+    def test_opening_price_is_used_when_current_price_is_not_yet_set(self):
+        quote = self.engine.calculate_player_price(
+            "rookie", [50], opening_price=250000
+        )
+        self.assertEqual(quote.current_price, Decimal("250000.00"))
+        self.assertEqual(quote.opening_price, Decimal("250000.00"))
+
+    def test_previous_season_average_can_seed_a_new_price(self):
+        quote = self.engine.calculate_player_price(
+            "returning-player", [], previous_season_average=60
+        )
+        self.assertEqual(quote.current_price, Decimal("300000"))
+        self.assertEqual(quote.weighted_score, Decimal("60.00"))
+
+    def test_dnp_and_bye_do_not_change_player_price(self):
+        for availability in (PlayerAvailability.DNP, PlayerAvailability.BYE):
+            quote = self.engine.calculate_player_price(
+                "p1", [100, 80, 60], current_price=400000,
+                availability=availability
+            )
+            self.assertEqual(quote.next_price, Decimal("400000.00"))
+            self.assertEqual(quote.price_change, Decimal("0.00"))
+
+    def test_price_movement_is_capped_and_rounded_to_configured_increment(self):
+        quote = self.engine.calculate_player_price(
+            "p1", [300], current_price=400000
+        )
+        self.assertEqual(quote.next_price, Decimal("460000.00"))
+
+    def test_pricing_rejects_missing_performance_basis(self):
+        with self.assertRaisesRegex(ValueError, "recent scores or previous-season"):
+            self.engine.calculate_player_price("p1", [], current_price=300000)
+
+    def test_pricing_rejects_invalid_scores_and_prices(self):
+        for score in (-1, float("nan"), float("inf"), True):
+            with self.subTest(score=score):
+                with self.assertRaises(ValueError):
+                    self.engine.calculate_player_price("p1", [score], current_price=300000)
+        with self.assertRaises(ValueError):
+            self.engine.calculate_player_price("p1", [50], current_price=0)
+
+    def test_custom_pricing_parameters_are_applied(self):
+        config = PlayerPricingConfig(
+            value_per_point=Decimal("4000"),
+            recent_score_weights=(Decimal("1"),),
+            max_change_fraction=Decimal("0.10"),
+            price_floor=Decimal("100000"),
+            price_ceiling=Decimal("900000"),
+            price_increment=Decimal("100"),
+        )
+        quote = self.engine.calculate_player_price(
+            "p1", [100], current_price=400000, config=config
+        )
+        self.assertEqual(quote.break_even_score, Decimal("100.00"))
+        self.assertEqual(quote.next_price, Decimal("400000.00"))
+
+    def test_market_revaluation_updates_squad_value_without_cash_ledger_entry(self):
+        account = self.engine.purchase_player(self.account, "p1", 300000, "tx-1")
+        revalued = self.engine.update_player_market_value(account, "p1", 350000)
+        self.assertEqual(revalued.squad_value, Decimal("350000.00"))
+        self.assertEqual(revalued.available_balance, account.available_balance)
+        self.assertEqual(revalued.transactions, account.transactions)
+        self.assertEqual(account.squad_value, Decimal("300000.00"))
+
+    def test_market_revaluation_rejects_unowned_player(self):
+        with self.assertRaisesRegex(ValueError, "not registered"):
+            self.engine.update_player_market_value(self.account, "missing", 100000)
 
 
 if __name__ == "__main__":
