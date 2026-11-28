@@ -37,3 +37,12 @@
 .dfme-standings-card p{margin:0;color:#aeb2a7;font-size:10px;line-height:1.65}
 @media(max-width:850px){.dfme-standings-grid{grid-template-columns:1fr}}
 @media(max-width:650px){.dfme-standings-card{padding:14px}.dfme-flow-panel>.dfme-tabs{display:grid;grid-template-columns:1fr}.dfme-flow-panel>.dfme-tabs button{text-align:left}}
+
+
+/* DFM HQ has exactly three top-level destinations. */
+.dfme-destination-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.dfme-destination-grid .dfme-featured{grid-column:auto;min-height:165px}
+.dfme-drl-entry{display:inline-flex;margin-top:12px;padding:12px 15px;border:1px solid rgba(199,255,0,.55);background:rgba(199,255,0,.08);color:#c7ff00;text-decoration:none;font-size:9px;font-weight:900;letter-spacing:.1em}
+.dfme-drl-entry:hover{background:rgba(199,255,0,.16)}
+@media(max-width:850px){.dfme-destination-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:650px){.dfme-destination-grid{grid-template-columns:1fr}.dfme-destination-grid .dfme-featured{grid-column:auto;min-height:130px}}
