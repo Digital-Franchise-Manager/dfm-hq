@@ -1,0 +1,21 @@
+{
+  "module": "drl.classic.frontend",
+  "sport_code": "DRL",
+  "game_mode": "classic",
+  "version": "0.1.0",
+  "backend_manifest": "backend/dfm/sports/drl/classic/manifest.json",
+  "core_path": "frontend/dfm/drl/classic-cup/core",
+  "packages_path": "frontend/dfm/drl/classic-cup/packages",
+  "typescript_package": "@dfm/web-game-classic",
+  "engines": [
+    "core/odds_engine",
+    "core/awards_engine",
+    "core/newsroom",
+    "core/ladder_engine",
+    "core/squad_engine",
+    "core/points_engine",
+    "core/bank_engine",
+    "core/lockout_engine",
+    "core/trade_engine"
+  ]
+}

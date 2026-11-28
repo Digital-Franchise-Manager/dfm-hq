@@ -10,7 +10,8 @@
     "tsBuildInfoFile": "../node_modules/.cache/tsbuildinfo/web.tsbuildinfo"
   },
   "include": [
-    "src"
+    "src",
+    "dfm"
   ],
   "references": [
     {
