@@ -28,7 +28,10 @@ export default function DRLClassicCup({ onExit }: Props) {
   const [leagueName, setLeagueName] = useState("");
   const [joinCode, setJoinCode] = useState("");
   const [leagueSearch, setLeagueSearch] = useState("");
-  const [notice, setNotice] = useState("");\n  const [fixtureRound, setFixtureRound] = useState(1);\n  const [fixtureTouchStart, setFixtureTouchStart] = useState<number | null>(null);\n  const fixtureSwipeProps = { onTouchStart: (event: React.TouchEvent<HTMLElement>) => setFixtureTouchStart(event.touches[0]?.clientX ?? null), onTouchEnd: (event: React.TouchEvent<HTMLElement>) => { if (fixtureTouchStart === null) return; const delta = (event.changedTouches[0]?.clientX ?? fixtureTouchStart) - fixtureTouchStart; if (Math.abs(delta) > 55) setFixtureRound((round) => Math.max(1, Math.min(30, round + (delta < 0 ? 1 : -1)))); setFixtureTouchStart(null); } };
+  const [notice, setNotice] = useState("");
+  const [fixtureRound, setFixtureRound] = useState(1);
+  const [fixtureTouchStart, setFixtureTouchStart] = useState<number | null>(null);
+  const fixtureSwipeProps = { onTouchStart: (event: React.TouchEvent<HTMLElement>) => setFixtureTouchStart(event.touches[0]?.clientX ?? null), onTouchEnd: (event: React.TouchEvent<HTMLElement>) => { if (fixtureTouchStart === null) return; const delta = (event.changedTouches[0]?.clientX ?? fixtureTouchStart) - fixtureTouchStart; if (Math.abs(delta) > 55) setFixtureRound((round) => Math.max(1, Math.min(30, round + (delta < 0 ? 1 : -1)))); setFixtureTouchStart(null); } };
 
   const navigate = (next: Screen) => { setNotice(""); setScreen(next); };
   const openLeaguePreview = () => { setLeagueTab("news"); navigate("league"); };
